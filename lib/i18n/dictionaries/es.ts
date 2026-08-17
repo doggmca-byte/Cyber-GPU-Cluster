@@ -154,6 +154,93 @@ const es: TranslationDictionary = {
       "Ocurrió un error inesperado. Inténtalo de nuevo — si persiste, reinicia la aplicación desde Telegram.",
     retry: "Reintentar",
   },
+  tasks: {
+    openButton: "Tareas",
+    title: "Centro de Tareas",
+    subtitle: "Completa tareas y gana recompensas",
+    progress: (done, total) => `⚡ ${done}/${total} COMPLETADAS`,
+    empty: "Todavía no hay tareas en esta categoría.",
+    categories: {
+      in_game: "En el juego",
+      general: "Generales",
+      partners: "Socios",
+      wallet: "Billetera",
+      friends: "Amigos",
+      special: "Especiales",
+    },
+    reward: {
+      game_balance: (amount) => `+${amount} TON (Juego)`,
+      ton: (amount) => `+${amount} TON`,
+      quota: (amount) => `+${amount} Cuota`,
+    },
+    action: {
+      start: "Empezar",
+      verify: "Verificar",
+      verifying: "Verificando...",
+      claim: "Reclamar",
+      claiming: "Reclamando...",
+      claimed: "✓ Reclamado",
+      notCompletedYet: "Aún no confirmado — inténtalo de nuevo después de completar la acción.",
+    },
+    items: {
+      own_gpus_5: {
+        title: "Ten 5 GPU",
+        description: "Compra y ten al menos 5 unidades de GPU al mismo tiempo.",
+      },
+      own_gpus_20: {
+        title: "Ten 20 GPU",
+        description: "Haz crecer tu granja hasta 20 unidades de GPU al mismo tiempo.",
+      },
+      harvest_10: {
+        title: "Recolecta HASH 10 veces",
+        description: "Pulsa el botón Recolectar 10 veces.",
+      },
+      harvest_50: {
+        title: "Recolecta HASH 50 veces",
+        description: "Pulsa el botón Recolectar 50 veces.",
+      },
+      subscribe_channel: {
+        title: "Suscríbete a nuestro canal",
+        description: "Únete a nuestro canal oficial de Telegram para noticias y novedades.",
+      },
+      visit_website: {
+        title: "Visita nuestro sitio web",
+        description: "Abre el sitio web de Cyber GPU Cluster.",
+      },
+      partner_channel: {
+        title: "Únete a un canal asociado",
+        description: "Suscríbete al canal de Telegram de nuestro socio.",
+      },
+      partner_offer: {
+        title: "Revisa una oferta de socio",
+        description: "Abre la página de la oferta del socio.",
+      },
+      first_deposit: {
+        title: "Haz tu primer depósito",
+        description: "Recarga tu Game Balance con TON real al menos una vez.",
+      },
+      deposit_5: {
+        title: "Haz 5 depósitos",
+        description: "Recarga tu Game Balance 5 veces.",
+      },
+      invite_1: {
+        title: "Invita a 1 amigo",
+        description: "Invita a un amigo usando tu enlace de referido.",
+      },
+      invite_5: {
+        title: "Invita a 5 amigos",
+        description: "Invita a 5 amigos usando tu enlace de referido.",
+      },
+      invite_20: {
+        title: "Invita a 20 amigos",
+        description: "Invita a 20 amigos usando tu enlace de referido.",
+      },
+      special_promo: {
+        title: "Bono por tiempo limitado",
+        description: "Una recompensa especial disponible por tiempo limitado.",
+      },
+    },
+  },
 };
 
 export default es;

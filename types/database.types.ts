@@ -50,6 +50,7 @@ export type Database = {
           created_at: string
           first_name: string | null
           game_balance: number
+          harvest_count: number
           hash_balance: number
           id: string
           lifetime_hash_generated: number
@@ -64,6 +65,7 @@ export type Database = {
           created_at?: string
           first_name?: string | null
           game_balance?: number
+          harvest_count?: number
           hash_balance?: number
           id?: string
           lifetime_hash_generated?: number
@@ -78,6 +80,7 @@ export type Database = {
           created_at?: string
           first_name?: string | null
           game_balance?: number
+          harvest_count?: number
           hash_balance?: number
           id?: string
           lifetime_hash_generated?: number
@@ -141,6 +144,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      task_templates: {
+        Row: {
+          action_type: string
+          category: string
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          reward_amount: number
+          reward_type: string
+          sort_order: number
+          target_value: string
+          title_key: string
+        }
+        Insert: {
+          action_type: string
+          category: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          reward_amount: number
+          reward_type: string
+          sort_order?: number
+          target_value: string
+          title_key: string
+        }
+        Update: {
+          action_type?: string
+          category?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          reward_amount?: number
+          reward_type?: string
+          sort_order?: number
+          target_value?: string
+          title_key?: string
+        }
+        Relationships: []
       }
       transactions: {
         Row: {
@@ -225,6 +270,51 @@ export type Database = {
           },
         ]
       }
+      user_tasks: {
+        Row: {
+          claimed_at: string | null
+          created_at: string
+          id: string
+          status: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "task_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -260,6 +350,18 @@ export type Database = {
         Returns: {
           claimed_amount: number
           withdrawable_balance: number
+        }[]
+      }
+      claim_task_reward: {
+        Args: { p_task_id: string; p_user_id: string }
+        Returns: {
+          game_balance: number
+          reward_amount: number
+          reward_type: string
+          status: string
+          task_id: string
+          withdrawable_balance: number
+          withdrawal_quota: number
         }[]
       }
       convert_withdrawable_to_game: {
@@ -309,13 +411,6 @@ export type Database = {
           withdrawal_quota: number
         }[]
       }
-      revert_withdrawal_to_pending: {
-        Args: { p_reason: string; p_transaction_id: string }
-        Returns: {
-          status: string
-          transaction_id: string
-        }[]
-      }
       request_withdrawal: {
         Args: {
           p_amount: number
@@ -331,6 +426,13 @@ export type Database = {
           transaction_id: string
           withdrawable_balance: number
           withdrawal_quota: number
+        }[]
+      }
+      revert_withdrawal_to_pending: {
+        Args: { p_reason: string; p_transaction_id: string }
+        Returns: {
+          status: string
+          transaction_id: string
         }[]
       }
     }

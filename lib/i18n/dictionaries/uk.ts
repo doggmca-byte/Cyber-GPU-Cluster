@@ -153,6 +153,93 @@ const uk: TranslationDictionary = {
       "Сталася неочікувана помилка. Спробуй ще раз — якщо проблема повторюється, перезапусти застосунок через Telegram.",
     retry: "Спробувати ще раз",
   },
+  tasks: {
+    openButton: "Завдання",
+    title: "Центр Завдань",
+    subtitle: "Виконуй завдання та отримуй нагороди",
+    progress: (done, total) => `⚡ ${done}/${total} ВИКОНАНО`,
+    empty: "У цій категорії поки немає завдань.",
+    categories: {
+      in_game: "В грі",
+      general: "Загальні",
+      partners: "Партнери",
+      wallet: "Гаманець",
+      friends: "Друзі",
+      special: "Особливе",
+    },
+    reward: {
+      game_balance: (amount) => `+${amount} TON (Гра)`,
+      ton: (amount) => `+${amount} TON`,
+      quota: (amount) => `+${amount} Квоти`,
+    },
+    action: {
+      start: "Виконати",
+      verify: "Перевірити",
+      verifying: "Перевіряємо...",
+      claim: "Забрати",
+      claiming: "Забираємо...",
+      claimed: "✓ Отримано",
+      notCompletedYet: "Ще не підтверджено — спробуй ще раз після виконання дії.",
+    },
+    items: {
+      own_gpus_5: {
+        title: "Володій 5 GPU",
+        description: "Купи та володій щонайменше 5 одиницями GPU одночасно.",
+      },
+      own_gpus_20: {
+        title: "Володій 20 GPU",
+        description: "Розвинь ферму до 20 одиниць GPU одночасно.",
+      },
+      harvest_10: {
+        title: "Зберіть HASH 10 разів",
+        description: "Натисни кнопку збору HASH 10 разів.",
+      },
+      harvest_50: {
+        title: "Зберіть HASH 50 разів",
+        description: "Натисни кнопку збору HASH 50 разів.",
+      },
+      subscribe_channel: {
+        title: "Підпишись на наш канал",
+        description: "Приєднайся до офіційного Telegram-каналу з новинами та оновленнями.",
+      },
+      visit_website: {
+        title: "Відвідай наш сайт",
+        description: "Відкрий сайт Cyber GPU Cluster.",
+      },
+      partner_channel: {
+        title: "Приєднайся до партнерського каналу",
+        description: "Підпишись на Telegram-канал нашого партнера.",
+      },
+      partner_offer: {
+        title: "Переглянь пропозицію партнера",
+        description: "Відкрий сторінку пропозиції партнера.",
+      },
+      first_deposit: {
+        title: "Зроби свій перший депозит",
+        description: "Поповни Game Balance реальним TON хоча б один раз.",
+      },
+      deposit_5: {
+        title: "Зроби 5 депозитів",
+        description: "Поповни Game Balance 5 разів.",
+      },
+      invite_1: {
+        title: "Запроси 1 друга",
+        description: "Запроси друга за своїм реферальним посиланням.",
+      },
+      invite_5: {
+        title: "Запроси 5 друзів",
+        description: "Запроси 5 друзів за своїм реферальним посиланням.",
+      },
+      invite_20: {
+        title: "Запроси 20 друзів",
+        description: "Запроси 20 друзів за своїм реферальним посиланням.",
+      },
+      special_promo: {
+        title: "Обмежений у часі бонус",
+        description: "Особлива нагорода, доступна протягом обмеженого часу.",
+      },
+    },
+  },
 };
 
 export default uk;

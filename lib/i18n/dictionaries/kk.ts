@@ -153,6 +153,93 @@ const kk: TranslationDictionary = {
       "Күтпеген қате орын алды. Қайта көріңіз — мәселе қайталанса, қосымшаны Telegram арқылы қайта іске қосыңыз.",
     retry: "Қайта көру",
   },
+  tasks: {
+    openButton: "Тапсырмалар",
+    title: "Тапсырмалар орталығы",
+    subtitle: "Тапсырмаларды орында да, сыйақы ал",
+    progress: (done, total) => `⚡ ${done}/${total} ОРЫНДАЛДЫ`,
+    empty: "Бұл санатта әзірге тапсырма жоқ.",
+    categories: {
+      in_game: "Ойында",
+      general: "Жалпы",
+      partners: "Серіктестер",
+      wallet: "Әмиян",
+      friends: "Достар",
+      special: "Ерекше",
+    },
+    reward: {
+      game_balance: (amount) => `+${amount} TON (Ойын)`,
+      ton: (amount) => `+${amount} TON`,
+      quota: (amount) => `+${amount} Квота`,
+    },
+    action: {
+      start: "Орындау",
+      verify: "Тексеру",
+      verifying: "Тексерілуде...",
+      claim: "Алу",
+      claiming: "Алынуда...",
+      claimed: "✓ Алынды",
+      notCompletedYet: "Әлі расталмады — әрекетті орындағаннан кейін қайта көріңіз.",
+    },
+    items: {
+      own_gpus_5: {
+        title: "5 GPU иеленіңіз",
+        description: "Бір мезгілде кемінде 5 GPU сатып алып, иелен.",
+      },
+      own_gpus_20: {
+        title: "20 GPU иеленіңіз",
+        description: "Фермаңды бір мезгілде 20 GPU-ге дейін өсір.",
+      },
+      harvest_10: {
+        title: "HASH-ты 10 рет жина",
+        description: "Жинау түймесін 10 рет бас.",
+      },
+      harvest_50: {
+        title: "HASH-ты 50 рет жина",
+        description: "Жинау түймесін 50 рет бас.",
+      },
+      subscribe_channel: {
+        title: "Арнамызға жазыл",
+        description: "Жаңалықтар мен жаңартулар үшін ресми Telegram арнамызға қосыл.",
+      },
+      visit_website: {
+        title: "Сайтымызға кір",
+        description: "Cyber GPU Cluster сайтын аш.",
+      },
+      partner_channel: {
+        title: "Серіктес арнасына қосыл",
+        description: "Серіктесіміздің Telegram арнасына жазыл.",
+      },
+      partner_offer: {
+        title: "Серіктес ұсынысын қара",
+        description: "Серіктестің ұсыныс бетін аш.",
+      },
+      first_deposit: {
+        title: "Алғашқы депозитіңді жаса",
+        description: "Game Balance-ты нақты TON-мен кемінде бір рет толықтыр.",
+      },
+      deposit_5: {
+        title: "5 депозит жаса",
+        description: "Game Balance-ты 5 рет толықтыр.",
+      },
+      invite_1: {
+        title: "1 досты шақыр",
+        description: "Реферал сілтемең арқылы досыңды шақыр.",
+      },
+      invite_5: {
+        title: "5 досты шақыр",
+        description: "Реферал сілтемең арқылы 5 досыңды шақыр.",
+      },
+      invite_20: {
+        title: "20 досты шақыр",
+        description: "Реферал сілтемең арқылы 20 досыңды шақыр.",
+      },
+      special_promo: {
+        title: "Уақыты шектеулі бонус",
+        description: "Уақыты шектеулі арнайы сыйақы.",
+      },
+    },
+  },
 };
 
 export default kk;

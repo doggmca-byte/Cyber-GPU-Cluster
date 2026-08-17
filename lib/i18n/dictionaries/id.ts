@@ -153,6 +153,93 @@ const id: TranslationDictionary = {
       "Terjadi kesalahan tak terduga. Coba lagi — jika masalah berlanjut, mulai ulang aplikasi lewat Telegram.",
     retry: "Coba lagi",
   },
+  tasks: {
+    openButton: "Misi",
+    title: "Pusat Misi",
+    subtitle: "Selesaikan misi dan dapatkan hadiah",
+    progress: (done, total) => `⚡ ${done}/${total} SELESAI`,
+    empty: "Belum ada misi di kategori ini.",
+    categories: {
+      in_game: "Dalam Game",
+      general: "Umum",
+      partners: "Mitra",
+      wallet: "Dompet",
+      friends: "Teman",
+      special: "Spesial",
+    },
+    reward: {
+      game_balance: (amount) => `+${amount} TON (Game)`,
+      ton: (amount) => `+${amount} TON`,
+      quota: (amount) => `+${amount} Kuota`,
+    },
+    action: {
+      start: "Mulai",
+      verify: "Verifikasi",
+      verifying: "Memverifikasi...",
+      claim: "Klaim",
+      claiming: "Mengklaim...",
+      claimed: "✓ Diklaim",
+      notCompletedYet: "Belum dikonfirmasi — coba lagi setelah menyelesaikan aksinya.",
+    },
+    items: {
+      own_gpus_5: {
+        title: "Miliki 5 GPU",
+        description: "Beli dan miliki setidaknya 5 unit GPU secara bersamaan.",
+      },
+      own_gpus_20: {
+        title: "Miliki 20 GPU",
+        description: "Kembangkan farm-mu hingga 20 unit GPU secara bersamaan.",
+      },
+      harvest_10: {
+        title: "Kumpulkan HASH 10 kali",
+        description: "Ketuk tombol Kumpulkan 10 kali.",
+      },
+      harvest_50: {
+        title: "Kumpulkan HASH 50 kali",
+        description: "Ketuk tombol Kumpulkan 50 kali.",
+      },
+      subscribe_channel: {
+        title: "Berlangganan channel kami",
+        description: "Gabung ke channel Telegram resmi kami untuk berita dan info terbaru.",
+      },
+      visit_website: {
+        title: "Kunjungi situs web kami",
+        description: "Buka situs web Cyber GPU Cluster.",
+      },
+      partner_channel: {
+        title: "Gabung channel mitra",
+        description: "Berlangganan channel Telegram mitra kami.",
+      },
+      partner_offer: {
+        title: "Cek penawaran mitra",
+        description: "Buka halaman penawaran mitra.",
+      },
+      first_deposit: {
+        title: "Lakukan deposit pertamamu",
+        description: "Isi ulang Game Balance dengan TON asli setidaknya sekali.",
+      },
+      deposit_5: {
+        title: "Lakukan 5 deposit",
+        description: "Isi ulang Game Balance 5 kali.",
+      },
+      invite_1: {
+        title: "Undang 1 teman",
+        description: "Undang teman menggunakan link referralmu.",
+      },
+      invite_5: {
+        title: "Undang 5 teman",
+        description: "Undang 5 teman menggunakan link referralmu.",
+      },
+      invite_20: {
+        title: "Undang 20 teman",
+        description: "Undang 20 teman menggunakan link referralmu.",
+      },
+      special_promo: {
+        title: "Bonus waktu terbatas",
+        description: "Hadiah spesial yang tersedia dalam waktu terbatas.",
+      },
+    },
+  },
 };
 
 export default id;

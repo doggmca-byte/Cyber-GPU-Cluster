@@ -80,3 +80,59 @@ export interface AdWatchResponse {
   withdrawal_quota: number;
   server_time: string;
 }
+
+// ---------------------------------------------------------------------------
+// Task Center (Центр Завдань)
+// ---------------------------------------------------------------------------
+
+export type TaskCategory = "in_game" | "general" | "partners" | "wallet" | "friends" | "special";
+export type TaskRewardType = "game_balance" | "ton" | "quota";
+export type TaskActionType =
+  | "telegram_channel"
+  | "external_link"
+  | "own_gpus_count"
+  | "harvest_count"
+  | "invite_count"
+  | "deposit_count";
+export type TaskStatus = "pending" | "completed" | "claimed";
+
+export interface TaskItem {
+  id: string;
+  category: TaskCategory;
+  /** Слаг для lib/i18n/dictionaries — t.tasks.items[title_key], НЕ повний шлях. */
+  title_key: string;
+  icon: string | null;
+  reward_amount: number;
+  reward_type: TaskRewardType;
+  action_type: TaskActionType;
+  target_value: string;
+  status: TaskStatus;
+  /** Лише для *_count завдань — живе значення/поріг, обчислені на GET /api/tasks. */
+  progress_current?: number;
+  progress_target?: number;
+}
+
+export interface TasksResponse {
+  tasks: TaskItem[];
+  completed_count: number;
+  total_count: number;
+  server_time: string;
+}
+
+export interface TaskVerifyResponse {
+  task_id: string;
+  status: TaskStatus;
+  completed: boolean;
+  server_time: string;
+}
+
+export interface TaskClaimResponse {
+  task_id: string;
+  status: TaskStatus;
+  reward_amount: number;
+  reward_type: TaskRewardType;
+  game_balance: number;
+  withdrawable_balance: number;
+  withdrawal_quota: number;
+  server_time: string;
+}

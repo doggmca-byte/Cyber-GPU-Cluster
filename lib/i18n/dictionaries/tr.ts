@@ -153,6 +153,93 @@ const tr: TranslationDictionary = {
       "Beklenmedik bir hata oluştu. Tekrar dene — sorun devam ederse uygulamayı Telegram üzerinden yeniden başlat.",
     retry: "Tekrar dene",
   },
+  tasks: {
+    openButton: "Görevler",
+    title: "Görev Merkezi",
+    subtitle: "Görevleri tamamla ve ödüller kazan",
+    progress: (done, total) => `⚡ ${done}/${total} TAMAMLANDI`,
+    empty: "Bu kategoride henüz görev yok.",
+    categories: {
+      in_game: "Oyun İçi",
+      general: "Genel",
+      partners: "Ortaklar",
+      wallet: "Cüzdan",
+      friends: "Arkadaşlar",
+      special: "Özel",
+    },
+    reward: {
+      game_balance: (amount) => `+${amount} TON (Oyun)`,
+      ton: (amount) => `+${amount} TON`,
+      quota: (amount) => `+${amount} Kota`,
+    },
+    action: {
+      start: "Başla",
+      verify: "Doğrula",
+      verifying: "Doğrulanıyor...",
+      claim: "Al",
+      claiming: "Alınıyor...",
+      claimed: "✓ Alındı",
+      notCompletedYet: "Henüz onaylanmadı — işlemi tamamladıktan sonra tekrar dene.",
+    },
+    items: {
+      own_gpus_5: {
+        title: "5 GPU'ya sahip ol",
+        description: "Aynı anda en az 5 GPU birimi satın al ve sahip ol.",
+      },
+      own_gpus_20: {
+        title: "20 GPU'ya sahip ol",
+        description: "Çiftliğini aynı anda 20 GPU birimine büyüt.",
+      },
+      harvest_10: {
+        title: "HASH'i 10 kez topla",
+        description: "Topla düğmesine 10 kez bas.",
+      },
+      harvest_50: {
+        title: "HASH'i 50 kez topla",
+        description: "Topla düğmesine 50 kez bas.",
+      },
+      subscribe_channel: {
+        title: "Kanalımıza abone ol",
+        description: "Haberler ve güncellemeler için resmi Telegram kanalımıza katıl.",
+      },
+      visit_website: {
+        title: "Web sitemizi ziyaret et",
+        description: "Cyber GPU Cluster web sitesini aç.",
+      },
+      partner_channel: {
+        title: "Bir ortak kanala katıl",
+        description: "Ortağımızın Telegram kanalına abone ol.",
+      },
+      partner_offer: {
+        title: "Bir ortak teklifine bak",
+        description: "Ortak teklif sayfasını aç.",
+      },
+      first_deposit: {
+        title: "İlk yatırımını yap",
+        description: "Game Balance'ını en az bir kez gerçek TON ile yükle.",
+      },
+      deposit_5: {
+        title: "5 yatırım yap",
+        description: "Game Balance'ını 5 kez yükle.",
+      },
+      invite_1: {
+        title: "1 arkadaş davet et",
+        description: "Referans linkini kullanarak bir arkadaşını davet et.",
+      },
+      invite_5: {
+        title: "5 arkadaş davet et",
+        description: "Referans linkini kullanarak 5 arkadaşını davet et.",
+      },
+      invite_20: {
+        title: "20 arkadaş davet et",
+        description: "Referans linkini kullanarak 20 arkadaşını davet et.",
+      },
+      special_promo: {
+        title: "Sınırlı süreli bonus",
+        description: "Sınırlı süre için geçerli özel bir ödül.",
+      },
+    },
+  },
 };
 
 export default tr;

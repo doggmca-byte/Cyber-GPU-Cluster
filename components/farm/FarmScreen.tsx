@@ -10,6 +10,7 @@ import type { LanguageCode } from "@/lib/i18n/languages";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 import type { SyncResponse } from "@/types/api";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
+import { TasksEntryButton } from "@/components/tasks/TasksEntryButton";
 
 export function FarmScreen() {
   const { state } = useUserData();
@@ -56,6 +57,8 @@ function FarmScreenReady({ data, initData }: { data: SyncResponse; initData: str
         telegramId={profile.telegram_id}
         photoUrl={photoUrl}
       />
+
+      <TasksEntryButton initData={initData} />
 
       <div className="glass-card flex items-center justify-between px-4 py-2.5 shadow-neon-green">
         <span className="text-xs uppercase tracking-wide text-white/50">{t.farm.totalPower}</span>

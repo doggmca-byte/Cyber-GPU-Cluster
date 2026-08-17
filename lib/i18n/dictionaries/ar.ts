@@ -152,6 +152,93 @@ const ar: TranslationDictionary = {
     description: "حدث خطأ غير متوقع. حاول مرة أخرى — وإذا استمرت المشكلة، أعد تشغيل التطبيق من تيليجرام.",
     retry: "حاول مرة أخرى",
   },
+  tasks: {
+    openButton: "المهام",
+    title: "مركز المهام",
+    subtitle: "أكمل المهام واحصل على المكافآت",
+    progress: (done, total) => `⚡ ${done}/${total} مكتمل`,
+    empty: "لا توجد مهام في هذه الفئة بعد.",
+    categories: {
+      in_game: "داخل اللعبة",
+      general: "عامة",
+      partners: "شركاء",
+      wallet: "المحفظة",
+      friends: "الأصدقاء",
+      special: "خاصة",
+    },
+    reward: {
+      game_balance: (amount) => `+${amount} TON (اللعبة)`,
+      ton: (amount) => `+${amount} TON`,
+      quota: (amount) => `+${amount} حصة`,
+    },
+    action: {
+      start: "ابدأ",
+      verify: "تحقق",
+      verifying: "جارٍ التحقق...",
+      claim: "استلام",
+      claiming: "جارٍ الاستلام...",
+      claimed: "✓ تم الاستلام",
+      notCompletedYet: "لم يتم التأكيد بعد — حاول مرة أخرى بعد إكمال الإجراء.",
+    },
+    items: {
+      own_gpus_5: {
+        title: "امتلك 5 بطاقات رسومية",
+        description: "اشترِ وامتلك 5 بطاقات رسومية على الأقل في نفس الوقت.",
+      },
+      own_gpus_20: {
+        title: "امتلك 20 بطاقة رسومية",
+        description: "طوّر مزرعتك إلى 20 بطاقة رسومية في نفس الوقت.",
+      },
+      harvest_10: {
+        title: "اجمع HASH 10 مرات",
+        description: "اضغط زر جمع HASH 10 مرات.",
+      },
+      harvest_50: {
+        title: "اجمع HASH 50 مرة",
+        description: "اضغط زر جمع HASH 50 مرة.",
+      },
+      subscribe_channel: {
+        title: "اشترك في قناتنا",
+        description: "انضم إلى قناة تيليجرام الرسمية للأخبار والتحديثات.",
+      },
+      visit_website: {
+        title: "زر موقعنا الإلكتروني",
+        description: "افتح موقع Cyber GPU Cluster.",
+      },
+      partner_channel: {
+        title: "انضم إلى قناة شريك",
+        description: "اشترك في قناة تيليجرام الخاصة بشريكنا.",
+      },
+      partner_offer: {
+        title: "تحقق من عرض الشريك",
+        description: "افتح صفحة عرض الشريك.",
+      },
+      first_deposit: {
+        title: "قم بأول عملية إيداع",
+        description: "اشحن رصيد اللعبة بـ TON حقيقي مرة واحدة على الأقل.",
+      },
+      deposit_5: {
+        title: "قم بـ 5 عمليات إيداع",
+        description: "اشحن رصيد اللعبة 5 مرات.",
+      },
+      invite_1: {
+        title: "ادعُ صديقًا واحدًا",
+        description: "ادعُ صديقًا باستخدام رابط الإحالة الخاص بك.",
+      },
+      invite_5: {
+        title: "ادعُ 5 أصدقاء",
+        description: "ادعُ 5 أصدقاء باستخدام رابط الإحالة الخاص بك.",
+      },
+      invite_20: {
+        title: "ادعُ 20 صديقًا",
+        description: "ادعُ 20 صديقًا باستخدام رابط الإحالة الخاص بك.",
+      },
+      special_promo: {
+        title: "مكافأة لوقت محدود",
+        description: "مكافأة خاصة متاحة لفترة محدودة.",
+      },
+    },
+  },
 };
 
 export default ar;

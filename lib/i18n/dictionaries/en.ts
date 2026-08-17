@@ -156,6 +156,93 @@ const en = {
       "An unexpected error occurred. Try again — if it keeps happening, restart the app from Telegram.",
     retry: "Try again",
   },
+  tasks: {
+    openButton: "Tasks",
+    title: "Task Center",
+    subtitle: "Complete tasks and earn rewards",
+    progress: (done: number, total: number) => `⚡ ${done}/${total} DONE`,
+    empty: "No tasks in this category yet.",
+    categories: {
+      in_game: "In-Game",
+      general: "General",
+      partners: "Partners",
+      wallet: "Wallet",
+      friends: "Friends",
+      special: "Special",
+    },
+    reward: {
+      game_balance: (amount: string) => `+${amount} TON (Game)`,
+      ton: (amount: string) => `+${amount} TON`,
+      quota: (amount: string) => `+${amount} Quota`,
+    },
+    action: {
+      start: "Start",
+      verify: "Verify",
+      verifying: "Verifying...",
+      claim: "Claim",
+      claiming: "Claiming...",
+      claimed: "✓ Claimed",
+      notCompletedYet: "Not confirmed yet — try again after completing the action.",
+    },
+    items: {
+      own_gpus_5: {
+        title: "Own 5 GPUs",
+        description: "Purchase and own at least 5 GPU units at the same time.",
+      },
+      own_gpus_20: {
+        title: "Own 20 GPUs",
+        description: "Grow your farm to 20 GPU units at the same time.",
+      },
+      harvest_10: {
+        title: "Collect HASH 10 times",
+        description: "Tap the Collect button 10 times.",
+      },
+      harvest_50: {
+        title: "Collect HASH 50 times",
+        description: "Tap the Collect button 50 times.",
+      },
+      subscribe_channel: {
+        title: "Subscribe to our channel",
+        description: "Join our official Telegram channel for news and updates.",
+      },
+      visit_website: {
+        title: "Visit our website",
+        description: "Open the Cyber GPU Cluster website.",
+      },
+      partner_channel: {
+        title: "Join a partner channel",
+        description: "Subscribe to our partner's Telegram channel.",
+      },
+      partner_offer: {
+        title: "Check a partner offer",
+        description: "Open the partner offer page.",
+      },
+      first_deposit: {
+        title: "Make your first deposit",
+        description: "Top up your Game Balance with real TON at least once.",
+      },
+      deposit_5: {
+        title: "Make 5 deposits",
+        description: "Top up your Game Balance 5 times.",
+      },
+      invite_1: {
+        title: "Invite 1 friend",
+        description: "Invite a friend using your referral link.",
+      },
+      invite_5: {
+        title: "Invite 5 friends",
+        description: "Invite 5 friends using your referral link.",
+      },
+      invite_20: {
+        title: "Invite 20 friends",
+        description: "Invite 20 friends using your referral link.",
+      },
+      special_promo: {
+        title: "Limited-time bonus",
+        description: "A special reward available for a limited time.",
+      },
+    },
+  },
 };
 
 // НАВМИСНО без `as const`: інакше рядкові властивості звужуються до
