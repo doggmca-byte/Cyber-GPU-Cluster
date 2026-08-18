@@ -1,17 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, Gem, Globe, Check } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Zap, Gem, Globe } from "lucide-react";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
-import { SUPPORTED_LANGUAGES, LANGUAGE_META, type LanguageCode } from "@/lib/i18n/languages";
-import { Modal } from "@/components/ui/Modal";
+import { LANGUAGE_META } from "@/lib/i18n/languages";
+import { LanguageModal } from "./LanguageModal";
 
 export function Header() {
+  const pathname = usePathname();
   const { state } = useUserData();
-  const { language, setLanguage, t } = useTranslation();
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const { language, t } = useTranslation();
+  const [isLangOpen, setIsLangOpen] = useState(false);
+
+  // /tasks малює власну верхню плашку (заголовок "ЦЕНТР ЗАВДАНЬ" + кнопка
+  // закриття) — спільний Header тут не рендеримо, щоб він не дублювався і не
+  // перекривав її (та не заходив під статус-бар Telegram двома шапками одразу).
+  if (pathname === "/tasks") return null;
 
   // Header монтується один раз для всіх табів (у layout), тому не блокує
   // рендер сторінки на loading/error — просто показує 0, доки немає даних.
@@ -39,9 +46,11 @@ export function Header() {
         </div>
       </div>
 
+      {/* Лише маленька кнопка-бейдж поточної мови — сама сітка мов рендериться
+          в LanguageModal і монтується в DOM тільки за isLangOpen === true. */}
       <button
         type="button"
-        onClick={() => setPickerOpen(true)}
+        onClick={() => setIsLangOpen(true)}
         className="flex items-center gap-1 rounded-full border border-white/10 bg-background-card px-3 py-1.5 text-xs font-medium tracking-wide text-white/80 transition hover:border-neon-cyan/50 hover:text-neon-cyan"
       >
         <Globe size={13} />
@@ -49,51 +58,7 @@ export function Header() {
         <span className="uppercase">{language}</span>
       </button>
 
-      {pickerOpen && (
-        <Modal title={t.language.pickerTitle} onClose={() => setPickerOpen(false)}>
-          <div className="grid grid-cols-2 gap-2">
-            {SUPPORTED_LANGUAGES.map((code) => (
-              <LanguageOption
-                key={code}
-                code={code}
-                active={code === language}
-                onSelect={() => {
-                  setLanguage(code);
-                  setPickerOpen(false);
-                }}
-              />
-            ))}
-          </div>
-        </Modal>
-      )}
+      <LanguageModal open={isLangOpen} onClose={() => setIsLangOpen(false)} />
     </header>
-  );
-}
-
-function LanguageOption({
-  code,
-  active,
-  onSelect,
-}: {
-  code: LanguageCode;
-  active: boolean;
-  onSelect: () => void;
-}) {
-  const meta = LANGUAGE_META[code];
-
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-start text-sm transition ${
-        active
-          ? "border-neon-cyan/50 bg-neon-cyan/10 text-neon-cyan"
-          : "border-white/10 text-white/70 hover:border-white/20 hover:text-white/90"
-      }`}
-    >
-      <span className="text-lg leading-none">{meta.flag}</span>
-      <span className="min-w-0 flex-1 truncate">{meta.nativeName}</span>
-      {active && <Check size={14} className="shrink-0" />}
-    </button>
   );
 }

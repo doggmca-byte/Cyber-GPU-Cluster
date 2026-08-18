@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Cpu,
   Zap,
@@ -12,9 +13,10 @@ import {
   Star,
   Gift,
   Loader2,
+  X,
   type LucideIcon,
 } from "lucide-react";
-import { useUserData } from "@/components/providers/UserDataProvider";
+import { useUserData, type UserDataState } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
@@ -65,11 +67,45 @@ type TasksState =
 export function TasksScreen() {
   const { state } = useUserData();
 
+  // Верхня плашка (заголовок + кнопка закриття) живе поза станами
+  // завантаження/помилки — користувач завжди має явний шлях назад на Ферму,
+  // навіть якщо /api/user/sync ще не відповів чи впав.
+  return (
+    <div className="flex flex-col gap-4">
+      <TasksTopBar />
+      <TasksBody state={state} />
+    </div>
+  );
+}
+
+function TasksBody({ state }: { state: UserDataState }) {
   if (state.status === "loading") return <ScreenSkeleton />;
   if (state.status === "no-telegram") return <NoTelegramNotice />;
   if (state.status === "error") return <SyncErrorNotice message={state.message} />;
 
   return <TasksScreenReady initData={state.initData} />;
+}
+
+function TasksTopBar() {
+  const { t } = useTranslation();
+
+  return (
+    <div
+      className="sticky top-0 z-40 -mx-4 -mt-4 flex items-center justify-between border-b border-white/[0.06] bg-background/90 px-4 py-3 backdrop-blur-xl"
+      style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}
+    >
+      <h1 className="font-display text-base font-extrabold uppercase tracking-wide bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent">
+        {t.tasks.title}
+      </h1>
+      <Link
+        href="/"
+        aria-label={t.common.close}
+        className="rounded-full p-1.5 text-white/50 transition hover:bg-white/5 hover:text-white"
+      >
+        <X size={20} />
+      </Link>
+    </div>
+  );
 }
 
 function TasksScreenReady({ initData }: { initData: string }) {
@@ -221,10 +257,7 @@ function TasksScreenReady({ initData }: { initData: string }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="glass-card p-4 shadow-neon-purple">
-        <h1 className="font-display text-lg font-extrabold uppercase tracking-wide bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent">
-          {t.tasks.title}
-        </h1>
-        <p className="mt-1 text-xs text-white/40">{t.tasks.subtitle}</p>
+        <p className="text-xs text-white/40">{t.tasks.subtitle}</p>
 
         <div className="mt-3 flex items-center justify-between text-xs font-semibold text-neon-cyan">
           <span className="flex items-center gap-1">
