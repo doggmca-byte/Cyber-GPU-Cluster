@@ -68,13 +68,17 @@ export function WithdrawModal({
   const todayUtc = new Date().toISOString().slice(0, 10);
   const alreadyRequestedToday = profile.last_withdrawal_request_date === todayUtc;
 
-  const adsOk = profile.ads_watched_since_withdraw >= MIN_ADS_BEFORE_WITHDRAW;
+  // Перегляд реклами (ads_watched_since_withdraw) більше НЕ блокує вивід —
+  // лишається лише як інформативний прогрес/бонус до квоти (record_ad_watch
+  // все одно додає +0.05 TON квоти за кожен перегляд, незалежно від цього
+  // порогу). Реальні hard-blockers: баланс, квота, тіньований мін/макс,
+  // адреса, ліміт "1 заявка/добу".
+  const adsProgress = profile.ads_watched_since_withdraw >= MIN_ADS_BEFORE_WITHDRAW;
   const balanceOk = hasValidNumber && requested <= profile.withdrawable_balance;
   const quotaOk = hasValidNumber && requested <= profile.withdrawal_quota;
   const minOk = hasValidNumber && requested >= minForThisRequest;
   const maxOk = hasValidNumber && requested <= maxForThisRequest;
   const canSubmit =
-    adsOk &&
     hasValidNumber &&
     balanceOk &&
     quotaOk &&
@@ -138,7 +142,7 @@ export function WithdrawModal({
 
   return (
     <Modal title={t.wallet.withdraw.title} onClose={onClose}>
-      {!adsOk && (
+      {!adsProgress && (
         <div className="mb-4 rounded-xl border border-neon-gold/30 bg-neon-gold/10 p-3">
           <p className="text-xs font-semibold text-neon-gold">
             {t.wallet.withdraw.watchAdsPrompt(profile.ads_watched_since_withdraw, MIN_ADS_BEFORE_WITHDRAW)}
@@ -176,7 +180,6 @@ export function WithdrawModal({
         type="text"
         placeholder={t.wallet.withdraw.addressPlaceholder}
         value={address}
-        disabled={!adsOk}
         onChange={(e) => {
           setAddressTouched(true);
           setAddress(e.target.value);
@@ -199,7 +202,7 @@ export function WithdrawModal({
         inputMode="decimal"
         placeholder={t.wallet.withdraw.amountPlaceholder}
         value={amount}
-        disabled={!adsOk || alreadyRequestedToday}
+        disabled={alreadyRequestedToday}
         onChange={(e) => setAmount(e.target.value)}
         className="mt-1 w-full rounded-xl border border-white/10 bg-background px-3.5 py-2.5 text-sm outline-none transition focus:border-neon-cyan/60 disabled:opacity-40"
       />
