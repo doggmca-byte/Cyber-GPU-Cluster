@@ -8,6 +8,7 @@ import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import { buildCommentPayload, buildDepositComment } from "@/lib/ton/comment";
+import { MIN_DEPOSIT_TON } from "@/lib/constants/economy";
 import type { DepositVerifyResponse } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 
@@ -62,12 +63,28 @@ export function DepositModal({
   const walletAddress = useTonAddress();
 
   const [selected, setSelected] = useState<number | null>(null);
+  const [customAmount, setCustomAmount] = useState("");
   const [status, setStatus] = useState<DepositStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [creditedAmount, setCreditedAmount] = useState<number | null>(null);
 
   const isConfigured = TREASURY_ADDRESS.length > 0;
   const isBusy = status === "sending" || status === "verifying";
+
+  const customAmountNumber = Number(customAmount.replace(",", "."));
+  const customAmountValid = customAmount.trim().length > 0 && Number.isFinite(customAmountNumber) && customAmountNumber >= MIN_DEPOSIT_TON;
+  const customAmountInvalid = customAmount.trim().length > 0 && !customAmountValid;
+
+  const selectPreset = (preset: number) => {
+    setCustomAmount("");
+    setSelected(preset);
+  };
+
+  const onCustomAmountChange = (value: string) => {
+    setCustomAmount(value);
+    const parsed = Number(value.replace(",", "."));
+    setSelected(value.trim().length > 0 && Number.isFinite(parsed) && parsed >= MIN_DEPOSIT_TON ? parsed : null);
+  };
 
   const deposit = useCallback(async () => {
     if (!selected || !walletAddress || isBusy) return;
@@ -143,9 +160,9 @@ export function DepositModal({
                     key={preset}
                     type="button"
                     disabled={isBusy}
-                    onClick={() => setSelected(preset)}
+                    onClick={() => selectPreset(preset)}
                     className={`rounded-xl py-2 text-xs font-semibold transition disabled:opacity-40 ${
-                      selected === preset
+                      selected === preset && customAmount.trim().length === 0
                         ? "bg-neon-cyan/10 text-neon-cyan"
                         : "bg-white/5 text-slate-400 hover:text-slate-200"
                     }`}
@@ -154,6 +171,24 @@ export function DepositModal({
                   </button>
                 ))}
               </div>
+
+              <label className="mt-2.5 block text-[11px] text-slate-500">
+                {t.wallet.deposit.customAmountLabel(formatNumber(language, MIN_DEPOSIT_TON))}
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder={t.wallet.deposit.customAmountPlaceholder}
+                value={customAmount}
+                disabled={isBusy}
+                onChange={(e) => onCustomAmountChange(e.target.value)}
+                className="mt-1 w-full rounded-2xl border border-white/5 bg-[#0b0e14] px-3 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-neon-cyan/40 disabled:opacity-40"
+              />
+              {customAmountInvalid && (
+                <p className="mt-1 text-[11px] text-red-400">
+                  {t.wallet.deposit.minAmountError(formatNumber(language, MIN_DEPOSIT_TON))}
+                </p>
+              )}
 
               <button
                 type="button"

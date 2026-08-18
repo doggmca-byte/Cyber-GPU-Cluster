@@ -20,13 +20,13 @@ export const HASH_EXCHANGE_WITHDRAWABLE_FEE_BPS = 200; // 2.00%, лише при
 export const MIN_CONVERT_BACK_TON = 0.1;
 
 // request_withdrawal
-// Тіньовані мінімум/максимум/комісія за номером ЦІЄЇ заявки
-// (profiles.withdrawal_request_count ДО інкременту) — 0-ва заявка перша.
-export const WITHDRAW_FEE_BPS = 1000; // 10.00%, з 3-ї заявки (index >= 2)
+// Мінімум і комісія завжди фіксовані, незалежно від номера заявки (тіри
+// прибрано в 20260819120000_flatten_withdrawal_min_and_fee.sql — до цього
+// 0-ва/1-ша заявка мали пільгові мін 0.1/0.25 і флет-комісію 0.03/0.05 TON).
+export const WITHDRAW_FEE_BPS = 1000; // 10.00%, завжди
 export const MIN_ADS_BEFORE_WITHDRAW = 20;
-export const WITHDRAW_MIN_TIERS_TON = [0.1, 0.25, 0.5]; // [0-ва, 1-ша, 2-га+ (останнє значення)]
-export const WITHDRAW_FLAT_FEE_TIERS_TON = [0.03, 0.05]; // [0-ва, 1-ша]; з 2-ї — WITHDRAW_FEE_BPS (%)
-// Максимум за заявку залежить від lifetime_deposited_ton.
+export const WITHDRAW_MIN_TON = 0.1; // завжди, для будь-якої заявки
+// Максимум за заявку й далі залежить від lifetime_deposited_ton — цей тір НЕ прибирали.
 export const WITHDRAW_MAX_TIERS: ReadonlyArray<{ depositLessThan: number | null; maxTon: number }> = [
   { depositLessThan: 5, maxTon: 1 },
   { depositLessThan: 100, maxTon: 3 },
@@ -34,19 +34,12 @@ export const WITHDRAW_MAX_TIERS: ReadonlyArray<{ depositLessThan: number | null;
   { depositLessThan: null, maxTon: 15 }, // 250+
 ];
 
-export function withdrawMinForRequest(requestCount: number): number {
-  const tiers = WITHDRAW_MIN_TIERS_TON;
-  return tiers[Math.min(requestCount, tiers.length - 1)];
-}
-
 export function withdrawMaxForDeposits(lifetimeDepositedTon: number): number {
   const tier = WITHDRAW_MAX_TIERS.find((t) => t.depositLessThan === null || lifetimeDepositedTon < t.depositLessThan);
   return tier ? tier.maxTon : WITHDRAW_MAX_TIERS[WITHDRAW_MAX_TIERS.length - 1].maxTon;
 }
 
-export function withdrawFeeForRequest(requestCount: number, amount: number): number {
-  const flatTiers = WITHDRAW_FLAT_FEE_TIERS_TON;
-  if (requestCount < flatTiers.length) return flatTiers[requestCount];
+export function withdrawFee(amount: number): number {
   return calcFee(amount, WITHDRAW_FEE_BPS);
 }
 
@@ -56,6 +49,11 @@ export const AD_QUOTA_BONUS_TON = 0.05;
 // process_successful_deposit
 export const DEPOSIT_QUOTA_BONUS_RATE = 1.5; // +150% від суми депозиту
 export const REFERRAL_DEPOSIT_REVSHARE_RATE = 0.05; // 5%, назавжди з кожного депозиту referee
+// Мінімум для довільної суми депозиту (DepositModal, поле "своя сума") —
+// ЛИШЕ клієнтська UX-перевірка. Сервер (/api/wallet/deposit/verify →
+// process_successful_deposit) кредитує РІВНО ту суму, що реально прийшла
+// ончейн, незалежно від цього мінімуму — тут немає що обходити.
+export const MIN_DEPOSIT_TON = 0.3;
 
 // harvest_user_hash (реферальний бонус за перший видобуток)
 export const REFERRAL_FIRST_HARVEST_BONUS_TON = 0.01;

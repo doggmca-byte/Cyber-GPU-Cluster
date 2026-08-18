@@ -11,9 +11,9 @@ import { formatNumber } from "@/lib/i18n/formatNumber";
 import {
   MIN_ADS_BEFORE_WITHDRAW,
   WITHDRAW_FEE_BPS,
-  withdrawMinForRequest,
+  WITHDRAW_MIN_TON,
   withdrawMaxForDeposits,
-  withdrawFeeForRequest,
+  withdrawFee,
 } from "@/lib/constants/economy";
 import type { Profile, WithdrawResponse } from "@/types/api";
 
@@ -58,12 +58,10 @@ export function WithdrawModal({
   const hasValidNumber = Number.isFinite(requested) && requested > 0;
   const addressOk = address.trim().length > 0 && isValidTonAddress(address);
 
-  // Тіньовані мінімум/максимум/комісія за номером ЦІЄЇ заявки та lifetime-
+  // Мінімум фіксований (0.1 TON, завжди); максимум тіньований за lifetime-
   // депозитами — та сама логіка, що й у request_withdrawal RPC
-  // (20260819090000_gpu_lifecycle_withdrawal_tiers_daily_ad_reset.sql).
-  const minForThisRequest = withdrawMinForRequest(profile.withdrawal_request_count);
+  // (20260819120000_flatten_withdrawal_min_and_fee.sql).
   const maxForThisRequest = withdrawMaxForDeposits(profile.lifetime_deposited_ton);
-  const isFlatFeeTier = profile.withdrawal_request_count < 2;
 
   const todayUtc = new Date().toISOString().slice(0, 10);
   const alreadyRequestedToday = profile.last_withdrawal_request_date === todayUtc;
@@ -76,7 +74,7 @@ export function WithdrawModal({
   const adsProgress = profile.ads_watched_since_withdraw >= MIN_ADS_BEFORE_WITHDRAW;
   const balanceOk = hasValidNumber && requested <= profile.withdrawable_balance;
   const quotaOk = hasValidNumber && requested <= profile.withdrawal_quota;
-  const minOk = hasValidNumber && requested >= minForThisRequest;
+  const minOk = hasValidNumber && requested >= WITHDRAW_MIN_TON;
   const maxOk = hasValidNumber && requested <= maxForThisRequest;
   const canSubmit =
     hasValidNumber &&
@@ -87,10 +85,9 @@ export function WithdrawModal({
     !alreadyRequestedToday &&
     addressOk;
 
-  const fee = hasValidNumber ? withdrawFeeForRequest(profile.withdrawal_request_count, requested) : 0;
+  const fee = hasValidNumber ? withdrawFee(requested) : 0;
   const net = hasValidNumber ? requested - fee : 0;
   const feePercentLabel = formatNumber(language, WITHDRAW_FEE_BPS / 100, { maximumFractionDigits: 0 });
-  const feeAmountLabel = formatNumber(language, fee, { maximumFractionDigits: 6 });
 
   const submit = async () => {
     if (!canSubmit || isSubmitting) return;
@@ -207,7 +204,7 @@ export function WithdrawModal({
         className="mt-1 w-full rounded-2xl border border-white/5 bg-[#0b0e14] px-3 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-neon-cyan/40 disabled:opacity-40"
       />
       <div className="mt-1 flex items-center justify-between text-[10px] text-slate-600">
-        <span>{t.wallet.withdraw.minTierHint(formatNumber(language, minForThisRequest))}</span>
+        <span>{t.wallet.withdraw.minTierHint(formatNumber(language, WITHDRAW_MIN_TON))}</span>
         <span>{t.wallet.withdraw.maxTierHint(formatNumber(language, maxForThisRequest))}</span>
       </div>
 
@@ -221,7 +218,7 @@ export function WithdrawModal({
           </div>
           <div className="flex items-center justify-between">
             <span className="text-slate-500">
-              {isFlatFeeTier ? t.wallet.withdraw.feeRowFlat(feeAmountLabel) : t.wallet.withdraw.feeRow(feePercentLabel)}
+              {t.wallet.withdraw.feeRow(feePercentLabel)}
             </span>
             <span className="text-slate-500">
               -{fee.toFixed(fee < 1 ? 3 : 2)} {t.common.ton}
@@ -244,7 +241,7 @@ export function WithdrawModal({
       )}
       {hasValidNumber && balanceOk && quotaOk && !minOk && (
         <p className="mt-2 text-[11px] text-red-400">
-          {t.wallet.withdraw.minTierHint(formatNumber(language, minForThisRequest))}
+          {t.wallet.withdraw.minTierHint(formatNumber(language, WITHDRAW_MIN_TON))}
         </p>
       )}
       {hasValidNumber && balanceOk && quotaOk && minOk && !maxOk && (
