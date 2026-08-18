@@ -83,19 +83,28 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => {
       if (prev.status !== "ready") return prev;
 
+      const now = new Date().toISOString();
       const existing = prev.data.user_gpus.find((g) => g.gpu_level === level);
+
+      // buy_gpu на бекенді ЗАВЖДИ спершу харвестить УСІ наявні картки (щоб
+      // зафіксувати дохід до зміни amount) — тобто last_harvest_at усіх рядків
+      // на сервері вже скинуто на "зараз". Синхронізуємо це й тут локально,
+      // інакше useMiningEngine на Farm після повернення з Market порахує вже
+      // враховану сервером ділянку часу ЩЕ РАЗ як "незабрану".
+      const resetGpus = prev.data.user_gpus.map((g) => ({ ...g, last_harvest_at: now }));
+
       const nextUserGpus = existing
-        ? prev.data.user_gpus.map((g) =>
+        ? resetGpus.map((g) =>
             g.gpu_level === level ? { ...g, amount: g.amount + amountDelta } : g,
           )
         : [
-            ...prev.data.user_gpus,
+            ...resetGpus,
             {
               id: `optimistic-${level}-${Date.now()}`,
               user_id: prev.data.profile.id,
               gpu_level: level,
               amount: amountDelta,
-              last_harvest_at: new Date().toISOString(),
+              last_harvest_at: now,
             },
           ];
 

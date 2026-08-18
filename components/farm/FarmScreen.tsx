@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Zap, Gift, Cpu } from "lucide-react";
 import { useMiningEngine } from "@/hooks/useMiningEngine";
 import { useUserData } from "@/components/providers/UserDataProvider";
@@ -8,7 +8,7 @@ import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import type { LanguageCode } from "@/lib/i18n/languages";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
-import type { SyncResponse } from "@/types/api";
+import type { HarvestResponse, SyncResponse } from "@/types/api";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { TasksEntryButton } from "@/components/tasks/TasksEntryButton";
 
@@ -24,19 +24,52 @@ export function FarmScreen() {
 
 function FarmScreenReady({ data, initData }: { data: SyncResponse; initData: string }) {
   const { t, language } = useTranslation();
+  const { patchProfile } = useUserData();
   const { profile, user_gpus, gpu_templates, total_hash_per_second, server_time } = data;
-
-  const { accumulatedHash, isHarvesting, harvestError, harvest } = useMiningEngine({
-    initialHashBalance: profile.hash_balance,
-    totalHashPerSecond: total_hash_per_second,
-    serverTime: server_time,
-    initData,
-  });
 
   const templateByLevel = useMemo(
     () => new Map(gpu_templates.map((tmpl) => [tmpl.level, tmpl])),
     [gpu_templates],
   );
+
+  // Скільки $HASH уже накопичено, але ще не забрано, ЗАРАЗ (на момент
+  // server_time) — сума (server_time - last_harvest_at) * hash_per_second *
+  // amount по кожній картці, той самий розрахунок, що виконує harvest_user_hash
+  // на бекенді. Рахуємо це, а не беремо profile.hash_balance як базу — інакше
+  // великий лічильник показував би загальний баланс і "стрибав" би на нього
+  // ж таки після харвесту (баг, знайдений тестуванням на реальному пристрої).
+  const initialUnclaimedHash = useMemo(() => {
+    const serverTimeMs = new Date(server_time).getTime();
+    return user_gpus.reduce((sum, gpu) => {
+      if (gpu.amount <= 0) return sum;
+      const template = templateByLevel.get(gpu.gpu_level);
+      if (!template) return sum;
+      const elapsedSeconds = Math.max((serverTimeMs - new Date(gpu.last_harvest_at).getTime()) / 1000, 0);
+      return sum + elapsedSeconds * template.hash_per_second * gpu.amount;
+    }, 0);
+  }, [user_gpus, templateByLevel, server_time]);
+
+  const handleHarvestSuccess = useCallback(
+    (result: HarvestResponse) => {
+      // Пропатчити глобальний стан одразу — Header (HASH/TON бейджі) та решта
+      // екранів мають побачити нові баланси без очікування наступного
+      // повного /api/user/sync.
+      patchProfile({
+        hash_balance: result.hash_balance,
+        game_balance: result.game_balance,
+        withdrawable_balance: result.withdrawable_balance,
+      });
+    },
+    [patchProfile],
+  );
+
+  const { unclaimedHash, isHarvesting, harvestError, harvest } = useMiningEngine({
+    initialUnclaimedHash,
+    totalHashPerSecond: total_hash_per_second,
+    serverTime: server_time,
+    initData,
+    onHarvestSuccess: handleHarvestSuccess,
+  });
 
   // Косметичні дані (аватар) беремо напряму з initDataUnsafe на клієнті —
   // це не довірені дані і НЕ використовуються ні для чого, крім фото в UI.
@@ -68,7 +101,7 @@ function FarmScreenReady({ data, initData }: { data: SyncResponse; initData: str
       </div>
 
       <HashCounter
-        accumulatedHash={accumulatedHash}
+        unclaimedHash={unclaimedHash}
         isHarvesting={isHarvesting}
         harvestError={harvestError}
         onHarvest={harvest}
@@ -127,12 +160,12 @@ function ProfileCard({
 }
 
 function HashCounter({
-  accumulatedHash,
+  unclaimedHash,
   isHarvesting,
   harvestError,
   onHarvest,
 }: {
-  accumulatedHash: number;
+  unclaimedHash: number;
   isHarvesting: boolean;
   harvestError: string | null;
   onHarvest: () => void;
@@ -147,7 +180,7 @@ function HashCounter({
       </div>
 
       <span className="font-display text-4xl font-extrabold tabular-nums text-neon-cyan drop-shadow-[0_0_18px_rgba(34,211,238,0.55)]">
-        {formatNumber(language, accumulatedHash, {
+        {formatNumber(language, unclaimedHash, {
           minimumFractionDigits: 4,
           maximumFractionDigits: 4,
         })}

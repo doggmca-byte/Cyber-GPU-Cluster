@@ -108,6 +108,35 @@ function TasksTopBar() {
   );
 }
 
+// Скелетон, підігнаний під реальну розмітку екрана (прогрес-картка + таби +
+// список завдань), а не загальний ScreenSkeleton — щоб під час /api/tasks не
+// було різкої зміни форми блоків (те, що тестування описало як "мерехтіння
+// чорних блоків": невідповідний за формою/розміром скелетон різко замінювався
+// реальним контентом).
+function TasksSkeleton() {
+  return (
+    <div className="flex animate-pulse flex-col gap-4">
+      <div className="glass-card h-[92px] p-4">
+        <div className="h-3 w-40 rounded-full bg-white/10" />
+        <div className="mt-4 h-3 w-24 rounded-full bg-white/10" />
+        <div className="mt-2 h-2 w-full rounded-full bg-white/5" />
+      </div>
+
+      <div className="flex gap-2 overflow-hidden">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-8 w-20 shrink-0 rounded-full bg-white/5" />
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-2.5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="glass-card h-[92px]" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function TasksScreenReady({ initData }: { initData: string }) {
   const { t, language } = useTranslation();
   const { patchProfile } = useUserData();
@@ -247,7 +276,7 @@ function TasksScreenReady({ initData }: { initData: string }) {
     }
   };
 
-  if (tasksState.status === "loading") return <ScreenSkeleton />;
+  if (tasksState.status === "loading") return <TasksSkeleton />;
   if (tasksState.status === "error") return <SyncErrorNotice message={tasksState.message} />;
 
   const { tasks, completed, total } = tasksState;
