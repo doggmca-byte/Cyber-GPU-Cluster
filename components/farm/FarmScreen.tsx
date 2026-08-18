@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Zap, Gift, Cpu, Bot, Copy, Check, Server, ChevronRight, CirclePlus } from "lucide-react";
+import { Zap, Gift, Cpu, Bot, Copy, Check, Server, ChevronRight, CirclePlus, PauseCircle } from "lucide-react";
 import { useMiningEngine } from "@/hooks/useMiningEngine";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
@@ -14,6 +14,8 @@ import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/
 import { TasksEntryButton } from "@/components/tasks/TasksEntryButton";
 import { DailyBonusModal } from "@/components/daily/DailyBonusModal";
 import { MinerIcon } from "@/components/miners/MinerIcons";
+import { MAX_UNCLAIMED_SECONDS, gpuLifecycleCapHash, gpuRevivalCost, GPU_REVIVAL_MAX_COUNT } from "@/lib/constants/economy";
+import type { ReviveGpuResponse } from "@/types/api";
 
 export function FarmScreen() {
   const { state } = useUserData();
@@ -36,19 +38,50 @@ function FarmScreenReady({ data, initData }: { data: SyncResponse; initData: str
 
   // Скільки $HASH уже накопичено, але ще не забрано, ЗАРАЗ (на момент
   // server_time) — сума (server_time - last_harvest_at) * hash_per_second *
-  // amount по кожній картці, той самий розрахунок, що виконує harvest_user_hash
-  // на бекенді. Рахуємо це, а не беремо profile.hash_balance як базу — інакше
+  // amount по кожній картці, той самий розрахунок (включно з капом
+  // MAX_UNCLAIMED_SECONDS на кожен елапсед), що виконує harvest_user_hash на
+  // бекенді. Рахуємо це, а не беремо profile.hash_balance як базу — інакше
   // великий лічильник показував би загальний баланс і "стрибав" би на нього
   // ж таки після харвесту (баг, знайдений тестуванням на реальному пристрої).
-  const initialUnclaimedHash = useMemo(() => {
+  //
+  // capRemainingSeconds — скільки секунд лишилось до НАЙБЛИЖЧОГО капа (12г
+  // без харвесту АБО lifecycle-ліміт картки, залежно, що настане раніше) в
+  // НАЙБЛИЖЧОЇ картки (мінімум по всіх живих). useMiningEngine заморожує
+  // живий лічильник рівно тоді, коли цей бюджет вичерпається, — інакше він
+  // показував би більше, ніж сервер реально нарахує при харвесті (той самий
+  // клас бага). Мертві (is_dead) картки взагалі не рахуються — сервер для
+  // них теж пропускає нарахування (continue в harvest_user_hash).
+  const { initialUnclaimedHash, capRemainingSeconds } = useMemo(() => {
     const serverTimeMs = new Date(server_time).getTime();
-    return user_gpus.reduce((sum, gpu) => {
-      if (gpu.amount <= 0) return sum;
+    let unclaimed = 0;
+    let remaining = Infinity;
+    let hasOwnedGpu = false;
+
+    for (const gpu of user_gpus) {
+      if (gpu.amount <= 0 || gpu.is_dead) continue;
       const template = templateByLevel.get(gpu.gpu_level);
-      if (!template) return sum;
+      if (!template) continue;
+      hasOwnedGpu = true;
+
+      const rate = template.hash_per_second * gpu.amount;
       const elapsedSeconds = Math.max((serverTimeMs - new Date(gpu.last_harvest_at).getTime()) / 1000, 0);
-      return sum + elapsedSeconds * template.hash_per_second * gpu.amount;
-    }, 0);
+      const cappedByTime = Math.min(elapsedSeconds, MAX_UNCLAIMED_SECONDS);
+      const rowHarvestedByTime = cappedByTime * rate;
+
+      const rowCap = gpuLifecycleCapHash(template.cost_ton, gpu.amount);
+      const rowHeadroom = Math.max(rowCap - gpu.lifetime_hash_generated, 0);
+      const rowHarvested = Math.min(rowHarvestedByTime, rowHeadroom);
+      unclaimed += rowHarvested;
+
+      const secondsUntilTimeCap = MAX_UNCLAIMED_SECONDS - cappedByTime;
+      const secondsUntilLifecycleCap = rate > 0 ? Math.max(rowHeadroom - rowHarvestedByTime, 0) / rate : Infinity;
+      remaining = Math.min(remaining, secondsUntilTimeCap, secondsUntilLifecycleCap);
+    }
+
+    return {
+      initialUnclaimedHash: unclaimed,
+      capRemainingSeconds: hasOwnedGpu ? remaining : null,
+    };
   }, [user_gpus, templateByLevel, server_time]);
 
   const handleHarvestSuccess = useCallback(
@@ -65,8 +98,9 @@ function FarmScreenReady({ data, initData }: { data: SyncResponse; initData: str
     [patchProfile],
   );
 
-  const { unclaimedHash, isHarvesting, harvestError, harvest } = useMiningEngine({
+  const { unclaimedHash, isAtCap, isHarvesting, harvestError, harvest } = useMiningEngine({
     initialUnclaimedHash,
+    capRemainingSecondsAtServerTime: capRemainingSeconds,
     totalHashPerSecond: total_hash_per_second,
     serverTime: server_time,
     initData,
@@ -105,12 +139,13 @@ function FarmScreenReady({ data, initData }: { data: SyncResponse; initData: str
       <MiningPanel
         hashPerHour={hashPerHour}
         unclaimedHash={unclaimedHash}
+        isAtCap={isAtCap}
         isHarvesting={isHarvesting}
         harvestError={harvestError}
         onHarvest={harvest}
       />
 
-      <ActiveServersSection userGpus={user_gpus} templateByLevel={templateByLevel} />
+      <ActiveServersSection userGpus={user_gpus} templateByLevel={templateByLevel} initData={initData} />
     </div>
   );
 }
@@ -190,12 +225,14 @@ function ProfileCard({
 function MiningPanel({
   hashPerHour,
   unclaimedHash,
+  isAtCap,
   isHarvesting,
   harvestError,
   onHarvest,
 }: {
   hashPerHour: number;
   unclaimedHash: number;
+  isAtCap: boolean;
   isHarvesting: boolean;
   harvestError: string | null;
   onHarvest: () => void;
@@ -230,6 +267,13 @@ function MiningPanel({
         {t.common.hash}
       </span>
 
+      {isAtCap && (
+        <div className="flex items-center gap-1.5 rounded-full border border-neon-gold/30 bg-neon-gold/10 px-3 py-1.5 text-[11px] font-semibold text-neon-gold">
+          <PauseCircle size={13} className="shrink-0" />
+          {t.farm.productionPaused}
+        </div>
+      )}
+
       <button
         type="button"
         onClick={onHarvest}
@@ -248,9 +292,11 @@ function MiningPanel({
 function ActiveServersSection({
   userGpus,
   templateByLevel,
+  initData,
 }: {
   userGpus: SyncResponse["user_gpus"];
   templateByLevel: Map<number, SyncResponse["gpu_templates"][number]>;
+  initData: string;
 }) {
   const { t } = useTranslation();
 
@@ -286,7 +332,7 @@ function ActiveServersSection({
           {userGpus.map((gpu) => {
             const template = templateByLevel.get(gpu.gpu_level);
             if (!template) return null;
-            return <ServerRow key={gpu.id} gpu={gpu} template={template} now={now} />;
+            return <ServerRow key={gpu.id} gpu={gpu} template={template} now={now} initData={initData} />;
           })}
         </div>
       )}
@@ -306,16 +352,93 @@ function ServerRow({
   gpu,
   template,
   now,
+  initData,
 }: {
   gpu: SyncResponse["user_gpus"][number];
   template: SyncResponse["gpu_templates"][number];
   now: number;
+  initData: string;
 }) {
   const { t, language } = useTranslation();
+  const { patchGpuRevived } = useUserData();
+
+  const [isReviving, setIsReviving] = useState(false);
+  const [reviveError, setReviveError] = useState<string | null>(null);
+
+  const rarityLabel = getRarityLabel(t, template.rarity);
+
+  const revive = async () => {
+    if (isReviving) return;
+    setIsReviving(true);
+    setReviveError(null);
+
+    try {
+      const res = await fetch("/api/farm/revive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData, gpu_level: template.level }),
+      });
+
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? `revive failed with status ${res.status}`);
+      }
+
+      const result = (await res.json()) as ReviveGpuResponse;
+      patchGpuRevived(template.level, result.new_game_balance, result.revival_count);
+    } catch (err) {
+      setReviveError(err instanceof Error ? err.message : t.common.unknownError);
+    } finally {
+      setIsReviving(false);
+    }
+  };
+
+  if (gpu.is_dead) {
+    const canRevive = gpu.revival_count < GPU_REVIVAL_MAX_COUNT;
+    const revivalCost = gpuRevivalCost(template.cost_ton, gpu.amount, gpu.revival_count);
+
+    return (
+      <div className="glass-card flex items-center gap-3 p-3.5 opacity-75">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 grayscale">
+          <MinerIcon level={template.level} rarity={template.rarity} className="h-7 w-7" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <p className="truncate text-sm font-semibold text-white/50">{template.name}</p>
+            <span className="shrink-0 rounded-full border border-red-400/30 bg-red-400/10 px-1.5 py-0.5 text-[9px] font-bold text-red-400">
+              {t.farm.gpuDead}
+            </span>
+          </div>
+          <p className="truncate text-[11px] text-white/30">
+            {t.farm.reviveCount(gpu.revival_count, GPU_REVIVAL_MAX_COUNT)}
+          </p>
+
+          {canRevive ? (
+            <button
+              type="button"
+              onClick={() => void revive()}
+              disabled={isReviving}
+              className="mt-2 flex items-center gap-1.5 rounded-lg border border-neon-gold/40 bg-neon-gold/10 px-3 py-1.5 text-[11px] font-bold text-neon-gold transition active:scale-95 disabled:opacity-50"
+            >
+              {isReviving
+                ? t.farm.reviving
+                : t.farm.reviveButton(formatNumber(language, revivalCost, { maximumFractionDigits: 3 }))}
+            </button>
+          ) : (
+            <p className="mt-2 text-[11px] font-semibold text-red-400">{t.farm.reviveMaxReached}</p>
+          )}
+
+          {reviveError && <p className="mt-1.5 text-[11px] text-red-400">{reviveError}</p>}
+        </div>
+      </div>
+    );
+  }
 
   const progress = Math.min(gpu.amount / template.max_limit, 1) * 100;
-  const rarityLabel = getRarityLabel(t, template.rarity);
   const uptimeSeconds = Math.max((now - new Date(gpu.last_harvest_at).getTime()) / 1000, 0);
+  const lifecycleCap = gpuLifecycleCapHash(template.cost_ton, gpu.amount);
+  const lifecycleProgress = lifecycleCap > 0 ? Math.min(gpu.lifetime_hash_generated / lifecycleCap, 1) * 100 : 0;
 
   return (
     <div className="glass-card flex items-center gap-3 p-3.5">
@@ -345,6 +468,15 @@ function ServerRow({
           <div
             className="h-full rounded-full bg-gradient-to-r from-neon-cyan to-neon-green"
             style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        {/* Ресурс "життя" картки (lifecycle-кап, 1.25× вартості) — окремо від
+            прогресу володіння вище: жовтий, щоб не плутати з ним. */}
+        <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/5">
+          <div
+            className="h-full rounded-full bg-neon-gold/70"
+            style={{ width: `${lifecycleProgress}%` }}
           />
         </div>
 

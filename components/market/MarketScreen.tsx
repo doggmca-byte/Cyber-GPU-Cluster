@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Zap } from "lucide-react";
+import Link from "next/link";
+import { Zap, Settings2 } from "lucide-react";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { MinerIcon } from "@/components/miners/MinerIcons";
+import { GpuCyclesModal } from "@/components/market/GpuCyclesModal";
 import type { BuyGpuResponse, GpuTemplate, SyncResponse } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 
@@ -43,9 +45,11 @@ function MarketScreenReady({ data, initData }: { data: SyncResponse; initData: s
   const { profile, user_gpus, gpu_templates } = data;
 
   const amountByLevel = new Map(user_gpus.map((g) => [g.gpu_level, g.amount]));
+  const deadByLevel = new Map(user_gpus.map((g) => [g.gpu_level, g.is_dead]));
 
   const [buyingLevel, setBuyingLevel] = useState<number | null>(null);
   const [errorByLevel, setErrorByLevel] = useState<Record<number, string>>({});
+  const [cyclesTemplate, setCyclesTemplate] = useState<GpuTemplate | null>(null);
 
   const buy = async (template: GpuTemplate) => {
     if (buyingLevel !== null) return;
@@ -103,13 +107,23 @@ function MarketScreenReady({ data, initData }: { data: SyncResponse; initData: s
             key={template.level}
             template={template}
             owned={amountByLevel.get(template.level) ?? 0}
+            isDead={deadByLevel.get(template.level) ?? false}
             isBuying={buyingLevel === template.level}
             disabled={buyingLevel !== null}
             error={errorByLevel[template.level]}
             onBuy={() => buy(template)}
+            onOpenCycles={() => setCyclesTemplate(template)}
           />
         ))}
       </div>
+
+      {cyclesTemplate && (
+        <GpuCyclesModal
+          template={cyclesTemplate}
+          maxQuantity={cyclesTemplate.max_limit}
+          onClose={() => setCyclesTemplate(null)}
+        />
+      )}
     </div>
   );
 }
@@ -117,17 +131,21 @@ function MarketScreenReady({ data, initData }: { data: SyncResponse; initData: s
 function GpuCard({
   template,
   owned,
+  isDead,
   isBuying,
   disabled,
   error,
   onBuy,
+  onOpenCycles,
 }: {
   template: GpuTemplate;
   owned: number;
+  isDead: boolean;
   isBuying: boolean;
   disabled: boolean;
   error?: string;
   onBuy: () => void;
+  onOpenCycles: () => void;
 }) {
   const { t, language } = useTranslation();
   const isMaxed = owned >= template.max_limit;
@@ -165,6 +183,15 @@ function GpuCard({
             </span>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={onOpenCycles}
+          aria-label={t.market.cycles.openButton}
+          className="shrink-0 rounded-lg border border-white/10 p-1.5 text-white/40 transition hover:border-neon-green/40 hover:text-neon-green"
+        >
+          <Settings2 size={15} />
+        </button>
       </div>
 
       <div className="mt-3.5 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
@@ -174,18 +201,27 @@ function GpuCard({
         />
       </div>
 
-      <button
-        type="button"
-        onClick={onBuy}
-        disabled={disabled || isMaxed}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple py-2.5 text-sm font-bold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        {isMaxed
-          ? t.market.limitReached
-          : isBuying
-            ? t.market.buying
-            : t.market.buy(formatNumber(language, template.cost_ton, { maximumFractionDigits: 2 }))}
-      </button>
+      {isDead ? (
+        <Link
+          href="/"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-red-400/40 bg-red-400/10 py-2.5 text-xs font-bold uppercase tracking-wide text-red-400 transition active:scale-[0.98]"
+        >
+          {t.market.reviveOnFarm}
+        </Link>
+      ) : (
+        <button
+          type="button"
+          onClick={onBuy}
+          disabled={disabled || isMaxed}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple py-2.5 text-sm font-bold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {isMaxed
+            ? t.market.limitReached
+            : isBuying
+              ? t.market.buying
+              : t.market.buy(formatNumber(language, template.cost_ton, { maximumFractionDigits: 2 }))}
+        </button>
+      )}
 
       {error && <p className="mt-2 text-center text-xs text-red-400">{error}</p>}
     </div>

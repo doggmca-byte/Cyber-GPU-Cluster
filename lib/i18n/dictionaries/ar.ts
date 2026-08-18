@@ -51,6 +51,12 @@ const ar: TranslationDictionary = {
     activeServers: "الخوادم النشطة",
     buyNewServer: "شراء خادم جديد",
     uptime: "مدة التشغيل",
+    productionPaused: "تم إيقاف الإنتاج مؤقتًا — اجمع HASH للاستمرار",
+    gpuDead: "نفد المورد",
+    reviveCount: (count, max) => `الإحياءات: ${count}/${max}`,
+    reviveButton: (cost) => `إحياء · ${cost} TON`,
+    reviving: "جارٍ الإحياء...",
+    reviveMaxReached: "نفد المورد نهائيًا",
   },
   market: {
     gameBalance: "رصيد اللعبة",
@@ -60,6 +66,20 @@ const ar: TranslationDictionary = {
     buy: (price) => `شراء · ${price} TON`,
     buying: "جارٍ الشراء...",
     limitReached: "تم بلوغ الحد الأقصى",
+    reviveOnFarm: "أحيِ في المزرعة لفتح الشراء",
+    cycles: {
+      title: (name) => `دورات: ${name}`,
+      quantityLabel: "الكمية",
+      goalPerCycle: (amount) => `هدف الدورة: ${amount} TON`,
+      durationPerCycle: (days) => `مدة الدورة: ~${days} يوم`,
+      productionPerHour: (amount) => `${amount} TON/ساعة`,
+      cycleRow: (n, cost, roi, profit) =>
+        `الدورة ${n} · التكلفة ${cost} TON · العائد ~${roi} يوم · الربح ${profit} TON`,
+      totalCost: "إجمالي التكلفة",
+      totalProduction: "إجمالي الإنتاج",
+      netProfit: "صافي الربح",
+      openButton: "الدورات",
+    },
   },
   exchange: {
     hashToTon: {
@@ -67,6 +87,7 @@ const ar: TranslationDictionary = {
       rateNote: (min) => `السعر: 100,000 HASH = 1 TON · الحد الأدنى ${min} HASH`,
       available: "المتاح",
       amountPlaceholder: (min) => `الحد الأدنى ${min}`,
+      stepError: (step) => `يجب أن يكون المبلغ من مضاعفات ${step} HASH.`,
       targetWithdrawable: "Withdrawable",
       targetGame: "Game",
       grossRow: "ستحصل عليه (إجمالي)",
@@ -140,6 +161,10 @@ const ar: TranslationDictionary = {
       netRow: "المبلغ المستحق",
       insufficientBalance: "رصيد Withdrawable Balance غير كافٍ.",
       insufficientQuota: "تم تجاوز حصة السحب — شاهد المزيد من الإعلانات لفتحها.",
+      feeRowFlat: (amount) => `الرسوم (${amount} TON)`,
+      minTierHint: (min) => `الحد الأدنى لهذا السحب: ${min} TON`,
+      maxTierHint: (max) => `الحد الأقصى لكل طلب حاليًا: ${max} TON`,
+      oneRequestPerDay: "يُسمح بطلب سحب واحد فقط يوميًا (إعادة التعيين في 00:00 UTC).",
       submit: "سحب",
       submitting: "جارٍ إرسال الطلب...",
       success: (amount, addressShort) =>

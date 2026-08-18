@@ -54,6 +54,12 @@ const en = {
     activeServers: "Active Servers",
     buyNewServer: "Buy New Server",
     uptime: "Uptime",
+    productionPaused: "Production paused — collect HASH to resume",
+    gpuDead: "Resource depleted",
+    reviveCount: (count: number, max: number) => `Revivals: ${count}/${max}`,
+    reviveButton: (cost: string) => `Revive · ${cost} TON`,
+    reviving: "Reviving...",
+    reviveMaxReached: "Resource permanently depleted",
   },
   market: {
     gameBalance: "Game balance",
@@ -63,6 +69,20 @@ const en = {
     buy: (price: string) => `Buy · ${price} TON`,
     buying: "Buying...",
     limitReached: "Limit reached",
+    reviveOnFarm: "Revive on Farm to unlock buying",
+    cycles: {
+      title: (name: string) => `${name} Cycles`,
+      quantityLabel: "Quantity",
+      goalPerCycle: (amount: string) => `Cycle target: ${amount} TON`,
+      durationPerCycle: (days: string) => `Cycle duration: ~${days} days`,
+      productionPerHour: (amount: string) => `${amount} TON/hour`,
+      cycleRow: (n: number, cost: string, roi: string, profit: string) =>
+        `Cycle ${n} · cost ${cost} TON · ROI ~${roi}d · profit ${profit} TON`,
+      totalCost: "Total cost",
+      totalProduction: "Total production",
+      netProfit: "Net profit",
+      openButton: "Cycles",
+    },
   },
   exchange: {
     hashToTon: {
@@ -70,6 +90,7 @@ const en = {
       rateNote: (min: string) => `Rate: 100,000 HASH = 1 TON · minimum ${min} HASH`,
       available: "Available",
       amountPlaceholder: (min: string) => `Minimum ${min}`,
+      stepError: (step: string) => `Amount must be a multiple of ${step} HASH.`,
       targetWithdrawable: "Withdrawable",
       targetGame: "Game",
       grossRow: "You'll get (gross)",
@@ -143,6 +164,10 @@ const en = {
       netRow: "You'll receive",
       insufficientBalance: "Not enough funds in Withdrawable Balance.",
       insufficientQuota: "Withdrawal quota exceeded — watch more ads to unlock it.",
+      feeRowFlat: (amount: string) => `Fee (${amount} TON)`,
+      minTierHint: (min: string) => `Minimum for this withdrawal: ${min} TON`,
+      maxTierHint: (max: string) => `Maximum per request right now: ${max} TON`,
+      oneRequestPerDay: "Only 1 withdrawal request per day is allowed (resets at 00:00 UTC).",
       submit: "Withdraw",
       submitting: "Submitting request...",
       success: (amount: string, addressShort: string) =>

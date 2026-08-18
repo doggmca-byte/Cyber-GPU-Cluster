@@ -51,6 +51,12 @@ const uk: TranslationDictionary = {
     activeServers: "Активні сервери",
     buyNewServer: "Купити новий сервер",
     uptime: "Час роботи",
+    productionPaused: "Виробництво призупинено — забери HASH, щоб продовжити",
+    gpuDead: "Ресурс вичерпано",
+    reviveCount: (count, max) => `Оживлень: ${count}/${max}`,
+    reviveButton: (cost) => `Оживити · ${cost} TON`,
+    reviving: "Оживляємо...",
+    reviveMaxReached: "Ресурс остаточно вичерпано",
   },
   market: {
     gameBalance: "Ігровий баланс",
@@ -60,6 +66,20 @@ const uk: TranslationDictionary = {
     buy: (price) => `Купити · ${price} TON`,
     buying: "Купуємо...",
     limitReached: "Ліміт досягнуто",
+    reviveOnFarm: "Оживи на Фермі, щоб знову купувати",
+    cycles: {
+      title: (name) => `Цикли: ${name}`,
+      quantityLabel: "Кількість",
+      goalPerCycle: (amount) => `Ціль циклу: ${amount} TON`,
+      durationPerCycle: (days) => `Тривалість циклу: ~${days} дн.`,
+      productionPerHour: (amount) => `${amount} TON/год`,
+      cycleRow: (n, cost, roi, profit) =>
+        `Цикл ${n} · вартість ${cost} TON · ROI ~${roi} дн. · прибуток ${profit} TON`,
+      totalCost: "Загальні витрати",
+      totalProduction: "Загальне виробництво",
+      netProfit: "Чистий прибуток",
+      openButton: "Цикли",
+    },
   },
   exchange: {
     hashToTon: {
@@ -67,6 +87,7 @@ const uk: TranslationDictionary = {
       rateNote: (min) => `Курс: 100 000 HASH = 1 TON · мінімум ${min} HASH`,
       available: "Доступно",
       amountPlaceholder: (min) => `Мінімум ${min}`,
+      stepError: (step) => `Сума має бути кратна ${step} HASH.`,
       targetWithdrawable: "Withdrawable",
       targetGame: "Game",
       grossRow: "Отримаєш (брутто)",
@@ -140,6 +161,10 @@ const uk: TranslationDictionary = {
       netRow: "До виплати",
       insufficientBalance: "Недостатньо коштів на Withdrawable Balance.",
       insufficientQuota: "Перевищено квоту виводу — перегляньте більше реклам, щоб розблокувати.",
+      feeRowFlat: (amount) => `Комісія (${amount} TON)`,
+      minTierHint: (min) => `Мінімум для цього виводу: ${min} TON`,
+      maxTierHint: (max) => `Максимум за заявку зараз: ${max} TON`,
+      oneRequestPerDay: "Дозволена лише 1 заявка на добу (скидання о 00:00 UTC).",
       submit: "Вивести",
       submitting: "Надсилаємо заявку...",
       success: (amount, addressShort) =>

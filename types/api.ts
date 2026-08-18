@@ -28,6 +28,14 @@ export interface BuyGpuResponse {
   server_time: string;
 }
 
+export interface ReviveGpuResponse {
+  gpu_level: number;
+  new_game_balance: number;
+  revival_count: number;
+  revival_cost: number;
+  server_time: string;
+}
+
 export type ExchangeTargetBalance = "withdrawable" | "game";
 
 export interface ExchangeResponse {

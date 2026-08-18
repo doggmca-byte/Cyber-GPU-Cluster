@@ -51,6 +51,12 @@ const tr: TranslationDictionary = {
     activeServers: "Aktif Sunucular",
     buyNewServer: "Yeni Sunucu Satın Al",
     uptime: "Çalışma Süresi",
+    productionPaused: "Üretim duraklatıldı — devam etmek için HASH topla",
+    gpuDead: "Kaynak tükendi",
+    reviveCount: (count, max) => `Canlandırma: ${count}/${max}`,
+    reviveButton: (cost) => `Canlandır · ${cost} TON`,
+    reviving: "Canlandırılıyor...",
+    reviveMaxReached: "Kaynak kalıcı olarak tükendi",
   },
   market: {
     gameBalance: "Oyun bakiyesi",
@@ -60,6 +66,20 @@ const tr: TranslationDictionary = {
     buy: (price) => `Satın al · ${price} TON`,
     buying: "Satın alınıyor...",
     limitReached: "Limite ulaşıldı",
+    reviveOnFarm: "Satın almanın kilidini açmak için Çiftlik'te canlandır",
+    cycles: {
+      title: (name) => `Döngüler: ${name}`,
+      quantityLabel: "Adet",
+      goalPerCycle: (amount) => `Döngü hedefi: ${amount} TON`,
+      durationPerCycle: (days) => `Döngü süresi: ~${days} gün`,
+      productionPerHour: (amount) => `${amount} TON/sa`,
+      cycleRow: (n, cost, roi, profit) =>
+        `Döngü ${n} · maliyet ${cost} TON · ROI ~${roi} gün · kâr ${profit} TON`,
+      totalCost: "Toplam maliyet",
+      totalProduction: "Toplam üretim",
+      netProfit: "Net kâr",
+      openButton: "Döngüler",
+    },
   },
   exchange: {
     hashToTon: {
@@ -67,6 +87,7 @@ const tr: TranslationDictionary = {
       rateNote: (min) => `Kur: 100.000 HASH = 1 TON · minimum ${min} HASH`,
       available: "Kullanılabilir",
       amountPlaceholder: (min) => `Minimum ${min}`,
+      stepError: (step) => `Tutar ${step} HASH'in katı olmalı.`,
       targetWithdrawable: "Withdrawable",
       targetGame: "Game",
       grossRow: "Alacağın (brüt)",
@@ -140,6 +161,10 @@ const tr: TranslationDictionary = {
       netRow: "Alacağın",
       insufficientBalance: "Withdrawable Balance'ta yetersiz bakiye.",
       insufficientQuota: "Çekim kotası aşıldı — kilidini açmak için daha fazla reklam izle.",
+      feeRowFlat: (amount) => `Komisyon (${amount} TON)`,
+      minTierHint: (min) => `Bu çekim için minimum: ${min} TON`,
+      maxTierHint: (max) => `Şu anki istek başına maksimum: ${max} TON`,
+      oneRequestPerDay: "Günde yalnızca 1 çekim talebine izin verilir (00:00 UTC'de sıfırlanır).",
       submit: "Çek",
       submitting: "Talep gönderiliyor...",
       success: (amount, addressShort) =>

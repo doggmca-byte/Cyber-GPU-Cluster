@@ -51,6 +51,12 @@ const id: TranslationDictionary = {
     activeServers: "Server Aktif",
     buyNewServer: "Beli Server Baru",
     uptime: "Waktu Aktif",
+    productionPaused: "Produksi dijeda — kumpulkan HASH untuk melanjutkan",
+    gpuDead: "Sumber daya habis",
+    reviveCount: (count, max) => `Kebangkitan: ${count}/${max}`,
+    reviveButton: (cost) => `Bangkitkan · ${cost} TON`,
+    reviving: "Membangkitkan...",
+    reviveMaxReached: "Sumber daya habis permanen",
   },
   market: {
     gameBalance: "Saldo game",
@@ -60,6 +66,20 @@ const id: TranslationDictionary = {
     buy: (price) => `Beli · ${price} TON`,
     buying: "Membeli...",
     limitReached: "Batas tercapai",
+    reviveOnFarm: "Bangkitkan di Farm untuk membuka pembelian",
+    cycles: {
+      title: (name) => `Siklus: ${name}`,
+      quantityLabel: "Jumlah",
+      goalPerCycle: (amount) => `Target siklus: ${amount} TON`,
+      durationPerCycle: (days) => `Durasi siklus: ~${days} hari`,
+      productionPerHour: (amount) => `${amount} TON/jam`,
+      cycleRow: (n, cost, roi, profit) =>
+        `Siklus ${n} · biaya ${cost} TON · ROI ~${roi} hari · profit ${profit} TON`,
+      totalCost: "Total biaya",
+      totalProduction: "Total produksi",
+      netProfit: "Laba bersih",
+      openButton: "Siklus",
+    },
   },
   exchange: {
     hashToTon: {
@@ -67,6 +87,7 @@ const id: TranslationDictionary = {
       rateNote: (min) => `Kurs: 100.000 HASH = 1 TON · minimum ${min} HASH`,
       available: "Tersedia",
       amountPlaceholder: (min) => `Minimum ${min}`,
+      stepError: (step) => `Jumlah harus kelipatan ${step} HASH.`,
       targetWithdrawable: "Withdrawable",
       targetGame: "Game",
       grossRow: "Akan diterima (kotor)",
@@ -140,6 +161,10 @@ const id: TranslationDictionary = {
       netRow: "Akan diterima",
       insufficientBalance: "Saldo Withdrawable Balance tidak cukup.",
       insufficientQuota: "Kuota penarikan terlampaui — tonton lebih banyak iklan untuk membukanya.",
+      feeRowFlat: (amount) => `Biaya (${amount} TON)`,
+      minTierHint: (min) => `Minimum untuk penarikan ini: ${min} TON`,
+      maxTierHint: (max) => `Maksimum per permintaan saat ini: ${max} TON`,
+      oneRequestPerDay: "Hanya 1 permintaan penarikan per hari (reset pukul 00:00 UTC).",
       submit: "Tarik",
       submitting: "Mengirim permintaan...",
       success: (amount, addressShort) =>

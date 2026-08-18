@@ -49,7 +49,11 @@ export async function POST(request: Request) {
     }
 
     const templateByLevel = new Map((gpuTemplates ?? []).map((t) => [t.level, t]));
+    // Мертві (is_dead) картки не виробляють нічого, доки не оживлені —
+    // не рахуємо їх у сумарну швидкість (той самий принцип, що й
+    // harvest_user_hash: continue для is_dead рядків).
     const totalHashPerSecond = (userGpus ?? []).reduce((sum, gpu) => {
+      if (gpu.is_dead) return sum;
       const template = templateByLevel.get(gpu.gpu_level);
       return sum + (template ? template.hash_per_second * gpu.amount : 0);
     }, 0);

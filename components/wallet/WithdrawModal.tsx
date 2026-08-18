@@ -8,7 +8,13 @@ import { WatchAdButton } from "@/components/wallet/WatchAdButton";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
-import { MIN_ADS_BEFORE_WITHDRAW, WITHDRAW_FEE_BPS, calcFee } from "@/lib/constants/economy";
+import {
+  MIN_ADS_BEFORE_WITHDRAW,
+  WITHDRAW_FEE_BPS,
+  withdrawMinForRequest,
+  withdrawMaxForDeposits,
+  withdrawFeeForRequest,
+} from "@/lib/constants/economy";
 import type { Profile, WithdrawResponse } from "@/types/api";
 
 function isValidTonAddress(value: string): boolean {
@@ -52,14 +58,35 @@ export function WithdrawModal({
   const hasValidNumber = Number.isFinite(requested) && requested > 0;
   const addressOk = address.trim().length > 0 && isValidTonAddress(address);
 
+  // Тіньовані мінімум/максимум/комісія за номером ЦІЄЇ заявки та lifetime-
+  // депозитами — та сама логіка, що й у request_withdrawal RPC
+  // (20260819090000_gpu_lifecycle_withdrawal_tiers_daily_ad_reset.sql).
+  const minForThisRequest = withdrawMinForRequest(profile.withdrawal_request_count);
+  const maxForThisRequest = withdrawMaxForDeposits(profile.lifetime_deposited_ton);
+  const isFlatFeeTier = profile.withdrawal_request_count < 2;
+
+  const todayUtc = new Date().toISOString().slice(0, 10);
+  const alreadyRequestedToday = profile.last_withdrawal_request_date === todayUtc;
+
   const adsOk = profile.ads_watched_since_withdraw >= MIN_ADS_BEFORE_WITHDRAW;
   const balanceOk = hasValidNumber && requested <= profile.withdrawable_balance;
   const quotaOk = hasValidNumber && requested <= profile.withdrawal_quota;
-  const canSubmit = adsOk && hasValidNumber && balanceOk && quotaOk && addressOk;
+  const minOk = hasValidNumber && requested >= minForThisRequest;
+  const maxOk = hasValidNumber && requested <= maxForThisRequest;
+  const canSubmit =
+    adsOk &&
+    hasValidNumber &&
+    balanceOk &&
+    quotaOk &&
+    minOk &&
+    maxOk &&
+    !alreadyRequestedToday &&
+    addressOk;
 
-  const fee = hasValidNumber ? calcFee(requested, WITHDRAW_FEE_BPS) : 0;
+  const fee = hasValidNumber ? withdrawFeeForRequest(profile.withdrawal_request_count, requested) : 0;
   const net = hasValidNumber ? requested - fee : 0;
   const feePercentLabel = formatNumber(language, WITHDRAW_FEE_BPS / 100, { maximumFractionDigits: 0 });
+  const feeAmountLabel = formatNumber(language, fee, { maximumFractionDigits: 6 });
 
   const submit = async () => {
     if (!canSubmit || isSubmitting) return;
@@ -85,6 +112,14 @@ export function WithdrawModal({
         withdrawable_balance: result.withdrawable_balance,
         withdrawal_quota: result.withdrawal_quota,
         ads_watched_since_withdraw: result.ads_watched_since_withdraw,
+        // request_withdrawal RPC не повертає ці два поля окремо (не міняли
+        // сигнатуру відповіді через DROP FUNCTION), але детерміновано інкрементує
+        // withdrawal_request_count і виставляє last_withdrawal_request_date =
+        // сьогодні UTC при кожному успішному виклику — оптимістично оновлюємо
+        // так само тут, щоб тіри мінімуму/комісії/денного ліміту в UI одразу
+        // відповідали реальності без повного ресинку.
+        withdrawal_request_count: profile.withdrawal_request_count + 1,
+        last_withdrawal_request_date: todayUtc,
       });
       setAmount("");
       const addressShort = `${result.destination_address.slice(0, 6)}…${result.destination_address.slice(-4)}`;
@@ -152,16 +187,26 @@ export function WithdrawModal({
         <p className="mt-1 text-xs text-red-400">{t.wallet.withdraw.invalidAddress}</p>
       )}
 
+      {alreadyRequestedToday && (
+        <p className="mt-3 rounded-xl border border-neon-gold/30 bg-neon-gold/10 p-2.5 text-xs font-semibold text-neon-gold">
+          {t.wallet.withdraw.oneRequestPerDay}
+        </p>
+      )}
+
       <label className="mt-3 block text-xs text-white/40">{t.wallet.withdraw.amountLabel}</label>
       <input
         type="number"
         inputMode="decimal"
         placeholder={t.wallet.withdraw.amountPlaceholder}
         value={amount}
-        disabled={!adsOk}
+        disabled={!adsOk || alreadyRequestedToday}
         onChange={(e) => setAmount(e.target.value)}
         className="mt-1 w-full rounded-xl border border-white/10 bg-background px-3.5 py-2.5 text-sm outline-none transition focus:border-neon-cyan/60 disabled:opacity-40"
       />
+      <div className="mt-1 flex items-center justify-between text-[11px] text-white/30">
+        <span>{t.wallet.withdraw.minTierHint(formatNumber(language, minForThisRequest))}</span>
+        <span>{t.wallet.withdraw.maxTierHint(formatNumber(language, maxForThisRequest))}</span>
+      </div>
 
       {hasValidNumber && (
         <div className="mt-3 flex flex-col gap-1 rounded-xl bg-white/[0.03] p-3 text-xs">
@@ -172,9 +217,11 @@ export function WithdrawModal({
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-white/40">{t.wallet.withdraw.feeRow(feePercentLabel)}</span>
             <span className="text-white/40">
-              -{fee.toFixed(2)} {t.common.ton}
+              {isFlatFeeTier ? t.wallet.withdraw.feeRowFlat(feeAmountLabel) : t.wallet.withdraw.feeRow(feePercentLabel)}
+            </span>
+            <span className="text-white/40">
+              -{fee.toFixed(fee < 1 ? 3 : 2)} {t.common.ton}
             </span>
           </div>
           <div className="flex items-center justify-between">
@@ -191,6 +238,16 @@ export function WithdrawModal({
       )}
       {hasValidNumber && balanceOk && !quotaOk && (
         <p className="mt-2 text-xs text-red-400">{t.wallet.withdraw.insufficientQuota}</p>
+      )}
+      {hasValidNumber && balanceOk && quotaOk && !minOk && (
+        <p className="mt-2 text-xs text-red-400">
+          {t.wallet.withdraw.minTierHint(formatNumber(language, minForThisRequest))}
+        </p>
+      )}
+      {hasValidNumber && balanceOk && quotaOk && minOk && !maxOk && (
+        <p className="mt-2 text-xs text-red-400">
+          {t.wallet.withdraw.maxTierHint(formatNumber(language, maxForThisRequest))}
+        </p>
       )}
 
       <button

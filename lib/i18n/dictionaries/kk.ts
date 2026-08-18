@@ -51,6 +51,12 @@ const kk: TranslationDictionary = {
     activeServers: "Белсенді серверлер",
     buyNewServer: "Жаңа сервер сатып алу",
     uptime: "Жұмыс уақыты",
+    productionPaused: "Өндіріс уақытша тоқтатылды — жалғастыру үшін HASH жина",
+    gpuDead: "Ресурс таусылды",
+    reviveCount: (count, max) => `Тірілту: ${count}/${max}`,
+    reviveButton: (cost) => `Тірілту · ${cost} TON`,
+    reviving: "Тірілтуде...",
+    reviveMaxReached: "Ресурс түбегейлі таусылды",
   },
   market: {
     gameBalance: "Ойын балансы",
@@ -60,6 +66,20 @@ const kk: TranslationDictionary = {
     buy: (price) => `Сатып алу · ${price} TON`,
     buying: "Сатып алынуда...",
     limitReached: "Лимитке жетті",
+    reviveOnFarm: "Сатып алуды ашу үшін Фермада тірілт",
+    cycles: {
+      title: (name) => `Циклдар: ${name}`,
+      quantityLabel: "Саны",
+      goalPerCycle: (amount) => `Цикл мақсаты: ${amount} TON`,
+      durationPerCycle: (days) => `Цикл ұзақтығы: ~${days} күн`,
+      productionPerHour: (amount) => `${amount} TON/сағ`,
+      cycleRow: (n, cost, roi, profit) =>
+        `${n}-цикл · құны ${cost} TON · ROI ~${roi} күн · пайда ${profit} TON`,
+      totalCost: "Жалпы шығын",
+      totalProduction: "Жалпы өндіріс",
+      netProfit: "Таза пайда",
+      openButton: "Циклдар",
+    },
   },
   exchange: {
     hashToTon: {
@@ -67,6 +87,7 @@ const kk: TranslationDictionary = {
       rateNote: (min) => `Курс: 100 000 HASH = 1 TON · ең аз ${min} HASH`,
       available: "Қолжетімді",
       amountPlaceholder: (min) => `Ең аз ${min}`,
+      stepError: (step) => `Сома ${step} HASH-қа еселі болуы керек.`,
       targetWithdrawable: "Withdrawable",
       targetGame: "Game",
       grossRow: "Аласың (жалпы)",
@@ -140,6 +161,10 @@ const kk: TranslationDictionary = {
       netRow: "Төленеді",
       insufficientBalance: "Withdrawable Balance-та қаражат жеткіліксіз.",
       insufficientQuota: "Шығару квотасы асып кетті — құлыпты ашу үшін көбірек жарнама көр.",
+      feeRowFlat: (amount) => `Комиссия (${amount} TON)`,
+      minTierHint: (min) => `Осы шығару үшін ең аз сома: ${min} TON`,
+      maxTierHint: (max) => `Қазір бір өтінім үшін ең көп сома: ${max} TON`,
+      oneRequestPerDay: "Тәулігіне тек 1 өтінімге рұқсат етіледі (00:00 UTC-де жаңарады).",
       submit: "Шығару",
       submitting: "Өтінім жіберілуде...",
       success: (amount, addressShort) =>

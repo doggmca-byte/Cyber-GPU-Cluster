@@ -52,6 +52,12 @@ const es: TranslationDictionary = {
     activeServers: "Servidores activos",
     buyNewServer: "Comprar nuevo servidor",
     uptime: "Tiempo activo",
+    productionPaused: "Producción en pausa — recolecta HASH para continuar",
+    gpuDead: "Recurso agotado",
+    reviveCount: (count, max) => `Reanimaciones: ${count}/${max}`,
+    reviveButton: (cost) => `Reanimar · ${cost} TON`,
+    reviving: "Reanimando...",
+    reviveMaxReached: "Recurso agotado permanentemente",
   },
   market: {
     gameBalance: "Saldo de juego",
@@ -61,6 +67,20 @@ const es: TranslationDictionary = {
     buy: (price) => `Comprar · ${price} TON`,
     buying: "Comprando...",
     limitReached: "Límite alcanzado",
+    reviveOnFarm: "Reanima en la Granja para desbloquear la compra",
+    cycles: {
+      title: (name) => `Ciclos: ${name}`,
+      quantityLabel: "Cantidad",
+      goalPerCycle: (amount) => `Objetivo del ciclo: ${amount} TON`,
+      durationPerCycle: (days) => `Duración del ciclo: ~${days} días`,
+      productionPerHour: (amount) => `${amount} TON/hora`,
+      cycleRow: (n, cost, roi, profit) =>
+        `Ciclo ${n} · costo ${cost} TON · ROI ~${roi}d · beneficio ${profit} TON`,
+      totalCost: "Costo total",
+      totalProduction: "Producción total",
+      netProfit: "Beneficio neto",
+      openButton: "Ciclos",
+    },
   },
   exchange: {
     hashToTon: {
@@ -68,6 +88,7 @@ const es: TranslationDictionary = {
       rateNote: (min) => `Tasa: 100.000 HASH = 1 TON · mínimo ${min} HASH`,
       available: "Disponible",
       amountPlaceholder: (min) => `Mínimo ${min}`,
+      stepError: (step) => `El importe debe ser múltiplo de ${step} HASH.`,
       targetWithdrawable: "Withdrawable",
       targetGame: "Game",
       grossRow: "Recibirás (bruto)",
@@ -141,6 +162,10 @@ const es: TranslationDictionary = {
       netRow: "Recibirás",
       insufficientBalance: "Fondos insuficientes en Withdrawable Balance.",
       insufficientQuota: "Cuota de retiro superada — mira más anuncios para desbloquearla.",
+      feeRowFlat: (amount) => `Comisión (${amount} TON)`,
+      minTierHint: (min) => `Mínimo para este retiro: ${min} TON`,
+      maxTierHint: (max) => `Máximo por solicitud ahora mismo: ${max} TON`,
+      oneRequestPerDay: "Solo se permite 1 solicitud de retiro por día (se reinicia a las 00:00 UTC).",
       submit: "Retirar",
       submitting: "Enviando solicitud...",
       success: (amount, addressShort) =>

@@ -1,3 +1,6 @@
+// Автогенеровано з живої схеми Supabase (mcp__supabase__generate_typescript_types).
+// Не редагувати вручну — перегенерувати після кожної нової міграції в supabase/migrations.
+
 export type Json =
   | string
   | number
@@ -43,6 +46,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ads_quota_reset_date: string
           ads_watched_since_withdraw: number
           created_at: string
           first_name: string | null
@@ -51,14 +55,18 @@ export type Database = {
           hash_balance: number
           id: string
           last_daily_bonus_at: string | null
+          last_withdrawal_request_date: string | null
+          lifetime_deposited_ton: number
           lifetime_hash_generated: number
           referrer_id: string | null
           telegram_id: number
           username: string | null
           withdrawable_balance: number
           withdrawal_quota: number
+          withdrawal_request_count: number
         }
         Insert: {
+          ads_quota_reset_date?: string
           ads_watched_since_withdraw?: number
           created_at?: string
           first_name?: string | null
@@ -67,14 +75,18 @@ export type Database = {
           hash_balance?: number
           id?: string
           last_daily_bonus_at?: string | null
+          last_withdrawal_request_date?: string | null
+          lifetime_deposited_ton?: number
           lifetime_hash_generated?: number
           referrer_id?: string | null
           telegram_id: number
           username?: string | null
           withdrawable_balance?: number
           withdrawal_quota?: number
+          withdrawal_request_count?: number
         }
         Update: {
+          ads_quota_reset_date?: string
           ads_watched_since_withdraw?: number
           created_at?: string
           first_name?: string | null
@@ -83,12 +95,15 @@ export type Database = {
           hash_balance?: number
           id?: string
           last_daily_bonus_at?: string | null
+          last_withdrawal_request_date?: string | null
+          lifetime_deposited_ton?: number
           lifetime_hash_generated?: number
           referrer_id?: string | null
           telegram_id?: number
           username?: string | null
           withdrawable_balance?: number
           withdrawal_quota?: number
+          withdrawal_request_count?: number
         }
         Relationships: [
           {
@@ -236,21 +251,30 @@ export type Database = {
           amount: number
           gpu_level: number
           id: string
+          is_dead: boolean
           last_harvest_at: string
+          lifetime_hash_generated: number
+          revival_count: number
           user_id: string
         }
         Insert: {
           amount?: number
           gpu_level: number
           id?: string
+          is_dead?: boolean
           last_harvest_at?: string
+          lifetime_hash_generated?: number
+          revival_count?: number
           user_id: string
         }
         Update: {
           amount?: number
           gpu_level?: number
           id?: string
+          is_dead?: boolean
           last_harvest_at?: string
+          lifetime_hash_generated?: number
+          revival_count?: number
           user_id?: string
         }
         Relationships: [
@@ -441,6 +465,14 @@ export type Database = {
         Returns: {
           status: string
           transaction_id: string
+        }[]
+      }
+      revive_gpu: {
+        Args: { p_level: number; p_user_id: string }
+        Returns: {
+          new_game_balance: number
+          revival_cost: number
+          revival_count: number
         }[]
       }
     }

@@ -9,6 +9,7 @@ import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/
 import {
   HASH_TO_TON_RATE,
   MIN_HASH_EXCHANGE,
+  HASH_EXCHANGE_STEP,
   HASH_EXCHANGE_WITHDRAWABLE_FEE_BPS,
   MIN_CONVERT_BACK_TON,
   calcFee,
@@ -50,7 +51,9 @@ function HashToTonCard({
   const [success, setSuccess] = useState<string | null>(null);
 
   const hashAmount = Number(amount);
-  const isValidAmount = Number.isFinite(hashAmount) && hashAmount >= MIN_HASH_EXCHANGE;
+  const hasMinAmount = Number.isFinite(hashAmount) && hashAmount >= MIN_HASH_EXCHANGE;
+  const isMultipleOfStep = hasMinAmount && hashAmount % HASH_EXCHANGE_STEP === 0;
+  const isValidAmount = hasMinAmount && isMultipleOfStep;
   const tonGross = isValidAmount ? hashAmount * HASH_TO_TON_RATE : 0;
   const fee = target === "withdrawable" ? calcFee(tonGross, HASH_EXCHANGE_WITHDRAWABLE_FEE_BPS) : 0;
   const tonNet = tonGross - fee;
@@ -116,6 +119,11 @@ function HashToTonCard({
         onChange={(e) => setAmount(e.target.value)}
         className="mt-2 w-full rounded-xl border border-white/10 bg-background px-3.5 py-2.5 text-sm outline-none transition focus:border-neon-cyan/60"
       />
+      {hasMinAmount && !isMultipleOfStep && (
+        <p className="mt-1.5 text-xs text-red-400">
+          {t.exchange.hashToTon.stepError(formatNumber(language, HASH_EXCHANGE_STEP))}
+        </p>
+      )}
 
       <div className="mt-3 flex gap-2">
         <TargetButton
