@@ -1,16 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Check } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { SUPPORTED_LANGUAGES, LANGUAGE_META, type LanguageCode } from "@/lib/i18n/languages";
 
 /**
  * Самодостатній компонент: сам володіє isOpen (useState(false) — закритий за
- * замовчуванням) і сам рендерить і кнопку-бейдж, і модалку. Замінює попередню
- * пару Header.tsx + LanguageModal.tsx, де стан жив у Header і прокидався пропсами —
- * функціонально те саме, але тут немає жодного проміжного прошарку між кнопкою
- * і `{isOpen && (...)}`, тож немає де сховатись багу "модалка не закривається".
+ * замовчуванням) і сам рендерить і кнопку-бейдж, і модалку.
+ *
+ * КРИТИЧНО: модалка рендериться через createPortal у document.body, а НЕ
+ * інлайн у власному дереві. Причина — <header> (де живе ця кнопка) має клас
+ * backdrop-blur-xl (backdrop-filter), а будь-який backdrop-filter/filter/
+ * transform на предку в CSS створює НОВИЙ containing block для нащадків з
+ * position: fixed. Без порталу "fixed inset-0" нижче фіксувався б відносно
+ * маленького прямокутника <header>, а не всього viewport — саме це й було
+ * видно на скріншоті багу: сітка мов, обрізана зверху екрана, без бекдропу
+ * на весь екран, що "просвічує" контент під собою замість того, щоб бути
+ * центрованою модалкою поверх усього.
  */
 export function LanguageSelector() {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,43 +47,45 @@ export function LanguageSelector() {
         <span className="text-[10px] text-gray-400">▼</span>
       </button>
 
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
-          onClick={() => setIsOpen(false)}
-        >
+      {isOpen &&
+        createPortal(
           <div
-            className="w-full max-w-xs space-y-3 rounded-2xl border border-[#1E293B] bg-[#101726] p-4 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+            onClick={() => setIsOpen(false)}
           >
-            <div className="flex items-center justify-between border-b border-[#1E293B] pb-2">
-              <span className="text-sm font-bold text-white">{t.language.pickerTitle}</span>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                aria-label={t.common.close}
-                className="px-2 py-1 text-base text-gray-400 transition hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
+            <div
+              className="w-full max-w-xs space-y-3 rounded-2xl border border-[#1E293B] bg-[#101726] p-4 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-[#1E293B] pb-2">
+                <span className="text-sm font-bold text-white">{t.language.pickerTitle}</span>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  aria-label={t.common.close}
+                  className="px-2 py-1 text-base text-gray-400 transition hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
 
-            <div className="grid max-h-[60vh] grid-cols-2 gap-2 overflow-y-auto">
-              {SUPPORTED_LANGUAGES.map((code) => (
-                <LanguageOption
-                  key={code}
-                  code={code}
-                  active={code === language}
-                  onSelect={() => {
-                    setLanguage(code);
-                    setIsOpen(false);
-                  }}
-                />
-              ))}
+              <div className="grid max-h-[60vh] grid-cols-2 gap-2 overflow-y-auto">
+                {SUPPORTED_LANGUAGES.map((code) => (
+                  <LanguageOption
+                    key={code}
+                    code={code}
+                    active={code === language}
+                    onSelect={() => {
+                      setLanguage(code);
+                      setIsOpen(false);
+                    }}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
