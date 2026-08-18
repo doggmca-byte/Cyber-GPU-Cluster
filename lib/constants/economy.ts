@@ -30,6 +30,15 @@ export const REFERRAL_DEPOSIT_REVSHARE_RATE = 0.05; // 5%, назавжди з �
 export const REFERRAL_FIRST_HARVEST_BONUS_TON = 0.01;
 export const REFERRAL_FIRST_HARVEST_THRESHOLD_HASH = 100;
 
+// claim_daily_bonus
+export const DAILY_BONUS_REWARD_TON = 0.001;
+// Мінімальна "взаємодія з рекламою" перед клеймом (Adsgram/Monetag-заглушка,
+// той самий підхід, що й у record_ad_watch/WatchAdButton — реального SDK
+// callback тут немає, сервер лише перевіряє, що клієнт відзвітував про
+// виконання чеклиста, перш ніж викликати claim_daily_bonus).
+export const DAILY_BONUS_MIN_AD_INTERACTIONS = 2;
+export const DAILY_BONUS_MIN_AD_WATCH_SECONDS = 5;
+
 export function calcFee(amount: number, feeBps: number): number {
   return Math.round(amount * feeBps) / 10000;
 }

@@ -4,17 +4,27 @@ import { useState } from "react";
 import { PlayCircle } from "lucide-react";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
+import { showRewardedAd } from "@/lib/ads/monetag";
+import { openDirectAdLink } from "@/lib/ads/openAdLink";
 import type { AdWatchResponse } from "@/types/api";
 
 /**
- * Adsgram-заглушка: реального SDK показу реклами не підключено (не входив у
- * завдання цього етапу — лише бекенд-облік). Клік одразу "завершує перегляд"
- * і викликає /api/ads/watch. Коли з'явиться реальний SDK — тут його викликати
- * і відправляти на бекенд лише після реального завершення показу.
+ * "Ads for Cashout" лічильник (MIN_ADS_BEFORE_WITHDRAW/20) і швидка кнопка
+ * бонусної реклами. Клік запускає два незалежні монетизаційні канали
+ * Monetag разом:
+ *  - Direct Link (openDirectAdLink, lib/ads/openAdLink.ts) — відкривається
+ *    одразу, без очікування. Немає промісу завершення, тож не впливає на
+ *    інкремент лічильника — паралельний дохід.
+ *  - SDK Rewarded Interstitial (showRewardedAd, zone 11600101,
+ *    lib/ads/monetag.ts) — /api/ads/watch (інкремент ads_watched_since_withdraw)
+ *    викликається лише після успішного резолву його промісу.
+ * Немає server-side callback від Monetag, тож справжній захист від накрутки
+ * лишається на бекенді (RPC record_ad_watch).
  */
 export function WatchAdButton({ initData }: { initData: string }) {
   const { t } = useTranslation();
-  const { patchProfile } = useUserData();
+  const { state: userDataState, patchProfile } = useUserData();
+  const telegramId = userDataState.status === "ready" ? userDataState.data.profile.telegram_id : undefined;
   const [isWatching, setIsWatching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +35,14 @@ export function WatchAdButton({ initData }: { initData: string }) {
     setError(null);
 
     try {
+      openDirectAdLink(telegramId);
+
+      const adWatched = await showRewardedAd();
+      if (!adWatched) {
+        setError(t.watchAd.adNotCompleted);
+        return;
+      }
+
       const res = await fetch("/api/ads/watch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

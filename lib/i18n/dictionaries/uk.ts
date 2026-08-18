@@ -146,6 +146,7 @@ const uk: TranslationDictionary = {
   watchAd: {
     button: "Переглянути рекламу",
     loading: "Завантаження реклами...",
+    adNotCompleted: "Рекламу не переглянуто до кінця. Спробуй ще раз.",
   },
   errorPage: {
     title: "Щось пішло не так",
@@ -239,6 +240,40 @@ const uk: TranslationDictionary = {
         description: "Особлива нагорода, доступна протягом обмеженого часу.",
       },
     },
+  },
+  dailyBonus: {
+    modalTitle: "Daily Bonus",
+    loading: "Завантаження...",
+    loadError: "Не вдалося завантажити стан щоденного бонусу.",
+    cooldownTitle: "Повертайся завтра!",
+    cooldownLabel: (time) => `⏱️ До наступної нагороди: ${time}`,
+    adScreenTitle: "ВАМ ПОТРІБНО ВЗАЄМОДІЯТИ З РЕКЛАМОЮ",
+    adScreenSubtitle: "Виконай усі кроки нижче, щоб розблокувати нагороду",
+    adButtons: {
+      go: "Перейти",
+      playNow: "Грати зараз",
+      joinNow: "Приєднатись",
+      view: "Переглянути",
+      open: "Відкрити",
+      install: "Встановити",
+      buy: "Купити",
+      subscribe: "Підписатись",
+    },
+    checklist: {
+      watchFull: "Перегляньте рекламу до кінця.",
+      twoButtons: "Натисніть мінімум на 2 різні рекламні кнопки.",
+      stay5s: "Залишайтеся на цільовій сторінці мінімум 5 секунд.",
+    },
+    progress: (done, total) => `${done}/${total} виконано`,
+    cancel: "Відміна",
+    claimButton: (amount) => `Перевірити / Забрати ${amount} TON`,
+    claiming: "Перевіряємо...",
+    claimError: "Не вдалося забрати нагороду. Спробуй ще раз.",
+    adNotCompleted: "Рекламу не переглянуто до кінця. Спробуй ще раз.",
+    cooldownActiveError: "Кулдаун ще активний.",
+    claimedTitle: "Нагороду отримано!",
+    claimedAmount: (amount) => `+${amount} TON зараховано`,
+    done: "Готово",
   },
 };
 

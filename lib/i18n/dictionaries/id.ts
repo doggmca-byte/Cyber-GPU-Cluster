@@ -146,6 +146,7 @@ const id: TranslationDictionary = {
   watchAd: {
     button: "Tonton iklan",
     loading: "Memuat iklan...",
+    adNotCompleted: "Iklan belum selesai ditonton. Coba lagi.",
   },
   errorPage: {
     title: "Terjadi kesalahan",
@@ -239,6 +240,40 @@ const id: TranslationDictionary = {
         description: "Hadiah spesial yang tersedia dalam waktu terbatas.",
       },
     },
+  },
+  dailyBonus: {
+    modalTitle: "Daily Bonus",
+    loading: "Memuat...",
+    loadError: "Gagal memuat status bonus harian.",
+    cooldownTitle: "Kembali lagi besok!",
+    cooldownLabel: (time) => `⏱️ Hadiah berikutnya dalam: ${time}`,
+    adScreenTitle: "ANDA PERLU BERINTERAKSI DENGAN IKLAN",
+    adScreenSubtitle: "Selesaikan semua langkah di bawah untuk membuka hadiahmu",
+    adButtons: {
+      go: "Mulai",
+      playNow: "Main Sekarang",
+      joinNow: "Gabung Sekarang",
+      view: "Lihat",
+      open: "Buka",
+      install: "Pasang",
+      buy: "Beli",
+      subscribe: "Berlangganan",
+    },
+    checklist: {
+      watchFull: "Tonton iklan sampai selesai.",
+      twoButtons: "Ketuk minimal 2 tombol iklan yang berbeda.",
+      stay5s: "Tetap di halaman tujuan minimal 5 detik.",
+    },
+    progress: (done, total) => `${done}/${total} selesai`,
+    cancel: "Batal",
+    claimButton: (amount) => `Verifikasi / Ambil ${amount} TON`,
+    claiming: "Memverifikasi...",
+    claimError: "Gagal mengambil hadiah. Coba lagi.",
+    adNotCompleted: "Iklan belum selesai ditonton. Coba lagi.",
+    cooldownActiveError: "Cooldown masih aktif.",
+    claimedTitle: "Hadiah berhasil diambil!",
+    claimedAmount: (amount) => `+${amount} TON masuk`,
+    done: "Selesai",
   },
 };
 

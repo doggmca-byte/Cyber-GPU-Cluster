@@ -147,6 +147,7 @@ const es: TranslationDictionary = {
   watchAd: {
     button: "Ver anuncio",
     loading: "Cargando anuncio...",
+    adNotCompleted: "El anuncio no se completó. Inténtalo de nuevo.",
   },
   errorPage: {
     title: "Algo salió mal",
@@ -240,6 +241,40 @@ const es: TranslationDictionary = {
         description: "Una recompensa especial disponible por tiempo limitado.",
       },
     },
+  },
+  dailyBonus: {
+    modalTitle: "Daily Bonus",
+    loading: "Cargando...",
+    loadError: "No se pudo cargar el estado de la recompensa diaria.",
+    cooldownTitle: "¡Vuelve mañana!",
+    cooldownLabel: (time) => `⏱️ Próxima recompensa en: ${time}`,
+    adScreenTitle: "DEBES INTERACTUAR CON EL ANUNCIO",
+    adScreenSubtitle: "Completa todos los pasos siguientes para desbloquear tu recompensa",
+    adButtons: {
+      go: "Ir",
+      playNow: "Jugar ahora",
+      joinNow: "Unirse ahora",
+      view: "Ver",
+      open: "Abrir",
+      install: "Instalar",
+      buy: "Comprar",
+      subscribe: "Suscribirse",
+    },
+    checklist: {
+      watchFull: "Mira el anuncio hasta el final.",
+      twoButtons: "Toca al menos 2 botones de anuncio diferentes.",
+      stay5s: "Permanece en la página de destino al menos 5 segundos.",
+    },
+    progress: (done, total) => `${done}/${total} completado`,
+    cancel: "Cancelar",
+    claimButton: (amount) => `Verificar / Reclamar ${amount} TON`,
+    claiming: "Verificando...",
+    claimError: "No se pudo reclamar la recompensa. Inténtalo de nuevo.",
+    adNotCompleted: "El anuncio no se completó. Inténtalo de nuevo.",
+    cooldownActiveError: "El tiempo de espera todavía está activo.",
+    claimedTitle: "¡Recompensa reclamada!",
+    claimedAmount: (amount) => `+${amount} TON acreditado`,
+    done: "Listo",
   },
 };
 

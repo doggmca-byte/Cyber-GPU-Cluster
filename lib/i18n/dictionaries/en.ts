@@ -149,6 +149,7 @@ const en = {
   watchAd: {
     button: "Watch ad",
     loading: "Loading ad...",
+    adNotCompleted: "Ad wasn't completed. Try again.",
   },
   errorPage: {
     title: "Something went wrong",
@@ -242,6 +243,40 @@ const en = {
         description: "A special reward available for a limited time.",
       },
     },
+  },
+  dailyBonus: {
+    modalTitle: "Daily Bonus",
+    loading: "Loading...",
+    loadError: "Couldn't load the daily bonus status.",
+    cooldownTitle: "Come back tomorrow!",
+    cooldownLabel: (time: string) => `⏱️ Next reward in: ${time}`,
+    adScreenTitle: "YOU NEED TO INTERACT WITH THE AD",
+    adScreenSubtitle: "Complete every step below to unlock your reward",
+    adButtons: {
+      go: "Go",
+      playNow: "Play Now",
+      joinNow: "Join Now",
+      view: "View",
+      open: "Open",
+      install: "Install",
+      buy: "Buy",
+      subscribe: "Subscribe",
+    },
+    checklist: {
+      watchFull: "Watch the ad to the end.",
+      twoButtons: "Tap at least 2 different ad buttons.",
+      stay5s: "Stay on the target page for at least 5 seconds.",
+    },
+    progress: (done: number, total: number) => `${done}/${total} completed`,
+    cancel: "Cancel",
+    claimButton: (amount: string) => `Verify / Claim ${amount} TON`,
+    claiming: "Verifying...",
+    claimError: "Couldn't claim the reward. Try again.",
+    adNotCompleted: "Ad wasn't completed. Try again.",
+    cooldownActiveError: "The cooldown is still active.",
+    claimedTitle: "Reward claimed!",
+    claimedAmount: (amount: string) => `+${amount} TON credited`,
+    done: "Done",
   },
 };
 

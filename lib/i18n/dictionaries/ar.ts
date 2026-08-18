@@ -146,6 +146,7 @@ const ar: TranslationDictionary = {
   watchAd: {
     button: "مشاهدة إعلان",
     loading: "جارٍ تحميل الإعلان...",
+    adNotCompleted: "لم تتم مشاهدة الإعلان بالكامل. حاول مرة أخرى.",
   },
   errorPage: {
     title: "حدث خطأ ما",
@@ -238,6 +239,40 @@ const ar: TranslationDictionary = {
         description: "مكافأة خاصة متاحة لفترة محدودة.",
       },
     },
+  },
+  dailyBonus: {
+    modalTitle: "Daily Bonus",
+    loading: "جارٍ التحميل...",
+    loadError: "تعذّر تحميل حالة المكافأة اليومية.",
+    cooldownTitle: "عد غدًا!",
+    cooldownLabel: (time) => `⏱️ المكافأة التالية خلال: ${time}`,
+    adScreenTitle: "عليك التفاعل مع الإعلان",
+    adScreenSubtitle: "أكمل جميع الخطوات أدناه لفتح مكافأتك",
+    adButtons: {
+      go: "اذهب",
+      playNow: "العب الآن",
+      joinNow: "انضم الآن",
+      view: "عرض",
+      open: "فتح",
+      install: "تثبيت",
+      buy: "شراء",
+      subscribe: "اشتراك",
+    },
+    checklist: {
+      watchFull: "شاهد الإعلان حتى النهاية.",
+      twoButtons: "اضغط على زرّين إعلانيين مختلفين على الأقل.",
+      stay5s: "ابقَ في الصفحة المستهدفة لمدة 5 ثوانٍ على الأقل.",
+    },
+    progress: (done, total) => `${done}/${total} مكتمل`,
+    cancel: "إلغاء",
+    claimButton: (amount) => `تحقّق / احصل على ${amount} TON`,
+    claiming: "جارٍ التحقق...",
+    claimError: "تعذّر الحصول على المكافأة. حاول مرة أخرى.",
+    adNotCompleted: "لم تتم مشاهدة الإعلان بالكامل. حاول مرة أخرى.",
+    cooldownActiveError: "فترة الانتظار ما زالت فعّالة.",
+    claimedTitle: "تم استلام المكافأة!",
+    claimedAmount: (amount) => `تمت إضافة ${amount}+ TON`,
+    done: "تم",
   },
 };
 

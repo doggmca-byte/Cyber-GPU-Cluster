@@ -146,6 +146,7 @@ const kk: TranslationDictionary = {
   watchAd: {
     button: "Жарнаманы көру",
     loading: "Жарнама жүктелуде...",
+    adNotCompleted: "Жарнама толық көрсетілмеді. Қайта көріңіз.",
   },
   errorPage: {
     title: "Бірдеңе дұрыс болмады",
@@ -239,6 +240,40 @@ const kk: TranslationDictionary = {
         description: "Уақыты шектеулі арнайы сыйақы.",
       },
     },
+  },
+  dailyBonus: {
+    modalTitle: "Daily Bonus",
+    loading: "Жүктелуде...",
+    loadError: "Күнделікті бонус күйін жүктеу мүмкін болмады.",
+    cooldownTitle: "Ертең қайта орал!",
+    cooldownLabel: (time) => `⏱️ Келесі сыйақыға дейін: ${time}`,
+    adScreenTitle: "ЖАРНАМАМЕН ӘРЕКЕТТЕСУ ҚАЖЕТ",
+    adScreenSubtitle: "Сыйақыны ашу үшін төмендегі барлық қадамдарды орында",
+    adButtons: {
+      go: "Өту",
+      playNow: "Қазір ойна",
+      joinNow: "Қосылу",
+      view: "Қарау",
+      open: "Ашу",
+      install: "Орнату",
+      buy: "Сатып алу",
+      subscribe: "Жазылу",
+    },
+    checklist: {
+      watchFull: "Жарнаманы соңына дейін қарап шық.",
+      twoButtons: "Кемінде 2 түрлі жарнама түймесін бас.",
+      stay5s: "Мақсатты бетте кемінде 5 секунд болу.",
+    },
+    progress: (done, total) => `${done}/${total} орындалды`,
+    cancel: "Бас тарту",
+    claimButton: (amount) => `Тексеру / ${amount} TON алу`,
+    claiming: "Тексерілуде...",
+    claimError: "Сыйақыны алу мүмкін болмады. Қайта көріңіз.",
+    adNotCompleted: "Жарнама толық көрсетілмеді. Қайта көріңіз.",
+    cooldownActiveError: "Күту уақыты әлі аяқталған жоқ.",
+    claimedTitle: "Сыйақы алынды!",
+    claimedAmount: (amount) => `+${amount} TON есептелді`,
+    done: "Дайын",
   },
 };
 

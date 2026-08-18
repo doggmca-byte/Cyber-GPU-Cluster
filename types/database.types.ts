@@ -1,6 +1,3 @@
-// Автогенеровано з живої схеми Supabase (mcp__supabase__generate_typescript_types).
-// Не редагувати вручну — перегенерувати після кожної нової міграції в supabase/migrations.
-
 export type Json =
   | string
   | number
@@ -53,6 +50,7 @@ export type Database = {
           harvest_count: number
           hash_balance: number
           id: string
+          last_daily_bonus_at: string | null
           lifetime_hash_generated: number
           referrer_id: string | null
           telegram_id: number
@@ -68,6 +66,7 @@ export type Database = {
           harvest_count?: number
           hash_balance?: number
           id?: string
+          last_daily_bonus_at?: string | null
           lifetime_hash_generated?: number
           referrer_id?: string | null
           telegram_id: number
@@ -83,6 +82,7 @@ export type Database = {
           harvest_count?: number
           hash_balance?: number
           id?: string
+          last_daily_bonus_at?: string | null
           lifetime_hash_generated?: number
           referrer_id?: string | null
           telegram_id?: number
@@ -343,6 +343,14 @@ export type Database = {
           hash_harvested: number
           new_game_balance: number
           new_gpu_amount: number
+        }[]
+      }
+      claim_daily_bonus: {
+        Args: { p_reward_amount: number; p_user_id: string }
+        Returns: {
+          game_balance: number
+          last_daily_bonus_at: string
+          withdrawable_balance: number
         }[]
       }
       claim_referral_rewards: {

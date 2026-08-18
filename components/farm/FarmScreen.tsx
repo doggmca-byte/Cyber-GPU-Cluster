@@ -11,6 +11,7 @@ import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 import type { HarvestResponse, SyncResponse } from "@/types/api";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { TasksEntryButton } from "@/components/tasks/TasksEntryButton";
+import { DailyBonusModal } from "@/components/daily/DailyBonusModal";
 
 export function FarmScreen() {
   const { state } = useUserData();
@@ -82,6 +83,8 @@ function FarmScreenReady({ data, initData }: { data: SyncResponse; initData: str
   const displayName = profile.first_name || profile.username || `#${profile.telegram_id}`;
   const hashPerHour = total_hash_per_second * 3600;
 
+  const [isDailyBonusOpen, setIsDailyBonusOpen] = useState(false);
+
   return (
     <div className="flex flex-col gap-4">
       <ProfileCard
@@ -89,7 +92,12 @@ function FarmScreenReady({ data, initData }: { data: SyncResponse; initData: str
         username={profile.username}
         telegramId={profile.telegram_id}
         photoUrl={photoUrl}
+        onOpenDailyBonus={() => setIsDailyBonusOpen(true)}
       />
+
+      {isDailyBonusOpen && (
+        <DailyBonusModal initData={initData} onClose={() => setIsDailyBonusOpen(false)} />
+      )}
 
       <TasksEntryButton initData={initData} />
 
@@ -117,11 +125,13 @@ function ProfileCard({
   username,
   telegramId,
   photoUrl,
+  onOpenDailyBonus,
 }: {
   displayName: string;
   username: string | null;
   telegramId: number;
   photoUrl?: string;
+  onOpenDailyBonus: () => void;
 }) {
   const { t } = useTranslation();
   const initial = displayName.charAt(0).toUpperCase();
@@ -148,9 +158,8 @@ function ProfileCard({
 
       <button
         type="button"
-        disabled
-        title={t.common.comingSoon}
-        className="flex shrink-0 items-center gap-1 rounded-full border border-neon-gold/30 bg-neon-gold/10 px-3 py-1.5 text-[11px] font-semibold text-neon-gold opacity-60"
+        onClick={onOpenDailyBonus}
+        className="flex shrink-0 items-center gap-1 rounded-full border border-neon-gold/30 bg-neon-gold/10 px-3 py-1.5 text-[11px] font-semibold text-neon-gold transition active:scale-95"
       >
         <Gift size={13} />
         {t.farm.dailyBonus}

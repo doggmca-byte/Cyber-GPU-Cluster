@@ -146,6 +146,7 @@ const tr: TranslationDictionary = {
   watchAd: {
     button: "Reklam izle",
     loading: "Reklam yükleniyor...",
+    adNotCompleted: "Reklam tamamlanmadı. Tekrar dene.",
   },
   errorPage: {
     title: "Bir şeyler ters gitti",
@@ -239,6 +240,40 @@ const tr: TranslationDictionary = {
         description: "Sınırlı süre için geçerli özel bir ödül.",
       },
     },
+  },
+  dailyBonus: {
+    modalTitle: "Daily Bonus",
+    loading: "Yükleniyor...",
+    loadError: "Günlük bonus durumu yüklenemedi.",
+    cooldownTitle: "Yarın tekrar gel!",
+    cooldownLabel: (time) => `⏱️ Sonraki ödüle kalan süre: ${time}`,
+    adScreenTitle: "REKLAMLA ETKİLEŞİME GEÇMENİZ GEREKİYOR",
+    adScreenSubtitle: "Ödülünü açmak için aşağıdaki tüm adımları tamamla",
+    adButtons: {
+      go: "Git",
+      playNow: "Şimdi Oyna",
+      joinNow: "Şimdi Katıl",
+      view: "Görüntüle",
+      open: "Aç",
+      install: "Yükle",
+      buy: "Satın Al",
+      subscribe: "Abone Ol",
+    },
+    checklist: {
+      watchFull: "Reklamı sonuna kadar izle.",
+      twoButtons: "En az 2 farklı reklam butonuna dokun.",
+      stay5s: "Hedef sayfada en az 5 saniye kal.",
+    },
+    progress: (done, total) => `${done}/${total} tamamlandı`,
+    cancel: "İptal",
+    claimButton: (amount) => `Doğrula / ${amount} TON Al`,
+    claiming: "Doğrulanıyor...",
+    claimError: "Ödül alınamadı. Tekrar dene.",
+    adNotCompleted: "Reklam tamamlanmadı. Tekrar dene.",
+    cooldownActiveError: "Bekleme süresi hâlâ aktif.",
+    claimedTitle: "Ödül alındı!",
+    claimedAmount: (amount) => `+${amount} TON yatırıldı`,
+    done: "Tamam",
   },
 };
 

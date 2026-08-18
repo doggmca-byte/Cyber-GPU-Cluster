@@ -136,3 +136,24 @@ export interface TaskClaimResponse {
   withdrawal_quota: number;
   server_time: string;
 }
+
+// ---------------------------------------------------------------------------
+// Daily Bonus (Щоденна нагорода)
+// ---------------------------------------------------------------------------
+
+export interface DailyBonusStatusResponse {
+  can_claim: boolean;
+  /** Скільки секунд лишилось до наступної доступності — 0, якщо can_claim. */
+  cooldown_seconds: number;
+  reward_amount: number;
+  last_claim_at: string | null;
+  server_time: string;
+}
+
+export interface DailyBonusClaimResponse {
+  reward_amount: number;
+  game_balance: number;
+  withdrawable_balance: number;
+  last_daily_bonus_at: string;
+  server_time: string;
+}
