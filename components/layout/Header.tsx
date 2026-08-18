@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Zap, Gem } from "lucide-react";
+import { Zap, Gem, ShieldCheck } from "lucide-react";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
@@ -43,8 +44,27 @@ export function Header() {
         </div>
       </div>
 
-      {/* Самодостатній компонент — сам володіє isOpen, закритий за замовчуванням. */}
-      <LanguageSelector />
+      <div className="flex items-center gap-2">
+        {/* Непомітна іконка входу в /admin — навмисно завжди в розмітці (не
+            приховуємо за клієнтською перевіркою telegram_id, бо
+            TELEGRAM_ADMIN_IDS — серверний секрет, і його ніде не читати
+            в клієнтському коді). Справжній захист — requireAdminAuth() на
+            бекенді (lib/admin/auth.ts): для будь-кого, крім акаунтів зі
+            списку, /admin одразу поверне "403 Access Denied". Клік звідси
+            (а не за посиланням поза Telegram) — єдиний надійний спосіб
+            потрапити туди, бо це навігація ВСЕРЕДИНІ вже живої Mini App
+            WebView-сесії, тож window.Telegram.WebApp.initData точно є. */}
+        <Link
+          href="/admin"
+          aria-label="Admin"
+          className="rounded-full border border-white/10 bg-background-card p-2 text-white/30 transition hover:border-neon-purple/50 hover:text-neon-purple"
+        >
+          <ShieldCheck size={15} />
+        </Link>
+
+        {/* Самодостатній компонент — сам володіє isOpen, закритий за замовчуванням. */}
+        <LanguageSelector />
+      </div>
     </header>
   );
 }
