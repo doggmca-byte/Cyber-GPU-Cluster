@@ -51,6 +51,9 @@ const en = {
     harvestButton: "Collect HASH",
     harvesting: "Collecting...",
     emptyGpuList: "You don't have any GPUs yet. Check out the Market to start mining.",
+    activeServers: "Active Servers",
+    buyNewServer: "Buy New Server",
+    uptime: "Uptime",
   },
   market: {
     gameBalance: "Game balance",

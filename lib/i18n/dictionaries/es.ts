@@ -49,6 +49,9 @@ const es: TranslationDictionary = {
     harvestButton: "Recolectar HASH",
     harvesting: "Recolectando...",
     emptyGpuList: "Todavía no tienes ninguna GPU. Visita el Mercado para empezar a minar.",
+    activeServers: "Servidores activos",
+    buyNewServer: "Comprar nuevo servidor",
+    uptime: "Tiempo activo",
   },
   market: {
     gameBalance: "Saldo de juego",

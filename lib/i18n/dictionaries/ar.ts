@@ -48,6 +48,9 @@ const ar: TranslationDictionary = {
     harvestButton: "جمع HASH",
     harvesting: "جارٍ الجمع...",
     emptyGpuList: "ليس لديك أي بطاقة رسومية بعد. تفقد المتجر لبدء التعدين.",
+    activeServers: "الخوادم النشطة",
+    buyNewServer: "شراء خادم جديد",
+    uptime: "مدة التشغيل",
   },
   market: {
     gameBalance: "رصيد اللعبة",

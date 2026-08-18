@@ -48,6 +48,9 @@ const tr: TranslationDictionary = {
     harvestButton: "HASH Topla",
     harvesting: "Toplanıyor...",
     emptyGpuList: "Henüz hiç GPU'n yok. Madenciliğe başlamak için Market'e göz at.",
+    activeServers: "Aktif Sunucular",
+    buyNewServer: "Yeni Sunucu Satın Al",
+    uptime: "Çalışma Süresi",
   },
   market: {
     gameBalance: "Oyun bakiyesi",

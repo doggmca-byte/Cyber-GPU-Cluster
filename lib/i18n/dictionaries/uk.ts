@@ -48,6 +48,9 @@ const uk: TranslationDictionary = {
     harvestButton: "Зібрати HASH",
     harvesting: "Збираємо...",
     emptyGpuList: "У тебе ще немає GPU. Загляни на Market, щоб почати майнити.",
+    activeServers: "Активні сервери",
+    buyNewServer: "Купити новий сервер",
+    uptime: "Час роботи",
   },
   market: {
     gameBalance: "Ігровий баланс",

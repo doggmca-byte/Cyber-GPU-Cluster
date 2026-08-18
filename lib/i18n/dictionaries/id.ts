@@ -48,6 +48,9 @@ const id: TranslationDictionary = {
     harvestButton: "Kumpulkan HASH",
     harvesting: "Mengumpulkan...",
     emptyGpuList: "Kamu belum punya GPU. Cek Pasar untuk mulai menambang.",
+    activeServers: "Server Aktif",
+    buyNewServer: "Beli Server Baru",
+    uptime: "Waktu Aktif",
   },
   market: {
     gameBalance: "Saldo game",

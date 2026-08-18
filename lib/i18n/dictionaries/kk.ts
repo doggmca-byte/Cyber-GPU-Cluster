@@ -48,6 +48,9 @@ const kk: TranslationDictionary = {
     harvestButton: "HASH жинау",
     harvesting: "Жиналуда...",
     emptyGpuList: "Сенде әлі GPU жоқ. Кен өндіруді бастау үшін Дүкенге қара.",
+    activeServers: "Белсенді серверлер",
+    buyNewServer: "Жаңа сервер сатып алу",
+    uptime: "Жұмыс уақыты",
   },
   market: {
     gameBalance: "Ойын балансы",
