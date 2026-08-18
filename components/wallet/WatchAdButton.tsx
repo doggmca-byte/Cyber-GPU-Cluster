@@ -4,22 +4,24 @@ import { useState } from "react";
 import { PlayCircle } from "lucide-react";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
-import { showRewardedAd } from "@/lib/ads/monetag";
+import { showRewardedAdRotating } from "@/lib/ads/rewardedAd";
 import { openDirectAdLink } from "@/lib/ads/openAdLink";
 import type { AdWatchResponse } from "@/types/api";
 
 /**
  * "Ads for Cashout" лічильник (MIN_ADS_BEFORE_WITHDRAW/20) і швидка кнопка
- * бонусної реклами. Клік запускає два незалежні монетизаційні канали
- * Monetag разом:
- *  - Direct Link (openDirectAdLink, lib/ads/openAdLink.ts) — відкривається
- *    одразу, без очікування. Немає промісу завершення, тож не впливає на
- *    інкремент лічильника — паралельний дохід.
- *  - SDK Rewarded Interstitial (showRewardedAd, zone 11600101,
- *    lib/ads/monetag.ts) — /api/ads/watch (інкремент ads_watched_since_withdraw)
- *    викликається лише після успішного резолву його промісу.
- * Немає server-side callback від Monetag, тож справжній захист від накрутки
- * лишається на бекенді (RPC record_ad_watch).
+ * бонусної реклами. Клік запускає два незалежні монетизаційні канали:
+ *  - Monetag Direct Link (openDirectAdLink, lib/ads/openAdLink.ts) —
+ *    відкривається одразу, без очікування. Немає промісу завершення, тож
+ *    не впливає на інкремент лічильника — паралельний дохід.
+ *  - Rewarded-показ через showRewardedAdRotating (lib/ads/rewardedAd.ts) —
+ *    чергує GigaPub (App ID 7784) і Monetag (zone 11600101) від виклику до
+ *    виклику, з автоматичним fallback на другого провайдера, якщо в
+ *    першого немає реклами. /api/ads/watch (інкремент
+ *    ads_watched_since_withdraw) викликається лише якщо БУДЬ-ЯКИЙ з двох
+ *    показав рекламу успішно.
+ * Немає server-side callback від жодного з провайдерів, тож справжній
+ * захист від накрутки лишається на бекенді (RPC record_ad_watch).
  */
 export function WatchAdButton({ initData }: { initData: string }) {
   const { t } = useTranslation();
@@ -37,7 +39,7 @@ export function WatchAdButton({ initData }: { initData: string }) {
     try {
       openDirectAdLink(telegramId);
 
-      const adWatched = await showRewardedAd();
+      const adWatched = await showRewardedAdRotating();
       if (!adWatched) {
         setError(t.watchAd.adNotCompleted);
         return;

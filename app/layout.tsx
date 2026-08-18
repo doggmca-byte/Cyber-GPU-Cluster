@@ -60,6 +60,13 @@ export default function RootLayout({
           потрібно — це і рятує від SSR/CSR-розбіжностей гідратації.
         */}
         <Script data-sdk="show_11600101" data-zone="11600101" src="//libtl.com/sdk.js" strategy="afterInteractive" />
+        {/*
+          GigaPub SDK (App ID 7784) — реєструє window.showGiga, який дергає
+          lib/ads/gigapub.ts (showGigaRewardedAd). Другий rewarded-провайдер
+          поряд із Monetag SDK вище — DailyBonusModal/WatchAdButton показують
+          обидва послідовно перед клеймом/нарахуванням.
+        */}
+        <Script src="https://ad.gigapub.tech/script?id=7784" strategy="afterInteractive" />
         {children}
       </body>
     </html>
