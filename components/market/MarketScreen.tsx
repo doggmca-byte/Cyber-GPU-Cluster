@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Cpu, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
+import { MinerIcon } from "@/components/miners/MinerIcons";
 import type { BuyGpuResponse, GpuTemplate, SyncResponse } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 
@@ -138,8 +139,8 @@ function GpuCard({
   return (
     <div className="glass-card p-4">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-neon-cyan/10 text-neon-cyan">
-          <Cpu size={22} />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-neon-cyan/10">
+          <MinerIcon level={template.level} rarity={template.rarity} className="h-6 w-6" />
         </div>
 
         <div className="min-w-0 flex-1">

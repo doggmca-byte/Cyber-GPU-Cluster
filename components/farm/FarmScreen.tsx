@@ -13,6 +13,7 @@ import type { HarvestResponse, SyncResponse } from "@/types/api";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { TasksEntryButton } from "@/components/tasks/TasksEntryButton";
 import { DailyBonusModal } from "@/components/daily/DailyBonusModal";
+import { MinerIcon } from "@/components/miners/MinerIcons";
 
 export function FarmScreen() {
   const { state } = useUserData();
@@ -318,8 +319,8 @@ function ServerRow({
 
   return (
     <div className="glass-card flex items-center gap-3 p-3.5">
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-neon-cyan/20 bg-gradient-to-br from-neon-cyan/15 to-neon-purple/10 text-neon-cyan shadow-neon-cyan">
-        <Cpu size={26} />
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-neon-cyan/20 bg-gradient-to-br from-neon-cyan/15 to-neon-purple/10 shadow-neon-cyan">
+        <MinerIcon level={template.level} rarity={template.rarity} className="h-7 w-7" />
       </div>
 
       <div className="min-w-0 flex-1">
