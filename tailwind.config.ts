@@ -1,7 +1,10 @@
 import type { Config } from "tailwindcss";
 import defaultTheme from "tailwindcss/defaultTheme";
 
-// Cyberpunk Dark Glassmorphism
+// Clean Dark Flat UI — суцільні матові поверхні, без неонового світіння/blur.
+// Токени "neon.*"/"shadow-neon-*" лишили назви для мінімального diff у
+// компонентах (сотні існуючих className), але самі значення тепер приглушені
+// акцентні кольори без glow — shadow-neon-* навмисно "none".
 const config: Config = {
   content: [
     "./app/**/*.{ts,tsx}",
@@ -12,25 +15,25 @@ const config: Config = {
     extend: {
       colors: {
         background: {
-          DEFAULT: "#080b11",
-          card: "#101726",
+          DEFAULT: "#0b0e14",
+          card: "#161b22",
         },
         neon: {
           cyan: "#22d3ee",
-          purple: "#b026ff",
-          green: "#39ff88",
-          gold: "#ffb800",
+          purple: "#a78bfa",
+          green: "#34d399",
+          gold: "#fbbf24",
         },
       },
       fontFamily: {
         sans: ["var(--font-inter)", ...defaultTheme.fontFamily.sans],
-        display: ["var(--font-orbitron)", ...defaultTheme.fontFamily.sans],
+        display: ["var(--font-inter)", ...defaultTheme.fontFamily.sans],
       },
       boxShadow: {
-        "neon-cyan": "0 0 20px -2px rgba(34, 211, 238, 0.35)",
-        "neon-purple": "0 0 20px -2px rgba(176, 38, 255, 0.35)",
-        "neon-green": "0 0 20px -2px rgba(57, 255, 136, 0.35)",
-        "neon-gold": "0 0 20px -2px rgba(255, 184, 0, 0.35)",
+        "neon-cyan": "none",
+        "neon-purple": "none",
+        "neon-green": "none",
+        "neon-gold": "none",
       },
       backdropBlur: {
         xs: "2px",
@@ -40,15 +43,6 @@ const config: Config = {
       },
       minHeight: {
         dvh: "100dvh",
-      },
-      keyframes: {
-        "neon-pulse": {
-          "0%, 100%": { boxShadow: "0 0 20px -2px rgba(34, 211, 238, 0.35)" },
-          "50%": { boxShadow: "0 0 42px 2px rgba(34, 211, 238, 0.65)" },
-        },
-      },
-      animation: {
-        "neon-pulse": "neon-pulse 2.4s ease-in-out infinite",
       },
     },
   },

@@ -31,16 +31,16 @@ export function Modal({ title, onClose, children }: ModalProps) {
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
 
-      <div className="glass-card relative z-10 w-full max-w-lg rounded-b-none border-b-0 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-neon-cyan">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-base font-bold">{title}</h2>
+      <div className="glass-card relative z-10 w-full max-w-lg rounded-b-none border-b-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="mb-3.5 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-white">{title}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label={t.common.close}
-            className="rounded-full p-1.5 text-white/50 transition hover:bg-white/5 hover:text-white"
+            className="rounded-full p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-white"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 

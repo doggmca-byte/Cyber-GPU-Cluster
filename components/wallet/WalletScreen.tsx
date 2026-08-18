@@ -35,35 +35,35 @@ function WalletScreenReady({ data, initData }: { data: SyncResponse; initData: s
         <BalanceCard label={t.wallet.withdrawable} value={profile.withdrawable_balance} accent="purple" />
       </div>
 
-      <div className="glass-card p-4">
-        <div className="flex items-center gap-2 text-xs text-white/40">
-          <Gauge size={14} />
+      <div className="glass-card p-3.5">
+        <div className="flex items-center gap-2 text-[11px] text-slate-500">
+          <Gauge size={13} />
           {t.wallet.quota}
         </div>
-        <p className="mt-1 font-display text-lg font-bold">
+        <p className="mt-1 text-base font-semibold text-white">
           {formatNumber(language, profile.withdrawal_quota, { maximumFractionDigits: 4 })} {t.common.ton}
         </p>
-        <p className="mt-1 text-[11px] text-white/30">
+        <p className="mt-1 text-[10px] text-slate-500">
           {t.wallet.adsWatched(profile.ads_watched_since_withdraw, MIN_ADS_BEFORE_WITHDRAW)}
         </p>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-2.5">
         <button
           type="button"
           onClick={() => setOpenModal("deposit")}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple py-3 text-sm font-bold text-background transition active:scale-[0.98]"
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-neon-cyan py-2.5 text-xs font-semibold text-background transition active:scale-[0.98]"
         >
-          <ArrowDownToLine size={16} />
+          <ArrowDownToLine size={15} />
           {t.wallet.depositButton}
         </button>
 
         <button
           type="button"
           onClick={() => setOpenModal("withdraw")}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 py-3 text-sm font-bold text-white/80 transition hover:border-neon-cyan/40 hover:text-neon-cyan active:scale-[0.98]"
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/10 py-2.5 text-xs font-semibold text-slate-300 transition active:scale-[0.98] hover:bg-white/5"
         >
-          <ArrowUpFromLine size={16} />
+          <ArrowUpFromLine size={15} />
           {t.wallet.withdrawButton}
         </button>
       </div>
@@ -88,16 +88,15 @@ function BalanceCard({
   accent: "cyan" | "purple";
 }) {
   const { t, language } = useTranslation();
-  const shadow = accent === "cyan" ? "shadow-neon-cyan" : "shadow-neon-purple";
   const color = accent === "cyan" ? "text-neon-cyan" : "text-neon-purple";
 
   return (
-    <div className={`glass-card p-4 ${shadow}`}>
-      <p className="text-xs uppercase tracking-wide text-white/40">{label}</p>
-      <p className={`mt-1 font-display text-xl font-extrabold ${color}`}>
+    <div className="glass-card p-3.5">
+      <p className="text-[10px] uppercase tracking-wide text-slate-500">{label}</p>
+      <p className={`mt-1 text-lg font-bold ${color}`}>
         {formatNumber(language, value, { maximumFractionDigits: 2 })}
       </p>
-      <p className="text-[11px] text-white/30">{t.common.ton}</p>
+      <p className="text-[10px] text-slate-500">{t.common.ton}</p>
     </div>
   );
 }

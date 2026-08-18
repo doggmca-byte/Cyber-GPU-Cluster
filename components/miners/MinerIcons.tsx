@@ -245,13 +245,7 @@ export function MinerIcon({ level, rarity, className }: MinerIconProps) {
   const Glyph = glyphForLevel(level);
 
   return (
-    <span
-      className={className}
-      style={{
-        color,
-        filter: `drop-shadow(0 0 5px ${color}99) drop-shadow(0 0 1px ${color})`,
-      }}
-    >
+    <span className={className} style={{ color }}>
       <svg
         viewBox="0 0 48 48"
         fill="none"

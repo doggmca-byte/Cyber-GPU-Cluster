@@ -110,13 +110,11 @@ export function DepositModal({
   return (
     <Modal title={t.wallet.deposit.title} onClose={onClose}>
       {!isConfigured ? (
-        <p className="text-sm text-white/50">{t.wallet.deposit.notConfigured}</p>
+        <p className="text-xs text-slate-400">{t.wallet.deposit.notConfigured}</p>
       ) : status === "success" ? (
-        <div className="flex flex-col items-center gap-2 py-4 text-center">
-          <p className="font-display text-lg font-bold text-neon-green">
-            {t.wallet.deposit.creditedTitle}
-          </p>
-          <p className="text-sm text-white/60">
+        <div className="flex flex-col items-center gap-2 py-3 text-center">
+          <p className="text-base font-semibold text-neon-green">{t.wallet.deposit.creditedTitle}</p>
+          <p className="text-xs text-slate-400">
             {t.wallet.deposit.creditedAmount(
               formatNumber(language, creditedAmount ?? 0, { maximumFractionDigits: 6 }),
             )}
@@ -124,7 +122,7 @@ export function DepositModal({
           <button
             type="button"
             onClick={onClose}
-            className="mt-3 w-full rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple py-2.5 text-sm font-bold text-background"
+            className="mt-3 w-full rounded-2xl bg-neon-cyan py-2.5 text-xs font-semibold text-background"
           >
             {t.wallet.deposit.done}
           </button>
@@ -137,19 +135,19 @@ export function DepositModal({
 
           {walletAddress && (
             <>
-              <p className="text-xs text-white/40">{t.wallet.deposit.chooseAmount}</p>
+              <p className="text-[11px] text-slate-500">{t.wallet.deposit.chooseAmount}</p>
 
-              <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="mt-2.5 grid grid-cols-3 gap-2">
                 {PRESETS_TON.map((preset) => (
                   <button
                     key={preset}
                     type="button"
                     disabled={isBusy}
                     onClick={() => setSelected(preset)}
-                    className={`rounded-xl border py-2.5 text-sm font-semibold transition disabled:opacity-40 ${
+                    className={`rounded-xl py-2 text-xs font-semibold transition disabled:opacity-40 ${
                       selected === preset
-                        ? "border-neon-cyan/50 bg-neon-cyan/10 text-neon-cyan"
-                        : "border-white/10 text-white/60 hover:text-white/90"
+                        ? "bg-neon-cyan/10 text-neon-cyan"
+                        : "bg-white/5 text-slate-400 hover:text-slate-200"
                     }`}
                   >
                     {preset} {t.common.ton}
@@ -161,7 +159,7 @@ export function DepositModal({
                 type="button"
                 onClick={deposit}
                 disabled={!selected || isBusy}
-                className="mt-4 w-full rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple py-3 text-sm font-bold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                className="mt-3.5 w-full rounded-2xl bg-neon-cyan py-2.5 text-xs font-semibold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {status === "sending"
                   ? t.wallet.deposit.confirmInWallet
@@ -172,11 +170,11 @@ export function DepositModal({
                       : t.wallet.deposit.pickAmount}
               </button>
 
-              {error && <p className="mt-2 text-center text-xs text-red-400">{error}</p>}
+              {error && <p className="mt-2 text-center text-[11px] text-red-400">{error}</p>}
             </>
           )}
 
-          <p className="mt-3 text-center text-[11px] text-white/30">{t.wallet.deposit.disclaimer}</p>
+          <p className="mt-3 text-center text-[10px] text-slate-600">{t.wallet.deposit.disclaimer}</p>
         </>
       )}
     </Modal>

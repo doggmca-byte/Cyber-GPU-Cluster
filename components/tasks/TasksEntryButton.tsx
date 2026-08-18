@@ -42,29 +42,26 @@ export function TasksEntryButton({ initData }: { initData: string }) {
   const hasClaimable = (summary?.claimable ?? 0) > 0;
 
   return (
-    <Link
-      href="/tasks"
-      className={`glass-card flex items-center justify-between gap-2 px-4 py-3 transition active:scale-[0.98] ${
-        hasClaimable ? "animate-neon-pulse border-neon-gold/40 shadow-neon-gold" : "shadow-neon-purple"
-      }`}
-    >
+    <Link href="/tasks" className="glass-card flex items-center justify-between gap-2 px-3.5 py-2.5 transition active:scale-[0.98]">
       <div className="flex items-center gap-2.5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neon-purple/10 text-neon-purple">
-          <ListChecks size={18} />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-neon-purple/10 text-neon-purple">
+          <ListChecks size={16} />
         </div>
         <div>
-          <p className="text-sm font-semibold">{t.tasks.openButton}</p>
-          {summary && <p className="text-[11px] text-white/40">{t.tasks.progress(summary.completed, summary.total)}</p>}
+          <p className="text-xs font-semibold text-white">{t.tasks.openButton}</p>
+          {summary && (
+            <p className="text-[10px] text-slate-500">{t.tasks.progress(summary.completed, summary.total)}</p>
+          )}
         </div>
       </div>
 
       <div className="flex items-center gap-2">
         {hasClaimable && (
-          <span className="rounded-full bg-neon-gold px-2 py-0.5 text-[10px] font-black text-background">
+          <span className="rounded-full bg-neon-gold px-1.5 py-0.5 text-[10px] font-bold text-background">
             {summary?.claimable}
           </span>
         )}
-        <ChevronRight size={16} className="text-white/30" />
+        <ChevronRight size={14} className="text-slate-600" />
       </div>
     </Link>
   );

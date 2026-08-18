@@ -137,15 +137,15 @@ function FriendsScreenReady({ data, initData }: { data: SyncResponse; initData: 
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3">
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 gap-2.5">
         <StatCard
-          icon={<Users size={16} className="text-neon-cyan" />}
+          icon={<Users size={14} className="text-neon-cyan" />}
           label={t.friends.invitedFriends}
           value={stats ? String(stats.friends_count) : "—"}
         />
         <StatCard
-          icon={<Coins size={16} className="text-neon-gold" />}
+          icon={<Coins size={14} className="text-neon-gold" />}
           label={t.friends.totalEarned}
           value={
             stats
@@ -156,12 +156,12 @@ function FriendsScreenReady({ data, initData }: { data: SyncResponse; initData: 
       </div>
 
       {statsError && (
-        <div className="glass-card p-4 text-center text-xs text-red-400">{statsError}</div>
+        <div className="glass-card p-3.5 text-center text-[11px] text-red-400">{statsError}</div>
       )}
 
-      <div className="glass-card p-4 shadow-neon-green">
-        <p className="text-xs uppercase tracking-wide text-white/50">{t.friends.pendingCommission}</p>
-        <p className="mt-1 font-display text-2xl font-extrabold text-neon-green">
+      <div className="glass-card p-3.5">
+        <p className="text-[11px] uppercase tracking-wide text-slate-500">{t.friends.pendingCommission}</p>
+        <p className="mt-1 text-xl font-bold text-neon-green">
           {stats ? formatNumber(language, stats.pending_reward, { maximumFractionDigits: 6 }) : "0"}{" "}
           {t.common.ton}
         </p>
@@ -170,21 +170,21 @@ function FriendsScreenReady({ data, initData }: { data: SyncResponse; initData: 
           type="button"
           onClick={claim}
           disabled={!stats || stats.pending_reward <= 0 || isClaiming}
-          className="mt-3 w-full rounded-xl bg-gradient-to-r from-neon-green to-neon-cyan py-2.5 text-sm font-bold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+          className="mt-2.5 w-full rounded-2xl bg-neon-green py-2.5 text-xs font-semibold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isClaiming ? t.friends.claiming : t.friends.claimButton}
         </button>
 
-        {claimError && <p className="mt-2 text-center text-xs text-red-400">{claimError}</p>}
-        {claimSuccess && <p className="mt-2 text-center text-xs text-neon-green">{claimSuccess}</p>}
+        {claimError && <p className="mt-2 text-center text-[11px] text-red-400">{claimError}</p>}
+        {claimSuccess && <p className="mt-2 text-center text-[11px] text-neon-green">{claimSuccess}</p>}
       </div>
 
-      <div className="glass-card p-4">
-        <div className="flex items-center gap-1.5 text-sm font-semibold">
-          <Info size={14} className="text-neon-cyan" />
+      <div className="glass-card p-3.5">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
+          <Info size={13} className="text-neon-cyan" />
           {t.friends.rulesTitle}
         </div>
-        <ul className="mt-2 flex flex-col gap-1.5 text-xs text-white/50">
+        <ul className="mt-2 flex flex-col gap-1.5 text-[11px] text-slate-400">
           <li>
             •{" "}
             {t.friends.ruleRevshare(
@@ -201,36 +201,36 @@ function FriendsScreenReady({ data, initData }: { data: SyncResponse; initData: 
         </ul>
       </div>
 
-      <div className="glass-card p-4">
-        <p className="text-sm font-semibold">{t.friends.yourLink}</p>
+      <div className="glass-card p-3.5">
+        <p className="text-xs font-semibold text-white">{t.friends.yourLink}</p>
 
         {referralLink ? (
           <>
-            <p className="mt-2 truncate rounded-xl bg-white/[0.03] px-3 py-2 text-xs text-white/60">
+            <p className="mt-2 truncate rounded-2xl bg-white/[0.03] px-3 py-2 text-[11px] text-slate-400">
               {referralLink}
             </p>
 
-            <div className="mt-3 flex gap-2">
+            <div className="mt-2.5 flex gap-2">
               <button
                 type="button"
                 onClick={shareLink}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple py-2.5 text-sm font-bold text-background transition active:scale-[0.98]"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-neon-cyan py-2.5 text-xs font-semibold text-background transition active:scale-[0.98]"
               >
-                <Send size={15} />
+                <Send size={14} />
                 {t.friends.share}
               </button>
 
               <button
                 type="button"
                 onClick={copyLink}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold text-white/70 transition hover:border-neon-cyan/40 hover:text-neon-cyan"
+                className="flex items-center justify-center gap-1.5 rounded-2xl bg-white/5 px-3.5 py-2.5 text-xs font-semibold text-slate-300 transition hover:text-neon-cyan"
               >
-                {copied ? <Check size={15} className="text-neon-green" /> : <Copy size={15} />}
+                {copied ? <Check size={14} className="text-neon-green" /> : <Copy size={14} />}
               </button>
             </div>
           </>
         ) : (
-          <p className="mt-2 text-xs text-white/40">{t.friends.notConfigured}</p>
+          <p className="mt-2 text-[11px] text-slate-500">{t.friends.notConfigured}</p>
         )}
       </div>
     </div>
@@ -247,12 +247,12 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="glass-card p-3.5">
-      <div className="flex items-center gap-1.5 text-xs text-white/40">
+    <div className="glass-card p-3">
+      <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
         {icon}
         {label}
       </div>
-      <p className="mt-1.5 font-display text-lg font-bold">{value}</p>
+      <p className="mt-1.5 text-base font-bold text-white">{value}</p>
     </div>
   );
 }

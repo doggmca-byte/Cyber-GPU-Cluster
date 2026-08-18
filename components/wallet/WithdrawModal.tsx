@@ -143,11 +143,11 @@ export function WithdrawModal({
   return (
     <Modal title={t.wallet.withdraw.title} onClose={onClose}>
       {!adsProgress && (
-        <div className="mb-4 rounded-xl border border-neon-gold/30 bg-neon-gold/10 p-3">
-          <p className="text-xs font-semibold text-neon-gold">
+        <div className="mb-3.5 rounded-2xl bg-neon-gold/10 p-2.5">
+          <p className="text-[11px] font-semibold text-neon-gold">
             {t.wallet.withdraw.watchAdsPrompt(profile.ads_watched_since_withdraw, MIN_ADS_BEFORE_WITHDRAW)}
           </p>
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10">
             <div
               className="h-full rounded-full bg-neon-gold"
               style={{
@@ -155,27 +155,27 @@ export function WithdrawModal({
               }}
             />
           </div>
-          <div className="mt-3">
+          <div className="mt-2.5">
             <WatchAdButton initData={initData} />
           </div>
         </div>
       )}
 
-      <div className="flex items-center justify-between text-xs text-white/40">
+      <div className="flex items-center justify-between text-[11px] text-slate-500">
         <span>{t.wallet.withdraw.balanceLabel}</span>
-        <span className="font-semibold text-white/70">
+        <span className="font-semibold text-slate-300">
           {formatNumber(language, profile.withdrawable_balance, { maximumFractionDigits: 4 })}{" "}
           {t.common.ton}
         </span>
       </div>
-      <div className="mt-1 flex items-center justify-between text-xs text-white/40">
+      <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
         <span>{t.wallet.withdraw.quotaLabel}</span>
-        <span className="font-semibold text-white/70">
+        <span className="font-semibold text-slate-300">
           {formatNumber(language, profile.withdrawal_quota, { maximumFractionDigits: 4 })} {t.common.ton}
         </span>
       </div>
 
-      <label className="mt-3 block text-xs text-white/40">{t.wallet.withdraw.addressLabel}</label>
+      <label className="mt-2.5 block text-[11px] text-slate-500">{t.wallet.withdraw.addressLabel}</label>
       <input
         type="text"
         placeholder={t.wallet.withdraw.addressPlaceholder}
@@ -184,19 +184,19 @@ export function WithdrawModal({
           setAddressTouched(true);
           setAddress(e.target.value);
         }}
-        className="mt-1 w-full rounded-xl border border-white/10 bg-background px-3.5 py-2.5 text-sm outline-none transition focus:border-neon-cyan/60 disabled:opacity-40"
+        className="mt-1 w-full rounded-2xl border border-white/5 bg-[#0b0e14] px-3 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-neon-cyan/40 disabled:opacity-40"
       />
       {address.trim().length > 0 && !addressOk && (
-        <p className="mt-1 text-xs text-red-400">{t.wallet.withdraw.invalidAddress}</p>
+        <p className="mt-1 text-[11px] text-red-400">{t.wallet.withdraw.invalidAddress}</p>
       )}
 
       {alreadyRequestedToday && (
-        <p className="mt-3 rounded-xl border border-neon-gold/30 bg-neon-gold/10 p-2.5 text-xs font-semibold text-neon-gold">
+        <p className="mt-2.5 rounded-2xl bg-neon-gold/10 p-2 text-[11px] font-semibold text-neon-gold">
           {t.wallet.withdraw.oneRequestPerDay}
         </p>
       )}
 
-      <label className="mt-3 block text-xs text-white/40">{t.wallet.withdraw.amountLabel}</label>
+      <label className="mt-2.5 block text-[11px] text-slate-500">{t.wallet.withdraw.amountLabel}</label>
       <input
         type="number"
         inputMode="decimal"
@@ -204,31 +204,31 @@ export function WithdrawModal({
         value={amount}
         disabled={alreadyRequestedToday}
         onChange={(e) => setAmount(e.target.value)}
-        className="mt-1 w-full rounded-xl border border-white/10 bg-background px-3.5 py-2.5 text-sm outline-none transition focus:border-neon-cyan/60 disabled:opacity-40"
+        className="mt-1 w-full rounded-2xl border border-white/5 bg-[#0b0e14] px-3 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-neon-cyan/40 disabled:opacity-40"
       />
-      <div className="mt-1 flex items-center justify-between text-[11px] text-white/30">
+      <div className="mt-1 flex items-center justify-between text-[10px] text-slate-600">
         <span>{t.wallet.withdraw.minTierHint(formatNumber(language, minForThisRequest))}</span>
         <span>{t.wallet.withdraw.maxTierHint(formatNumber(language, maxForThisRequest))}</span>
       </div>
 
       {hasValidNumber && (
-        <div className="mt-3 flex flex-col gap-1 rounded-xl bg-white/[0.03] p-3 text-xs">
+        <div className="mt-2.5 flex flex-col gap-1 rounded-2xl bg-white/[0.03] p-2.5 text-[11px]">
           <div className="flex items-center justify-between">
-            <span className="text-white/40">{t.wallet.withdraw.requestRow}</span>
-            <span className="text-white/70">
+            <span className="text-slate-500">{t.wallet.withdraw.requestRow}</span>
+            <span className="text-slate-300">
               {requested.toFixed(2)} {t.common.ton}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-white/40">
+            <span className="text-slate-500">
               {isFlatFeeTier ? t.wallet.withdraw.feeRowFlat(feeAmountLabel) : t.wallet.withdraw.feeRow(feePercentLabel)}
             </span>
-            <span className="text-white/40">
+            <span className="text-slate-500">
               -{fee.toFixed(fee < 1 ? 3 : 2)} {t.common.ton}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-white/40">{t.wallet.withdraw.netRow}</span>
+            <span className="text-slate-500">{t.wallet.withdraw.netRow}</span>
             <span className="font-semibold text-neon-green">
               {net.toFixed(2)} {t.common.ton}
             </span>
@@ -237,18 +237,18 @@ export function WithdrawModal({
       )}
 
       {hasValidNumber && !balanceOk && (
-        <p className="mt-2 text-xs text-red-400">{t.wallet.withdraw.insufficientBalance}</p>
+        <p className="mt-2 text-[11px] text-red-400">{t.wallet.withdraw.insufficientBalance}</p>
       )}
       {hasValidNumber && balanceOk && !quotaOk && (
-        <p className="mt-2 text-xs text-red-400">{t.wallet.withdraw.insufficientQuota}</p>
+        <p className="mt-2 text-[11px] text-red-400">{t.wallet.withdraw.insufficientQuota}</p>
       )}
       {hasValidNumber && balanceOk && quotaOk && !minOk && (
-        <p className="mt-2 text-xs text-red-400">
+        <p className="mt-2 text-[11px] text-red-400">
           {t.wallet.withdraw.minTierHint(formatNumber(language, minForThisRequest))}
         </p>
       )}
       {hasValidNumber && balanceOk && quotaOk && minOk && !maxOk && (
-        <p className="mt-2 text-xs text-red-400">
+        <p className="mt-2 text-[11px] text-red-400">
           {t.wallet.withdraw.maxTierHint(formatNumber(language, maxForThisRequest))}
         </p>
       )}
@@ -257,13 +257,13 @@ export function WithdrawModal({
         type="button"
         onClick={submit}
         disabled={!canSubmit || isSubmitting}
-        className="mt-3 w-full rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple py-3 text-sm font-bold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+        className="mt-2.5 w-full rounded-2xl bg-neon-cyan py-2.5 text-xs font-semibold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
       >
         {isSubmitting ? t.wallet.withdraw.submitting : t.wallet.withdraw.submit}
       </button>
 
-      {error && <p className="mt-2 text-center text-xs text-red-400">{error}</p>}
-      {success && <p className="mt-2 text-center text-xs text-neon-green">{success}</p>}
+      {error && <p className="mt-2 text-center text-[11px] text-red-400">{error}</p>}
+      {success && <p className="mt-2 text-center text-[11px] text-neon-green">{success}</p>}
     </Modal>
   );
 }

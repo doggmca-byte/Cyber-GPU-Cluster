@@ -17,9 +17,10 @@
 }
 
 @layer components {
-  /* Базова картка Cyberpunk Dark Glassmorphism */
+  /* Базова картка Clean Dark Flat UI — суцільна матова поверхня, без
+     backdrop-blur/glass-ефекту й без кольорового світіння. */
   .glass-card {
-    @apply relative rounded-2xl border border-white/[0.06] bg-background-card/70 backdrop-blur-xl;
+    @apply relative rounded-2xl border border-white/5 bg-background-card;
   }
 
   .no-scrollbar::-webkit-scrollbar {

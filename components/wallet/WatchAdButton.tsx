@@ -74,12 +74,12 @@ export function WatchAdButton({ initData }: { initData: string }) {
         type="button"
         onClick={watch}
         disabled={isWatching}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-neon-gold/30 bg-neon-gold/10 py-2.5 text-sm font-semibold text-neon-gold transition active:scale-[0.98] disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-neon-gold/10 py-2 text-xs font-semibold text-neon-gold transition active:scale-[0.98] disabled:opacity-50"
       >
-        <PlayCircle size={16} />
+        <PlayCircle size={14} />
         {isWatching ? t.watchAd.loading : t.watchAd.button}
       </button>
-      {error && <p className="mt-1.5 text-center text-xs text-red-400">{error}</p>}
+      {error && <p className="mt-1.5 text-center text-[11px] text-red-400">{error}</p>}
     </div>
   );
 }

@@ -33,13 +33,13 @@ export default function GlobalErrorBoundary({
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
-      <AlertTriangle size={40} className="text-red-400" />
-      <h1 className="font-display text-lg font-bold">{t.errorPage.title}</h1>
-      <p className="max-w-sm text-sm text-white/50">{t.errorPage.description}</p>
+      <AlertTriangle size={36} className="text-red-400" />
+      <h1 className="text-base font-semibold text-white">{t.errorPage.title}</h1>
+      <p className="max-w-sm text-xs text-slate-400">{t.errorPage.description}</p>
       <button
         type="button"
         onClick={reset}
-        className="rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple px-5 py-2.5 text-sm font-bold text-background transition active:scale-[0.98]"
+        className="rounded-2xl bg-neon-cyan px-5 py-2.5 text-xs font-semibold text-background transition active:scale-[0.98]"
       >
         {t.errorPage.retry}
       </button>

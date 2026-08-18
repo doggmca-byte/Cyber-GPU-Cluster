@@ -20,9 +20,9 @@ export function NoTelegramNotice() {
   const { t } = useTranslation();
 
   return (
-    <div className="glass-card p-6 text-center">
-      <p className="font-display text-sm font-bold">{t.noTelegram.title}</p>
-      <p className="mt-2 text-sm text-white/50">{t.noTelegram.description}</p>
+    <div className="glass-card p-5 text-center">
+      <p className="text-sm font-semibold text-white">{t.noTelegram.title}</p>
+      <p className="mt-2 text-xs text-slate-400">{t.noTelegram.description}</p>
     </div>
   );
 }
@@ -31,9 +31,9 @@ export function SyncErrorNotice({ message }: { message: string }) {
   const { t } = useTranslation();
 
   return (
-    <div className="glass-card p-6 text-center">
-      <p className="font-display text-sm font-bold text-red-400">{t.syncError.title}</p>
-      <p className="mt-2 text-sm text-white/50">{message}</p>
+    <div className="glass-card p-5 text-center">
+      <p className="text-sm font-semibold text-red-400">{t.syncError.title}</p>
+      <p className="mt-2 text-xs text-slate-400">{message}</p>
     </div>
   );
 }

@@ -179,44 +179,39 @@ function ProfileCard({
   }, [telegramId]);
 
   return (
-    <div className="glass-card flex items-center gap-3 p-4">
-      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border-2 border-neon-cyan/50 bg-background-card shadow-neon-cyan">
+    <div className="glass-card flex items-center gap-2.5 p-3">
+      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-white/10 bg-background-card">
         {photoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={photoUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center font-display text-xl font-bold text-neon-cyan">
+          <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-neon-cyan">
             {initial}
           </div>
         )}
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate font-display text-sm font-bold">{displayName}</p>
-        {username && <p className="truncate text-xs text-white/40">@{username}</p>}
+        <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+        {username && <p className="truncate text-[11px] text-slate-500">@{username}</p>}
 
         <button
           type="button"
           onClick={() => void copyId()}
-          className="mt-0.5 flex items-center gap-1 text-[11px] text-white/30 transition hover:text-white/60"
+          className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-500 transition hover:text-slate-300"
         >
           ID: {telegramId}
-          {copied ? <Check size={11} className="text-neon-green" /> : <Copy size={11} />}
+          {copied ? <Check size={10} className="text-neon-green" /> : <Copy size={10} />}
         </button>
       </div>
 
       <button
         type="button"
         onClick={onOpenDailyBonus}
-        className="flex shrink-0 flex-col items-center gap-0.5 rounded-xl border border-neon-gold/30 bg-neon-gold/10 px-3 py-2 transition active:scale-95"
+        className="flex shrink-0 items-center gap-1.5 rounded-xl bg-neon-gold px-3 py-2 text-xs font-semibold text-background transition active:scale-95"
       >
-        <span className="text-[9px] font-semibold uppercase tracking-wide text-neon-gold/70">
-          {t.farm.dailyBonus}
-        </span>
-        <span className="flex items-center gap-1 text-xs font-bold text-neon-gold">
-          <Gift size={13} />
-          {t.tasks.action.claim}
-        </span>
+        <Gift size={13} />
+        {t.farm.dailyBonus}
       </button>
     </div>
   );
@@ -240,36 +235,34 @@ function MiningPanel({
   const { t, language } = useTranslation();
 
   return (
-    <div className="glass-card flex animate-neon-pulse flex-col items-center gap-3 rounded-3xl px-6 py-7 shadow-neon-cyan">
-      <div className="flex w-full items-center justify-between text-white/30">
-        <Bot size={22} className="shrink-0 text-neon-cyan/70" />
-        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-white/40">
-          <span>→</span>
-          <span>{t.farm.totalPower}</span>
-          <span>←</span>
-        </div>
-        <Cpu size={20} className="shrink-0 rotate-12 text-neon-green/70" />
+    <div className="glass-card flex flex-col items-center gap-2 rounded-2xl px-5 py-5">
+      <div className="flex w-full items-center justify-between text-slate-600">
+        <Bot size={16} className="shrink-0 text-slate-500" />
+        <span className="text-[10px] font-medium uppercase tracking-widest text-slate-500">
+          {t.farm.totalPower}
+        </span>
+        <Cpu size={16} className="shrink-0 text-slate-500" />
       </div>
 
-      <span className="font-display text-lg font-bold text-neon-green drop-shadow-[0_0_10px_rgba(57,255,136,0.5)]">
+      <span className="text-sm font-semibold text-neon-green">
         +{formatNumber(language, hashPerHour, { maximumFractionDigits: 2 })} {t.farm.hashPerHourSuffix}
       </span>
 
-      <span className="text-[11px] uppercase tracking-widest text-white/30">{t.farm.accumulatedHash}</span>
+      <span className="text-[10px] uppercase tracking-widest text-slate-500">{t.farm.accumulatedHash}</span>
 
-      <span className="font-display text-4xl font-extrabold tabular-nums text-neon-cyan drop-shadow-[0_0_18px_rgba(34,211,238,0.55)]">
+      <span className="text-xl font-bold tabular-nums text-white">
         {formatNumber(language, unclaimedHash, {
           minimumFractionDigits: 4,
           maximumFractionDigits: 4,
         })}
       </span>
-      <span className="-mt-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/40">
+      <span className="-mt-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
         {t.common.hash}
       </span>
 
       {isAtCap && (
-        <div className="flex items-center gap-1.5 rounded-full border border-neon-gold/30 bg-neon-gold/10 px-3 py-1.5 text-[11px] font-semibold text-neon-gold">
-          <PauseCircle size={13} className="shrink-0" />
+        <div className="flex items-center gap-1.5 rounded-full bg-neon-gold/10 px-3 py-1 text-[10px] font-medium text-neon-gold">
+          <PauseCircle size={12} className="shrink-0" />
           {t.farm.productionPaused}
         </div>
       )}
@@ -278,13 +271,13 @@ function MiningPanel({
         type="button"
         onClick={onHarvest}
         disabled={isHarvesting}
-        className="mt-1 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-neon-cyan to-neon-green py-3 text-sm font-bold uppercase tracking-wide text-background transition active:scale-[0.98] disabled:opacity-50"
+        className="mt-1 flex w-full items-center justify-center gap-2 rounded-2xl bg-neon-green py-2.5 text-xs font-semibold text-background transition active:scale-[0.98] disabled:opacity-50"
       >
         {isHarvesting ? t.farm.harvesting : t.farm.harvestButton}
-        {!isHarvesting && <Zap size={16} fill="currentColor" />}
+        {!isHarvesting && <Zap size={14} fill="currentColor" />}
       </button>
 
-      {harvestError && <p className="text-center text-xs text-red-400">{harvestError}</p>}
+      {harvestError && <p className="text-center text-[11px] text-red-400">{harvestError}</p>}
     </div>
   );
 }
@@ -313,22 +306,22 @@ function ActiveServersSection({
   const ownedCount = userGpus.filter((gpu) => gpu.amount > 0).length;
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/50">
-          <Server size={14} />
+        <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          <Server size={12} />
           {t.farm.activeServers}
         </div>
-        <span className="text-xs font-semibold tabular-nums">
+        <span className="text-[11px] font-semibold tabular-nums">
           <span className="text-neon-green">{ownedCount}</span>
-          <span className="text-white/30"> / {templateByLevel.size}</span>
+          <span className="text-slate-600"> / {templateByLevel.size}</span>
         </span>
       </div>
 
       {userGpus.length === 0 ? (
-        <div className="glass-card p-5 text-center text-sm text-white/40">{t.farm.emptyGpuList}</div>
+        <div className="glass-card p-4 text-center text-xs text-slate-500">{t.farm.emptyGpuList}</div>
       ) : (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-2">
           {userGpus.map((gpu) => {
             const template = templateByLevel.get(gpu.gpu_level);
             if (!template) return null;
@@ -339,9 +332,9 @@ function ActiveServersSection({
 
       <Link
         href="/market"
-        className="flex items-center justify-center gap-2 rounded-xl border border-neon-cyan/30 py-2.5 text-xs font-bold uppercase tracking-wide text-neon-cyan transition active:scale-[0.98] hover:bg-neon-cyan/5"
+        className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 py-2.5 text-xs font-semibold text-slate-300 transition active:scale-[0.98] hover:bg-white/5"
       >
-        <CirclePlus size={15} />
+        <CirclePlus size={14} />
         {t.farm.buyNewServer}
       </Link>
     </div>
@@ -398,19 +391,19 @@ function ServerRow({
     const revivalCost = gpuRevivalCost(template.cost_ton, gpu.amount, gpu.revival_count);
 
     return (
-      <div className="glass-card flex items-center gap-3 p-3.5 opacity-75">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 grayscale">
-          <MinerIcon level={template.level} rarity={template.rarity} className="h-7 w-7" />
+      <div className="glass-card flex items-center gap-2.5 p-3 opacity-60">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/5 grayscale">
+          <MinerIcon level={template.level} rarity={template.rarity} className="h-5 w-5" />
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <p className="truncate text-sm font-semibold text-white/50">{template.name}</p>
-            <span className="shrink-0 rounded-full border border-red-400/30 bg-red-400/10 px-1.5 py-0.5 text-[9px] font-bold text-red-400">
+            <p className="truncate text-xs font-semibold text-slate-400">{template.name}</p>
+            <span className="shrink-0 rounded-full bg-red-500/10 px-1.5 py-0.5 text-[9px] font-medium text-red-400">
               {t.farm.gpuDead}
             </span>
           </div>
-          <p className="truncate text-[11px] text-white/30">
+          <p className="truncate text-[10px] text-slate-600">
             {t.farm.reviveCount(gpu.revival_count, GPU_REVIVAL_MAX_COUNT)}
           </p>
 
@@ -419,17 +412,17 @@ function ServerRow({
               type="button"
               onClick={() => void revive()}
               disabled={isReviving}
-              className="mt-2 flex items-center gap-1.5 rounded-lg border border-neon-gold/40 bg-neon-gold/10 px-3 py-1.5 text-[11px] font-bold text-neon-gold transition active:scale-95 disabled:opacity-50"
+              className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-neon-gold/10 px-2.5 py-1 text-[10px] font-semibold text-neon-gold transition active:scale-95 disabled:opacity-50"
             >
               {isReviving
                 ? t.farm.reviving
                 : t.farm.reviveButton(formatNumber(language, revivalCost, { maximumFractionDigits: 3 }))}
             </button>
           ) : (
-            <p className="mt-2 text-[11px] font-semibold text-red-400">{t.farm.reviveMaxReached}</p>
+            <p className="mt-1.5 text-[10px] font-medium text-red-400">{t.farm.reviveMaxReached}</p>
           )}
 
-          {reviveError && <p className="mt-1.5 text-[11px] text-red-400">{reviveError}</p>}
+          {reviveError && <p className="mt-1 text-[10px] text-red-400">{reviveError}</p>}
         </div>
       </div>
     );
@@ -441,22 +434,22 @@ function ServerRow({
   const lifecycleProgress = lifecycleCap > 0 ? Math.min(gpu.lifetime_hash_generated / lifecycleCap, 1) * 100 : 0;
 
   return (
-    <div className="glass-card flex items-center gap-3 p-3.5">
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-neon-cyan/20 bg-gradient-to-br from-neon-cyan/15 to-neon-purple/10 shadow-neon-cyan">
-        <MinerIcon level={template.level} rarity={template.rarity} className="h-7 w-7" />
+    <div className="glass-card flex items-center gap-2.5 p-3">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/5">
+        <MinerIcon level={template.level} rarity={template.rarity} className="h-5 w-5" />
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <p className="truncate text-sm font-semibold">{template.name}</p>
-          <span className="shrink-0 rounded-full border border-neon-green/30 bg-neon-green/10 px-1.5 py-0.5 text-[9px] font-bold text-neon-green">
+          <p className="truncate text-xs font-semibold text-white">{template.name}</p>
+          <span className="shrink-0 rounded-full bg-neon-green/10 px-1.5 py-0.5 text-[9px] font-semibold text-neon-green">
             LV.{template.level}
           </span>
         </div>
-        <p className="truncate text-[11px] text-white/35">{rarityLabel}</p>
+        <p className="truncate text-[10px] text-slate-500">{rarityLabel}</p>
 
-        <div className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-neon-green">
-          <Zap size={11} fill="currentColor" />
+        <div className="mt-1 flex items-center gap-1 text-[11px] font-medium text-neon-green">
+          <Zap size={10} fill="currentColor" />
           +
           {formatNumber(language, template.hash_per_second * gpu.amount * 3600, {
             maximumFractionDigits: 2,
@@ -464,29 +457,23 @@ function ServerRow({
           {t.farm.hashPerHourSuffix}
         </div>
 
-        <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-neon-cyan to-neon-green"
-            style={{ width: `${progress}%` }}
-          />
+        <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/5">
+          <div className="h-full rounded-full bg-neon-cyan" style={{ width: `${progress}%` }} />
         </div>
 
         {/* Ресурс "життя" картки (lifecycle-кап, 1.25× вартості) — окремо від
             прогресу володіння вище: жовтий, щоб не плутати з ним. */}
         <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/5">
-          <div
-            className="h-full rounded-full bg-neon-gold/70"
-            style={{ width: `${lifecycleProgress}%` }}
-          />
+          <div className="h-full rounded-full bg-neon-gold/70" style={{ width: `${lifecycleProgress}%` }} />
         </div>
 
-        <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-white/30">
-          <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-neon-green" />
+        <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-slate-500">
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-neon-green" />
           {t.farm.uptime}: {formatElapsed(uptimeSeconds)}
         </div>
       </div>
 
-      <ChevronRight size={18} className="shrink-0 text-white/15" />
+      <ChevronRight size={16} className="shrink-0 text-slate-600" />
     </div>
   );
 }

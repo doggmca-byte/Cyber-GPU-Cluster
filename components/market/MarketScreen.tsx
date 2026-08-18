@@ -13,16 +13,16 @@ import type { BuyGpuResponse, GpuTemplate, SyncResponse } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 
 const RARITY_COLOR: Record<string, string> = {
-  common: "text-white/60 border-white/20 bg-white/5",
-  uncommon: "text-neon-green border-neon-green/30 bg-neon-green/10",
-  rare: "text-neon-cyan border-neon-cyan/30 bg-neon-cyan/10",
-  elite: "text-neon-cyan border-neon-cyan/30 bg-neon-cyan/10",
-  epic: "text-neon-purple border-neon-purple/30 bg-neon-purple/10",
-  legendary: "text-neon-gold border-neon-gold/30 bg-neon-gold/10",
-  mythic: "text-neon-purple border-neon-purple/30 bg-neon-purple/10",
-  ancient: "text-neon-gold border-neon-gold/30 bg-neon-gold/10",
-  divine: "text-neon-cyan border-neon-cyan/30 bg-neon-cyan/10",
-  transcendent: "text-neon-purple border-neon-purple/30 bg-neon-purple/10",
+  common: "text-slate-400 border-slate-600/30 bg-slate-500/10",
+  uncommon: "text-emerald-400 border-emerald-500/20 bg-emerald-500/10",
+  rare: "text-cyan-400 border-cyan-500/20 bg-cyan-500/10",
+  elite: "text-cyan-400 border-cyan-500/20 bg-cyan-500/10",
+  epic: "text-violet-400 border-violet-500/20 bg-violet-500/10",
+  legendary: "text-amber-400 border-amber-500/20 bg-amber-500/10",
+  mythic: "text-violet-400 border-violet-500/20 bg-violet-500/10",
+  ancient: "text-amber-400 border-amber-500/20 bg-amber-500/10",
+  divine: "text-cyan-400 border-cyan-500/20 bg-cyan-500/10",
+  transcendent: "text-violet-400 border-violet-500/20 bg-violet-500/10",
 };
 
 function getRarityLabel(t: TranslationDictionary, rarity: string): string {
@@ -94,14 +94,14 @@ function MarketScreenReady({ data, initData }: { data: SyncResponse; initData: s
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="glass-card flex items-center justify-between px-4 py-2.5 shadow-neon-cyan">
-        <span className="text-xs uppercase tracking-wide text-white/50">{t.market.gameBalance}</span>
-        <span className="font-display text-sm font-bold text-neon-cyan">
+      <div className="glass-card flex items-center justify-between px-4 py-2.5">
+        <span className="text-[11px] uppercase tracking-wide text-slate-500">{t.market.gameBalance}</span>
+        <span className="text-sm font-semibold text-neon-cyan">
           {formatNumber(language, profile.game_balance, { maximumFractionDigits: 2 })} {t.common.ton}
         </span>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
         {gpu_templates.map((template) => (
           <GpuCard
             key={template.level}
@@ -155,30 +155,30 @@ function GpuCard({
   const hashPerDay = hashPerHour * 24;
 
   return (
-    <div className="glass-card p-4">
-      <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-neon-cyan/10">
-          <MinerIcon level={template.level} rarity={template.rarity} className="h-6 w-6" />
+    <div className="glass-card p-3">
+      <div className="flex items-start gap-2.5">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5">
+          <MinerIcon level={template.level} rarity={template.rarity} className="h-5 w-5" />
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate text-sm font-semibold">{template.name}</p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <p className="truncate text-xs font-semibold text-white">{template.name}</p>
             <span
-              className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${rarityClass}`}
+              className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${rarityClass}`}
             >
               {rarityLabel}
             </span>
           </div>
 
-          <p className="mt-0.5 text-xs text-white/40">{t.market.owned(owned, template.max_limit)}</p>
+          <p className="mt-0.5 text-[10px] text-slate-500">{t.market.owned(owned, template.max_limit)}</p>
 
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/60">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-400">
             <span className="flex items-center gap-1">
-              <Zap size={12} className="text-neon-green" />
+              <Zap size={10} className="text-neon-green" />
               {t.market.hashPerHour(formatNumber(language, hashPerHour, { maximumFractionDigits: 2 }))}
             </span>
-            <span className="text-white/30">
+            <span className="text-slate-600">
               {t.market.hashPerDay(formatNumber(language, hashPerDay, { maximumFractionDigits: 2 }))}
             </span>
           </div>
@@ -188,15 +188,15 @@ function GpuCard({
           type="button"
           onClick={onOpenCycles}
           aria-label={t.market.cycles.openButton}
-          className="shrink-0 rounded-lg border border-white/10 p-1.5 text-white/40 transition hover:border-neon-green/40 hover:text-neon-green"
+          className="shrink-0 rounded-lg p-1.5 text-slate-500 transition hover:text-neon-green"
         >
-          <Settings2 size={15} />
+          <Settings2 size={14} />
         </button>
       </div>
 
-      <div className="mt-3.5 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+      <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-white/5">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-neon-cyan to-neon-purple"
+          className="h-full rounded-full bg-neon-cyan"
           style={{ width: `${Math.min(owned / template.max_limit, 1) * 100}%` }}
         />
       </div>
@@ -204,7 +204,7 @@ function GpuCard({
       {isDead ? (
         <Link
           href="/"
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-red-400/40 bg-red-400/10 py-2.5 text-xs font-bold uppercase tracking-wide text-red-400 transition active:scale-[0.98]"
+          className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-xl bg-red-500/10 py-2 text-xs font-semibold text-red-400 transition active:scale-[0.98]"
         >
           {t.market.reviveOnFarm}
         </Link>
@@ -213,7 +213,7 @@ function GpuCard({
           type="button"
           onClick={onBuy}
           disabled={disabled || isMaxed}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple py-2.5 text-sm font-bold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+          className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-xl bg-neon-green py-2 text-xs font-semibold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isMaxed
             ? t.market.limitReached
@@ -223,7 +223,7 @@ function GpuCard({
         </button>
       )}
 
-      {error && <p className="mt-2 text-center text-xs text-red-400">{error}</p>}
+      {error && <p className="mt-2 text-center text-[11px] text-red-400">{error}</p>}
     </div>
   );
 }

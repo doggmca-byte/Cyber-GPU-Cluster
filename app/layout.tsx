@@ -1,17 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Orbitron } from "next/font/google";
+import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
+// Clean Dark Flat UI: єдиний спокійний шрифт (Inter) для тексту й заголовків
+// — font-display у tailwind.config.ts теж мапиться на нього, Orbitron
+// (техно-дисплейний шрифт) прибрали разом зі старим кіберпанк-стилем.
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
   variable: "--font-inter",
-});
-
-const orbitron = Orbitron({
-  subsets: ["latin"],
-  weight: ["600", "800"],
-  variable: "--font-orbitron",
 });
 
 export const metadata: Metadata = {
@@ -44,11 +41,7 @@ export default function RootLayout({
     // (--tg-viewport-height тощо) у <html> ще до монтування React, тому
     // серверний і клієнтський рендер тега <html> розходяться — це очікувано
     // і безпечно ігнорувати (сам SDK, а не наш код, модифікує DOM).
-    <html
-      lang="uk"
-      className={`${inter.variable} ${orbitron.variable}`}
-      suppressHydrationWarning
-    >
+    <html lang="uk" className={inter.variable} suppressHydrationWarning>
       <body className="min-h-dvh bg-background font-sans text-white antialiased">
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
         {/*

@@ -25,50 +25,35 @@ export function Header() {
   const tonBalance = (profile?.game_balance ?? 0) + (profile?.withdrawable_balance ?? 0);
 
   return (
-    <header className="sticky top-0 z-40 flex flex-col gap-2.5 border-b border-white/[0.06] bg-background/80 px-4 py-3 backdrop-blur-xl">
-      <div className="flex items-center justify-between gap-2">
-        {/* Двострочне лого — суто візуальний елемент (реальна назва застосунку,
-            metadata.title у app/layout.tsx), без нової механіки. */}
-        <div className="flex flex-col leading-none">
-          <span className="font-display text-base font-extrabold uppercase tracking-wide text-neon-cyan drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
-            Cyber GPU
+    <header className="sticky top-0 z-40 flex items-center justify-between gap-2 border-b border-white/5 bg-background/95 px-4 py-2.5">
+      {/* Самодостатній компонент — сам володіє isOpen, закритий за замовчуванням. */}
+      <LanguageSelector />
+
+      <div className="flex items-center gap-1.5">
+        <div className="glass-card flex items-center gap-1.5 px-2.5 py-1.5">
+          <Hexagon size={13} className="text-neon-green" fill="currentColor" fillOpacity={0.2} />
+          <span className="text-xs font-semibold tabular-nums text-white">
+            {formatNumber(language, hashBalance, { maximumFractionDigits: 2 })}
           </span>
-          <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.35em] text-white/40">
-            Cluster
-          </span>
+          <span className="text-[10px] font-medium uppercase text-slate-500">{t.common.hash}</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="glass-card flex items-center gap-1.5 px-3 py-1.5 shadow-neon-green">
-            <Hexagon size={14} className="text-neon-green" fill="currentColor" fillOpacity={0.25} />
-            <span className="text-sm font-semibold tabular-nums">
-              {formatNumber(language, hashBalance, { maximumFractionDigits: 2 })}
-            </span>
-            <span className="text-[10px] font-medium uppercase text-white/40">{t.common.hash}</span>
-          </div>
-
-          <div className="glass-card flex items-center gap-1.5 py-1.5 pl-3 pr-1.5 shadow-neon-purple">
-            <Gem size={14} className="text-neon-purple" />
-            <span className="text-sm font-semibold tabular-nums">
-              {formatNumber(language, tonBalance, { maximumFractionDigits: 2 })}
-            </span>
-            <span className="text-[10px] font-medium uppercase text-white/40">{t.common.ton}</span>
-            {/* Ярлик до вже наявного поповнення (DepositModal на /wallet) —
-                не нова механіка, лише швидший вхід до існуючого флоу. */}
-            <Link
-              href="/wallet"
-              aria-label={t.nav.wallet}
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neon-cyan/15 text-neon-cyan transition active:scale-90"
-            >
-              <Plus size={14} />
-            </Link>
-          </div>
+        <div className="glass-card flex items-center gap-1.5 py-1.5 pl-2.5 pr-1">
+          <Gem size={13} className="text-neon-purple" />
+          <span className="text-xs font-semibold tabular-nums text-white">
+            {formatNumber(language, tonBalance, { maximumFractionDigits: 2 })}
+          </span>
+          <span className="text-[10px] font-medium uppercase text-slate-500">{t.common.ton}</span>
+          {/* Ярлик до вже наявного поповнення (DepositModal на /wallet) —
+              не нова механіка, лише швидший вхід до існуючого флоу. */}
+          <Link
+            href="/wallet"
+            aria-label={t.nav.wallet}
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neon-cyan/15 text-neon-cyan transition active:scale-90"
+          >
+            <Plus size={12} />
+          </Link>
         </div>
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        {/* Самодостатній компонент — сам володіє isOpen, закритий за замовчуванням. */}
-        <LanguageSelector />
 
         {/* Непомітна іконка входу в /admin — навмисно завжди в розмітці (не
             приховуємо за клієнтською перевіркою telegram_id, бо
@@ -82,9 +67,9 @@ export function Header() {
         <Link
           href="/admin"
           aria-label="Admin"
-          className="rounded-full border border-white/10 bg-background-card p-2 text-white/30 transition hover:border-neon-purple/50 hover:text-neon-purple"
+          className="rounded-full border border-white/5 bg-background-card p-1.5 text-slate-500 transition hover:text-neon-purple"
         >
-          <ShieldCheck size={15} />
+          <ShieldCheck size={13} />
         </Link>
       </div>
     </header>

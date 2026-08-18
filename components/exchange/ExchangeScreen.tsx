@@ -97,16 +97,16 @@ function HashToTonCard({
   const minHashLabel = formatNumber(language, MIN_HASH_EXCHANGE);
 
   return (
-    <div className="glass-card p-4 shadow-neon-cyan">
+    <div className="glass-card p-3.5">
       <div className="flex items-center gap-2">
-        <Zap size={16} className="text-neon-cyan" />
-        <h2 className="font-display text-sm font-bold">{t.exchange.hashToTon.title}</h2>
+        <Zap size={14} className="text-neon-cyan" />
+        <h2 className="text-xs font-semibold text-white">{t.exchange.hashToTon.title}</h2>
       </div>
-      <p className="mt-1 text-xs text-white/40">{t.exchange.hashToTon.rateNote(minHashLabel)}</p>
+      <p className="mt-1 text-[11px] text-slate-500">{t.exchange.hashToTon.rateNote(minHashLabel)}</p>
 
-      <div className="mt-3 flex items-center justify-between text-xs text-white/40">
+      <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-500">
         <span>{t.exchange.hashToTon.available}</span>
-        <span className="font-semibold text-white/70">
+        <span className="font-semibold text-slate-300">
           {formatNumber(language, profile.hash_balance, { maximumFractionDigits: 4 })} {t.common.hash}
         </span>
       </div>
@@ -117,15 +117,15 @@ function HashToTonCard({
         placeholder={t.exchange.hashToTon.amountPlaceholder(minHashLabel)}
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        className="mt-2 w-full rounded-xl border border-white/10 bg-background px-3.5 py-2.5 text-sm outline-none transition focus:border-neon-cyan/60"
+        className="mt-2 w-full rounded-2xl border border-white/5 bg-[#0b0e14] px-3 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-neon-cyan/40"
       />
       {hasMinAmount && !isMultipleOfStep && (
-        <p className="mt-1.5 text-xs text-red-400">
+        <p className="mt-1.5 text-[11px] text-red-400">
           {t.exchange.hashToTon.stepError(formatNumber(language, HASH_EXCHANGE_STEP))}
         </p>
       )}
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-2.5 flex gap-2">
         <TargetButton
           label={t.exchange.hashToTon.targetWithdrawable}
           active={target === "withdrawable"}
@@ -139,7 +139,7 @@ function HashToTonCard({
       </div>
 
       {isValidAmount && (
-        <div className="mt-3 flex flex-col gap-1 rounded-xl bg-white/[0.03] p-3 text-xs">
+        <div className="mt-2.5 flex flex-col gap-1 rounded-2xl bg-white/[0.03] p-2.5 text-[11px]">
           <Row label={t.exchange.hashToTon.grossRow} value={`${tonGross.toFixed(6)} ${t.common.ton}`} />
           {fee > 0 && (
             <Row label={t.exchange.hashToTon.feeRow} value={`-${fee.toFixed(6)} ${t.common.ton}`} muted />
@@ -152,13 +152,13 @@ function HashToTonCard({
         type="button"
         onClick={submit}
         disabled={!isValidAmount || isSubmitting}
-        className="mt-3 w-full rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple py-2.5 text-sm font-bold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+        className="mt-2.5 w-full rounded-2xl bg-neon-cyan py-2.5 text-xs font-semibold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
       >
         {isSubmitting ? t.exchange.hashToTon.submitting : t.exchange.hashToTon.submit}
       </button>
 
-      {error && <p className="mt-2 text-center text-xs text-red-400">{error}</p>}
-      {success && <p className="mt-2 text-center text-xs text-neon-green">{success}</p>}
+      {error && <p className="mt-2 text-center text-[11px] text-red-400">{error}</p>}
+      {success && <p className="mt-2 text-center text-[11px] text-neon-green">{success}</p>}
     </div>
   );
 }
@@ -216,24 +216,24 @@ function ConvertBackCard({
   const minConvertLabel = formatNumber(language, MIN_CONVERT_BACK_TON);
 
   return (
-    <div className="glass-card p-4 shadow-neon-purple">
+    <div className="glass-card p-3.5">
       <div className="flex items-center gap-2">
-        <WalletIcon size={16} className="text-neon-purple" />
-        <h2 className="font-display text-sm font-bold">{t.exchange.convertBack.title}</h2>
+        <WalletIcon size={14} className="text-neon-purple" />
+        <h2 className="text-xs font-semibold text-white">{t.exchange.convertBack.title}</h2>
       </div>
-      <p className="mt-1 text-xs text-white/40">{t.exchange.convertBack.rateNote(minConvertLabel)}</p>
+      <p className="mt-1 text-[11px] text-slate-500">{t.exchange.convertBack.rateNote(minConvertLabel)}</p>
 
-      <div className="mt-3 flex items-center justify-center gap-3 text-xs">
-        <div className="flex-1 rounded-xl bg-white/[0.03] p-2.5 text-center">
-          <p className="text-white/40">{t.exchange.convertBack.withdrawableLabel}</p>
+      <div className="mt-2.5 flex items-center justify-center gap-2.5 text-[11px]">
+        <div className="flex-1 rounded-2xl bg-white/[0.03] p-2.5 text-center">
+          <p className="text-slate-500">{t.exchange.convertBack.withdrawableLabel}</p>
           <p className="mt-0.5 font-semibold text-neon-purple">
             {formatNumber(language, profile.withdrawable_balance, { maximumFractionDigits: 2 })}{" "}
             {t.common.ton}
           </p>
         </div>
-        <ArrowDown size={16} className="shrink-0 rotate-[-90deg] text-white/30 rtl:rotate-90" />
-        <div className="flex-1 rounded-xl bg-white/[0.03] p-2.5 text-center">
-          <p className="text-white/40">{t.exchange.convertBack.gameLabel}</p>
+        <ArrowDown size={14} className="shrink-0 rotate-[-90deg] text-slate-600 rtl:rotate-90" />
+        <div className="flex-1 rounded-2xl bg-white/[0.03] p-2.5 text-center">
+          <p className="text-slate-500">{t.exchange.convertBack.gameLabel}</p>
           <p className="mt-0.5 font-semibold text-neon-cyan">
             {formatNumber(language, profile.game_balance, { maximumFractionDigits: 2 })} {t.common.ton}
           </p>
@@ -246,20 +246,20 @@ function ConvertBackCard({
         placeholder={t.exchange.convertBack.amountPlaceholder(minConvertLabel)}
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        className="mt-3 w-full rounded-xl border border-white/10 bg-background px-3.5 py-2.5 text-sm outline-none transition focus:border-neon-purple/60"
+        className="mt-2.5 w-full rounded-2xl border border-white/5 bg-[#0b0e14] px-3 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-neon-purple/40"
       />
 
       <button
         type="button"
         onClick={submit}
         disabled={!isValidAmount || isSubmitting}
-        className="mt-3 w-full rounded-xl bg-gradient-to-r from-neon-purple to-neon-cyan py-2.5 text-sm font-bold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+        className="mt-2.5 w-full rounded-2xl bg-neon-purple py-2.5 text-xs font-semibold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
       >
         {isSubmitting ? t.exchange.convertBack.submitting : t.exchange.convertBack.submit}
       </button>
 
-      {error && <p className="mt-2 text-center text-xs text-red-400">{error}</p>}
-      {success && <p className="mt-2 text-center text-xs text-neon-green">{success}</p>}
+      {error && <p className="mt-2 text-center text-[11px] text-red-400">{error}</p>}
+      {success && <p className="mt-2 text-center text-[11px] text-neon-green">{success}</p>}
     </div>
   );
 }
@@ -277,10 +277,8 @@ function TargetButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 rounded-xl border py-2 text-xs font-semibold transition ${
-        active
-          ? "border-neon-cyan/50 bg-neon-cyan/10 text-neon-cyan"
-          : "border-white/10 text-white/50 hover:text-white/80"
+      className={`flex-1 rounded-xl py-1.5 text-[11px] font-semibold transition ${
+        active ? "bg-neon-cyan/10 text-neon-cyan" : "bg-white/5 text-slate-500 hover:text-slate-300"
       }`}
     >
       {label}
@@ -301,8 +299,8 @@ function Row({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-white/40">{label}</span>
-      <span className={strong ? "font-semibold text-neon-green" : muted ? "text-white/40" : "text-white/70"}>
+      <span className="text-slate-500">{label}</span>
+      <span className={strong ? "font-semibold text-neon-green" : muted ? "text-slate-500" : "text-slate-300"}>
         {value}
       </span>
     </div>

@@ -92,11 +92,11 @@ export function DailyBonusModal({ initData, onClose }: { initData: string; onClo
 
       {state.phase === "error" && (
         <div className="flex flex-col items-center gap-3 py-4">
-          <p className="text-center text-sm text-red-400">{state.message}</p>
+          <p className="text-center text-xs text-red-400">{state.message}</p>
           <button
             type="button"
             onClick={() => void loadStatus()}
-            className="rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/5"
+            className="rounded-2xl bg-white/5 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-white/10"
           >
             {t.common.retry}
           </button>
@@ -122,8 +122,8 @@ export function DailyBonusModal({ initData, onClose }: { initData: string; onClo
 
 function StatusMessage({ text }: { text: string }) {
   return (
-    <div className="flex items-center justify-center gap-2 py-8 text-sm text-white/40">
-      <Loader2 size={16} className="animate-spin" />
+    <div className="flex items-center justify-center gap-2 py-8 text-xs text-slate-500">
+      <Loader2 size={15} className="animate-spin" />
       {text}
     </div>
   );
@@ -173,18 +173,18 @@ function CooldownView({
   }, [targetMs]);
 
   return (
-    <div className="flex flex-col items-center gap-4 py-4 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-neon-gold/10 text-neon-gold shadow-neon-gold">
-        <Clock size={28} />
+    <div className="flex flex-col items-center gap-3 py-4 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-neon-gold/10 text-neon-gold">
+        <Clock size={22} />
       </div>
 
-      <p className="text-sm text-white/50">{t.dailyBonus.cooldownTitle}</p>
+      <p className="text-xs text-slate-400">{t.dailyBonus.cooldownTitle}</p>
 
-      <p className="font-display text-2xl font-extrabold tabular-nums text-neon-gold drop-shadow-[0_0_18px_rgba(255,184,0,0.45)]">
+      <p className="text-lg font-bold tabular-nums text-neon-gold">
         {t.dailyBonus.cooldownLabel(formatCountdown(secondsLeft))}
       </p>
 
-      <p className="text-xs text-white/30">
+      <p className="text-[11px] text-slate-500">
         {t.dailyBonus.claimButton(formatNumber(language, rewardAmount, { maximumFractionDigits: 6 }))}
       </p>
     </div>
@@ -196,10 +196,10 @@ function CooldownView({
 // відлік + реальний rewarded-показ), а не інтерактивний прогрес користувача.
 function ConfirmedChecklistItem({ icon: Icon, label }: { icon: typeof PlayCircle; label: string }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-xl border border-neon-green/40 bg-neon-green/10 px-3 py-2.5">
-      <CheckCircle2 size={18} className="shrink-0 text-neon-green" />
-      <span className="flex items-center gap-1.5 text-xs text-white/80">
-        <Icon size={13} className="shrink-0 opacity-60" />
+    <div className="flex items-center gap-2.5 rounded-2xl bg-neon-green/10 px-3 py-2">
+      <CheckCircle2 size={16} className="shrink-0 text-neon-green" />
+      <span className="flex items-center gap-1.5 text-[11px] text-slate-300">
+        <Icon size={12} className="shrink-0 opacity-60" />
         {label}
       </span>
     </div>
@@ -295,12 +295,10 @@ function AutoAdView({
   }, [countdown, runAdAndClaim]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3.5">
       <div className="text-center">
-        <p className="font-display text-sm font-extrabold uppercase tracking-wide bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent">
-          {t.dailyBonus.adScreenTitle}
-        </p>
-        <p className="mt-1 text-xs text-white/40">{t.dailyBonus.adScreenSubtitle}</p>
+        <p className="text-sm font-semibold text-white">{t.dailyBonus.adScreenTitle}</p>
+        <p className="mt-1 text-[11px] text-slate-500">{t.dailyBonus.adScreenSubtitle}</p>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -309,18 +307,18 @@ function AutoAdView({
         <ConfirmedChecklistItem icon={Timer} label={t.dailyBonus.checklist.stay5s} />
       </div>
 
-      <div className="flex items-center justify-center gap-2 rounded-xl border border-neon-cyan/30 bg-neon-cyan/10 px-4 py-3 text-center text-sm font-semibold text-neon-cyan">
-        <Clock size={16} className={countdown > 0 ? "shrink-0 animate-pulse" : "shrink-0 animate-spin"} />
+      <div className="flex items-center justify-center gap-2 rounded-2xl bg-neon-cyan/10 px-4 py-2.5 text-center text-xs font-semibold text-neon-cyan">
+        <Clock size={14} className={countdown > 0 ? "shrink-0 animate-pulse" : "shrink-0 animate-spin"} />
         {countdown > 0 ? t.dailyBonus.adStartingIn(countdown) : t.dailyBonus.adInProgress}
       </div>
 
-      {claimError && <p className="text-center text-xs text-red-400">{claimError}</p>}
+      {claimError && <p className="text-center text-[11px] text-red-400">{claimError}</p>}
 
       <button
         type="button"
         onClick={onCancel}
         disabled={isProcessing}
-        className="rounded-xl border border-white/10 py-2.5 text-xs font-semibold text-white/60 transition hover:bg-white/5 disabled:opacity-50"
+        className="rounded-2xl border border-white/10 py-2 text-xs font-semibold text-slate-400 transition hover:bg-white/5 disabled:opacity-50"
       >
         {t.dailyBonus.cancel}
       </button>
@@ -332,21 +330,21 @@ function ClaimedView({ rewardAmount, onClose }: { rewardAmount: number; onClose:
   const { t, language } = useTranslation();
 
   return (
-    <div className="flex flex-col items-center gap-4 py-4 text-center">
-      <div className="flex h-16 w-16 animate-neon-pulse items-center justify-center rounded-full bg-neon-green/10 text-neon-green shadow-neon-green">
-        <PartyPopper size={28} />
+    <div className="flex flex-col items-center gap-3 py-4 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-neon-green/10 text-neon-green">
+        <PartyPopper size={22} />
       </div>
 
-      <p className="font-display text-base font-extrabold text-neon-green">{t.dailyBonus.claimedTitle}</p>
+      <p className="text-sm font-semibold text-neon-green">{t.dailyBonus.claimedTitle}</p>
 
-      <p className="text-2xl font-bold tabular-nums text-neon-green">
+      <p className="text-xl font-bold tabular-nums text-neon-green">
         {t.dailyBonus.claimedAmount(formatNumber(language, rewardAmount, { maximumFractionDigits: 6 }))}
       </p>
 
       <button
         type="button"
         onClick={onClose}
-        className="w-full rounded-xl bg-gradient-to-r from-neon-cyan to-neon-purple py-2.5 text-sm font-bold text-background transition active:scale-[0.98]"
+        className="w-full rounded-2xl bg-neon-cyan py-2.5 text-xs font-semibold text-background transition active:scale-[0.98]"
       >
         {t.dailyBonus.done}
       </button>
