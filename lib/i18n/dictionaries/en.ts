@@ -24,6 +24,16 @@ const en = {
   support: {
     label: "Support",
   },
+  intro: {
+    title: "Cyber GPU Cluster",
+    statusInit: "Initializing GPU Cluster nodes...",
+    statusConnect: "Connecting to TON Blockchain & Supabase...",
+    statusSync: "Syncing Hash rate & mining metrics...",
+    statusReady: "Ready! Launching interface...",
+    connectionIssueTitle: "Connection issue",
+    connectionIssueDescription: "Couldn't reach the server. Check your connection and try again.",
+    retryButton: "Try again",
+  },
   noTelegram: {
     title: "Open via Telegram",
     description: "This app only works as a Telegram Mini App. Open the bot and tap the launch button.",

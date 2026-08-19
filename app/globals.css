@@ -31,4 +31,27 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* IntroLoader (components/IntroLoader.tsx) — пульсуюче neon-cyan світіння
+     навколо іконки GPU-чипа. Окрема @keyframes (а не Tailwind animate-pulse,
+     який лише анімує opacity) — тут пульсує саме box-shadow/радіус світіння,
+     інакше ефект "неонового чипу" не читається. */
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      box-shadow:
+        0 0 1px rgba(34, 211, 238, 0.8),
+        0 0 22px rgba(34, 211, 238, 0.35);
+    }
+    50% {
+      box-shadow:
+        0 0 2px rgba(34, 211, 238, 0.95),
+        0 0 44px rgba(34, 211, 238, 0.6),
+        0 0 70px rgba(167, 139, 250, 0.25);
+    }
+  }
+
+  .pulse-glow {
+    animation: pulse-glow 2.2s ease-in-out infinite;
+  }
 }

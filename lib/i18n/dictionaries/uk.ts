@@ -21,6 +21,16 @@ const uk: TranslationDictionary = {
   support: {
     label: "Підтримка",
   },
+  intro: {
+    title: "Cyber GPU Cluster",
+    statusInit: "Ініціалізація вузлів GPU Cluster...",
+    statusConnect: "Підключення до TON Blockchain та Supabase...",
+    statusSync: "Синхронізація хешрейту та майнінг-метрик...",
+    statusReady: "Готово! Запускаємо інтерфейс...",
+    connectionIssueTitle: "Проблема зі з'єднанням",
+    connectionIssueDescription: "Не вдалося з'єднатися з сервером. Перевір інтернет і спробуй ще раз.",
+    retryButton: "Спробувати знову",
+  },
   noTelegram: {
     title: "Відкрий через Telegram",
     description: "Цей застосунок працює лише як Telegram Mini App. Відкрий бота і натисни кнопку запуску.",

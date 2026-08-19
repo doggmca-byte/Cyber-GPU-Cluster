@@ -21,6 +21,16 @@ const es: TranslationDictionary = {
   support: {
     label: "Soporte",
   },
+  intro: {
+    title: "Cyber GPU Cluster",
+    statusInit: "Inicializando nodos de GPU Cluster...",
+    statusConnect: "Conectando a TON Blockchain y Supabase...",
+    statusSync: "Sincronizando hash rate y métricas de minería...",
+    statusReady: "¡Listo! Iniciando la interfaz...",
+    connectionIssueTitle: "Problema de conexión",
+    connectionIssueDescription: "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+    retryButton: "Intentar de nuevo",
+  },
   noTelegram: {
     title: "Abre a través de Telegram",
     description:

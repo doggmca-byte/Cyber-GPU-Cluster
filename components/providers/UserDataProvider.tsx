@@ -37,6 +37,14 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
   const initDataRef = useRef<string | null>(null);
 
   const sync = useCallback(async () => {
+    // Скидаємо на "loading" ЩОРАЗУ на початку виклику (не лише початкове
+    // значення useState) — інакше повторний sync() після помилки (IntroLoader
+    // "Спробувати знову" → refresh()) лишав би стан "error" протягом усього
+    // нового запиту: підписники (IntroLoader, SyncErrorNotice) бачили б
+    // застарілу помилку замість skeleton, і IntroLoader міг би миттю знову
+    // зафейлитись, ще не дочекавшись реальної відповіді нового fetch.
+    setState({ status: "loading" });
+
     const initData = initDataRef.current ?? getWebAppInitData();
 
     if (!initData) {
@@ -45,11 +53,20 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     }
     initDataRef.current = initData;
 
+    // AbortController-таймаут — захист від "вічно висячого" fetch (сервер
+    // приймає з'єднання, але ніколи не відповідає): без цього проміс sync()
+    // не резолвився б і не реджектився б ніколи, і UserDataProvider завис би
+    // в "loading" назавжди. IntroLoader має власний незалежний fail-safe
+    // (7.5с) для UX, але цей таймаут ще й звільняє сам зависаючий запит.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
       const res = await fetch("/api/user/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ initData }),
+        signal: controller.signal,
       });
 
       if (!res.ok) {
@@ -60,10 +77,17 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
       const data = (await res.json()) as SyncResponse;
       setState({ status: "ready", data, initData });
     } catch (err) {
+      const isTimeout = err instanceof DOMException && err.name === "AbortError";
       setState({
         status: "error",
-        message: err instanceof Error ? err.message : "unknown sync error",
+        message: isTimeout
+          ? "request timed out — server took too long to respond"
+          : err instanceof Error
+            ? err.message
+            : "unknown sync error",
       });
+    } finally {
+      clearTimeout(timeoutId);
     }
   }, []);
 

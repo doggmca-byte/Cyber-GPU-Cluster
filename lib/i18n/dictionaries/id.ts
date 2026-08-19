@@ -21,6 +21,16 @@ const id: TranslationDictionary = {
   support: {
     label: "Dukungan",
   },
+  intro: {
+    title: "Cyber GPU Cluster",
+    statusInit: "Menginisialisasi node GPU Cluster...",
+    statusConnect: "Menghubungkan ke TON Blockchain & Supabase...",
+    statusSync: "Menyinkronkan hash rate & metrik mining...",
+    statusReady: "Siap! Meluncurkan antarmuka...",
+    connectionIssueTitle: "Masalah koneksi",
+    connectionIssueDescription: "Tidak dapat terhubung ke server. Periksa koneksimu dan coba lagi.",
+    retryButton: "Coba lagi",
+  },
   noTelegram: {
     title: "Buka lewat Telegram",
     description: "Aplikasi ini hanya berjalan sebagai Telegram Mini App. Buka bot dan tekan tombol mulai.",

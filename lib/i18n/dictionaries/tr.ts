@@ -21,6 +21,16 @@ const tr: TranslationDictionary = {
   support: {
     label: "Destek",
   },
+  intro: {
+    title: "Cyber GPU Cluster",
+    statusInit: "GPU Cluster düğümleri başlatılıyor...",
+    statusConnect: "TON Blockchain & Supabase'e bağlanılıyor...",
+    statusSync: "Hash oranı ve madencilik metrikleri senkronize ediliyor...",
+    statusReady: "Hazır! Arayüz başlatılıyor...",
+    connectionIssueTitle: "Bağlantı sorunu",
+    connectionIssueDescription: "Sunucuya ulaşılamadı. Bağlantını kontrol edip tekrar dene.",
+    retryButton: "Tekrar dene",
+  },
   noTelegram: {
     title: "Telegram üzerinden aç",
     description: "Bu uygulama yalnızca Telegram Mini App olarak çalışır. Botu aç ve başlat düğmesine bas.",

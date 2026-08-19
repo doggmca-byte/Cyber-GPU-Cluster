@@ -21,6 +21,16 @@ const ar: TranslationDictionary = {
   support: {
     label: "الدعم",
   },
+  intro: {
+    title: "Cyber GPU Cluster",
+    statusInit: "جارٍ تهيئة عقد GPU Cluster...",
+    statusConnect: "الاتصال بشبكة TON و Supabase...",
+    statusSync: "مزامنة معدل التجزئة ومقاييس التعدين...",
+    statusReady: "جاهز! جارٍ تشغيل الواجهة...",
+    connectionIssueTitle: "مشكلة في الاتصال",
+    connectionIssueDescription: "تعذّر الوصول إلى الخادم. تحقّق من اتصالك وحاول مرة أخرى.",
+    retryButton: "حاول مرة أخرى",
+  },
   noTelegram: {
     title: "افتح عبر تيليجرام",
     description: "يعمل هذا التطبيق فقط كتطبيق Telegram Mini App. افتح البوت واضغط على زر التشغيل.",

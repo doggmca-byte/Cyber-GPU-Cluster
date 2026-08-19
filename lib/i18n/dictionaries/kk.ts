@@ -21,6 +21,16 @@ const kk: TranslationDictionary = {
   support: {
     label: "Қолдау",
   },
+  intro: {
+    title: "Cyber GPU Cluster",
+    statusInit: "GPU Cluster тораптары іске қосылуда...",
+    statusConnect: "TON Blockchain және Supabase-ке қосылуда...",
+    statusSync: "Хешрейт пен майнинг көрсеткіштері синхрондалуда...",
+    statusReady: "Дайын! Интерфейс іске қосылуда...",
+    connectionIssueTitle: "Байланыс мәселесі",
+    connectionIssueDescription: "Серверге қосылу мүмкін болмады. Интернетті тексеріп, қайта көріңіз.",
+    retryButton: "Қайта көру",
+  },
   noTelegram: {
     title: "Telegram арқылы аш",
     description: "Бұл қосымша тек Telegram Mini App ретінде жұмыс істейді. Ботты ашып, іске қосу түймесін бас.",
