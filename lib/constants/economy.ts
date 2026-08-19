@@ -61,6 +61,17 @@ export const MIN_DEPOSIT_TON = 0.3;
 export const REFERRAL_FIRST_HARVEST_BONUS_TON = 0.01;
 export const REFERRAL_FIRST_HARVEST_THRESHOLD_HASH = 100;
 
+// exchange_hash_to_ton (реферальна комісія з обміну/продажу HASH рефералом на біржі,
+// незалежно від p_target_balance — 20260819130000_ambassadors_manual_grants_and_exchange_referral.sql)
+export const REFERRAL_EXCHANGE_COMMISSION_TON = 0.01;
+export const REFERRAL_EXCHANGE_COMMISSION_STEP_HASH = 1000;
+
+// admin_grant_balance — ручне нарахування адміном (Адмінка → "Ручне нарахування").
+// Завжди кредитує лише game_balance, БЕЗ 5% реф-revshare і БЕЗ lifetime_deposited_ton —
+// маркується is_manual: true (transactions.is_manual), тому виключене зі статистики
+// "реальних депозитів рефералів" (Адмінка → "Статистика амбасадорів").
+export const ADMIN_GRANT_TARGET_BALANCE = "game_balance" as const;
+
 // claim_daily_bonus
 export const DAILY_BONUS_REWARD_TON = 0.001;
 // Мінімальна "взаємодія з рекламою" перед клеймом (Adsgram/Monetag-заглушка,

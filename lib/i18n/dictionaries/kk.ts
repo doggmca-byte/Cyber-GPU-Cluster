@@ -119,6 +119,8 @@ const kk: TranslationDictionary = {
     ruleRevshare: (percent) => `Досыңның әр депозитінен ${percent}% — мәңгі`,
     ruleFirstHarvest: (bonus, threshold) =>
       `Досың ${threshold} HASH өндіргенде бір реттік ${bonus} TON бонус`,
+    ruleExchangeCommission: (bonus, step) =>
+      `Досың биржада айырбастаған/сатқан әрбір ${step} HASH үшін ${bonus} TON реферал комиссиясы`,
     yourLink: "Сенің реферал сілтемең",
     share: "Бөлісу",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME теңшелмеген.",

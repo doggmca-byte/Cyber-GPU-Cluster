@@ -119,6 +119,8 @@ const tr: TranslationDictionary = {
     ruleRevshare: (percent) => `Arkadaşının her yatırımından ${percent}% — sonsuza dek`,
     ruleFirstHarvest: (bonus, threshold) =>
       `Arkadaşın ${threshold} HASH madenciliği yaptığında tek seferlik ${bonus} TON bonus`,
+    ruleExchangeCommission: (bonus, step) =>
+      `Arkadaşının borsada değiştirdiği/sattığı her ${step} HASH için ${bonus} TON referans komisyonu`,
     yourLink: "Referans linkin",
     share: "Paylaş",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME yapılandırılmamış.",

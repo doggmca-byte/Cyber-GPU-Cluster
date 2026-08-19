@@ -120,6 +120,8 @@ const es: TranslationDictionary = {
     ruleRevshare: (percent) => `${percent}% de cada depósito de tu amigo — para siempre`,
     ruleFirstHarvest: (bonus, threshold) =>
       `Bono único de ${bonus} TON cuando tu amigo mine ${threshold} HASH`,
+    ruleExchangeCommission: (bonus, step) =>
+      `${bonus} TON de comisión de referido por cada ${step} HASH que tu amigo cambie/venda en el exchange`,
     yourLink: "Tu enlace de referido",
     share: "Compartir",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME no está configurado.",

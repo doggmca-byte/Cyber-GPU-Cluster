@@ -119,6 +119,8 @@ const ar: TranslationDictionary = {
     ruleRevshare: (percent) => `${percent}% من كل إيداع يقوم به صديقك — إلى الأبد`,
     ruleFirstHarvest: (bonus, threshold) =>
       `مكافأة لمرة واحدة ${bonus} TON عندما يعدّن صديقك ${threshold} HASH`,
+    ruleExchangeCommission: (bonus, step) =>
+      `${bonus} TON عمولة إحالة عن كل ${step} HASH يبادلها/يبيعها صديقك في البورصة`,
     yourLink: "رابط الإحالة الخاص بك",
     share: "مشاركة",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME غير مُعدّ.",

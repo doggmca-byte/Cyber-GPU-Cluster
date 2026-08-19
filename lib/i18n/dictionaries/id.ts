@@ -119,6 +119,8 @@ const id: TranslationDictionary = {
     ruleRevshare: (percent) => `${percent}% dari setiap deposit temanmu — selamanya`,
     ruleFirstHarvest: (bonus, threshold) =>
       `Bonus sekali sebesar ${bonus} TON saat temanmu menambang ${threshold} HASH`,
+    ruleExchangeCommission: (bonus, step) =>
+      `${bonus} TON komisi referral untuk setiap ${step} HASH yang ditukar/dijual temanmu di exchange`,
     yourLink: "Link referral kamu",
     share: "Bagikan",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME belum dikonfigurasi.",

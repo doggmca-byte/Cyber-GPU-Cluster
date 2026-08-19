@@ -119,6 +119,8 @@ const ru: TranslationDictionary = {
     ruleRevshare: (percent) => `${percent}% с каждого депозита друга — навсегда`,
     ruleFirstHarvest: (bonus, threshold) =>
       `Разовый бонус ${bonus} TON, когда друг добудет ${threshold} HASH`,
+    ruleExchangeCommission: (bonus, step) =>
+      `${bonus} TON реферальной комиссии за каждые ${step} HASH, которые друг обменивает/продаёт на бирже`,
     yourLink: "Твоя реферальная ссылка",
     share: "Поделиться",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME не настроен.",

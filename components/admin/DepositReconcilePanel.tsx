@@ -24,7 +24,7 @@ interface ReconcileResponse {
  * (POST /api/admin/deposits/reconcile), і дозараховує все знайдене, чого ще
  * нема в transactions.
  */
-export function DepositReconcilePanel({ onUnauthorized }: { onUnauthorized: () => void }) {
+export function DepositReconcilePanel({ onSessionExpired }: { onSessionExpired: () => void }) {
   const [telegramIdInput, setTelegramIdInput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<ReconcileResponse | null>(null);
@@ -49,7 +49,7 @@ export function DepositReconcilePanel({ onUnauthorized }: { onUnauthorized: () =
       });
 
       if (res.status === 401 || res.status === 403) {
-        onUnauthorized();
+        onSessionExpired();
         return;
       }
 

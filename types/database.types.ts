@@ -54,6 +54,7 @@ export type Database = {
           harvest_count: number
           hash_balance: number
           id: string
+          is_ambassador: boolean
           last_daily_bonus_at: string | null
           last_withdrawal_request_date: string | null
           lifetime_deposited_ton: number
@@ -74,6 +75,7 @@ export type Database = {
           harvest_count?: number
           hash_balance?: number
           id?: string
+          is_ambassador?: boolean
           last_daily_bonus_at?: string | null
           last_withdrawal_request_date?: string | null
           lifetime_deposited_ton?: number
@@ -94,6 +96,7 @@ export type Database = {
           harvest_count?: number
           hash_balance?: number
           id?: string
+          is_ambassador?: boolean
           last_daily_bonus_at?: string | null
           last_withdrawal_request_date?: string | null
           lifetime_deposited_ton?: number
@@ -208,6 +211,7 @@ export type Database = {
           created_at: string
           fee: number
           id: string
+          is_manual: boolean
           payload: Json
           status: string
           tx_hash: string | null
@@ -219,6 +223,7 @@ export type Database = {
           created_at?: string
           fee?: number
           id?: string
+          is_manual?: boolean
           payload?: Json
           status?: string
           tx_hash?: string | null
@@ -230,6 +235,7 @@ export type Database = {
           created_at?: string
           fee?: number
           id?: string
+          is_manual?: boolean
           payload?: Json
           status?: string
           tx_hash?: string | null
@@ -344,6 +350,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_grant_balance: {
+        Args: {
+          p_admin_telegram_id: string
+          p_amount: number
+          p_user_id: string
+        }
+        Returns: {
+          game_balance: number
+          withdrawable_balance: number
+        }[]
+      }
       approve_withdrawal: {
         Args: { p_payout_tx_hash: string; p_transaction_id: string }
         Returns: {

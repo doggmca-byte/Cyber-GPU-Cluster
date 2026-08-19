@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, X, LogOut, RefreshCw, Wallet, Loader2, PenLine, AlertTriangle } from "lucide-react";
+import { Check, X, RefreshCw, Wallet, Loader2, PenLine, AlertTriangle } from "lucide-react";
 import { DepositReconcilePanel } from "@/components/admin/DepositReconcilePanel";
 import type { AdminWithdrawalItem, AdminWithdrawalsListResponse, AdminTreasuryResponse } from "@/types/admin";
 
@@ -16,7 +16,7 @@ type RowMode = { transactionId: string; type: "sending" | "manual" } | null;
  * без ручного введення хешу. "Manual" — запасний шлях для випадків, коли
  * авто-виплата не вдалась або сума перевищує MAX_AUTO_PAYOUT_TON.
  */
-export function WithdrawalsPanel({ onUnauthorized }: { onUnauthorized: () => void }) {
+export function WithdrawalsPanel({ onSessionExpired }: { onSessionExpired: () => void }) {
   const [items, setItems] = useState<AdminWithdrawalItem[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [treasuryBalance, setTreasuryBalance] = useState<number | null>(null);
@@ -35,7 +35,7 @@ export function WithdrawalsPanel({ onUnauthorized }: { onUnauthorized: () => voi
       const res = await fetch("/api/admin/withdrawals", { cache: "no-store" });
 
       if (res.status === 401 || res.status === 403) {
-        onUnauthorized();
+        onSessionExpired();
         return;
       }
 
@@ -49,14 +49,14 @@ export function WithdrawalsPanel({ onUnauthorized }: { onUnauthorized: () => voi
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "unknown error");
     }
-  }, [onUnauthorized]);
+  }, [onSessionExpired]);
 
   const loadTreasury = useCallback(async () => {
     setTreasuryError(null);
     try {
       const res = await fetch("/api/admin/treasury", { cache: "no-store" });
       if (res.status === 401 || res.status === 403) {
-        onUnauthorized();
+        onSessionExpired();
         return;
       }
       if (!res.ok) {
@@ -68,17 +68,12 @@ export function WithdrawalsPanel({ onUnauthorized }: { onUnauthorized: () => voi
     } catch (err) {
       setTreasuryError(err instanceof Error ? err.message : "unknown error");
     }
-  }, [onUnauthorized]);
+  }, [onSessionExpired]);
 
   useEffect(() => {
     void load();
     void loadTreasury();
   }, [load, loadTreasury]);
-
-  const logout = async () => {
-    await fetch("/api/admin/logout", { method: "POST" });
-    onUnauthorized();
-  };
 
   const removeItem = (transactionId: string) => {
     setItems((prev) => prev?.filter((item) => item.transaction_id !== transactionId) ?? prev);
@@ -99,7 +94,7 @@ export function WithdrawalsPanel({ onUnauthorized }: { onUnauthorized: () => voi
       });
 
       if (res.status === 401 || res.status === 403) {
-        onUnauthorized();
+        onSessionExpired();
         return;
       }
 
@@ -137,7 +132,7 @@ export function WithdrawalsPanel({ onUnauthorized }: { onUnauthorized: () => voi
       });
 
       if (res.status === 401 || res.status === 403) {
-        onUnauthorized();
+        onSessionExpired();
         return;
       }
 
@@ -175,7 +170,7 @@ export function WithdrawalsPanel({ onUnauthorized }: { onUnauthorized: () => voi
       });
 
       if (res.status === 401 || res.status === 403) {
-        onUnauthorized();
+        onSessionExpired();
         return;
       }
 
@@ -198,27 +193,17 @@ export function WithdrawalsPanel({ onUnauthorized }: { onUnauthorized: () => voi
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-lg font-bold">Pending Withdrawals</h1>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              void load();
-              void loadTreasury();
-            }}
-            className="flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 transition hover:border-neon-cyan/40 hover:text-neon-cyan"
-          >
-            <RefreshCw size={14} />
-            Оновити
-          </button>
-          <button
-            type="button"
-            onClick={logout}
-            className="flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 transition hover:border-red-400/40 hover:text-red-400"
-          >
-            <LogOut size={14} />
-            Вийти
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            void load();
+            void loadTreasury();
+          }}
+          className="flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 transition hover:border-neon-cyan/40 hover:text-neon-cyan"
+        >
+          <RefreshCw size={14} />
+          Оновити
+        </button>
       </div>
 
       <div className="glass-card flex items-center justify-between p-3.5">
@@ -237,7 +222,7 @@ export function WithdrawalsPanel({ onUnauthorized }: { onUnauthorized: () => voi
         </span>
       </div>
 
-      <DepositReconcilePanel onUnauthorized={onUnauthorized} />
+      <DepositReconcilePanel onSessionExpired={onSessionExpired} />
 
       {loadError && <div className="glass-card p-4 text-sm text-red-400">{loadError}</div>}
 

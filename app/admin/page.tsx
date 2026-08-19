@@ -1,16 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ShieldAlert, ShieldCheck, Smartphone } from "lucide-react";
+import { LogIn, ShieldAlert, ShieldCheck, Smartphone } from "lucide-react";
 import { getWebAppInitData } from "@/lib/telegram/getWebAppInitData";
-import { WithdrawalsPanel } from "@/components/admin/WithdrawalsPanel";
+import { AdminShell } from "@/components/admin/AdminShell";
 
 type AuthState =
   | { status: "checking" }
   | { status: "needs-telegram" } // відкрито в звичайному браузері — Сценарій 2 поки не реалізовано
   | { status: "access-denied" }
   | { status: "error"; message: string }
-  | { status: "ready" };
+  | { status: "ready" }
+  // Явний стан ПІСЛЯ натискання "Вийти" — НЕ переходить в "checking"/attemptAuth().
+  // Fix: раніше кнопка "Вийти" (WithdrawalsPanel.logout) чистила cookie, а тоді
+  // одразу викликала той самий onUnauthorized/attemptAuth, що й обробка 401 з API —
+  // а він всередині Telegram миттєво перелогінював адміна назад через
+  // /api/admin/telegram-login (initData ж лежить в SDK і так, і так), тому клік
+  // на "Вийти" візуально не мав жодного ефекту. Тепер логаут — окремий термінальний
+  // стан з ЯВНОЮ кнопкою "Увійти знову", а onSessionExpired (401/403 з API-запитів
+  // під час роботи) — окремий колбек, що й далі мовчки ретраїть attemptAuth().
+  | { status: "logged-out" };
 
 /**
  * /admin сама керує своїм auth-станом (middleware.ts гейтить лише API) —
@@ -65,8 +74,35 @@ export default function AdminPage() {
     void attemptAuth();
   }, [attemptAuth]);
 
+  // Викликається лише явним кліком на "Вийти" в AdminShell — чистить cookie і
+  // ЗУПИНЯЄТЬСЯ на терміальному стані, жодного авто-релогіну.
+  const logout = useCallback(async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+    } finally {
+      setAuth({ status: "logged-out" });
+    }
+  }, []);
+
   if (auth.status === "checking") {
     return <CenteredNotice>Перевірка доступу...</CenteredNotice>;
+  }
+
+  if (auth.status === "logged-out") {
+    return (
+      <CenteredNotice icon={<LogIn size={32} className="text-neon-cyan" />} title="Вихід виконано">
+        <div className="flex flex-col items-center gap-3">
+          <p>Сесію адмінки завершено.</p>
+          <button
+            type="button"
+            onClick={() => void attemptAuth()}
+            className="rounded-xl bg-neon-cyan px-4 py-2 text-xs font-semibold text-background transition active:scale-[0.98]"
+          >
+            Увійти знову
+          </button>
+        </div>
+      </CenteredNotice>
+    );
   }
 
   if (auth.status === "needs-telegram") {
@@ -94,7 +130,7 @@ export default function AdminPage() {
     );
   }
 
-  return <WithdrawalsPanel onUnauthorized={() => void attemptAuth()} />;
+  return <AdminShell onSessionExpired={() => void attemptAuth()} onLogout={() => void logout()} />;
 }
 
 function CenteredNotice({
@@ -110,7 +146,7 @@ function CenteredNotice({
     <div className="glass-card flex flex-col items-center gap-3 p-8 text-center">
       {icon ?? <ShieldCheck size={32} className="text-white/30" />}
       {title && <p className="font-display text-base font-bold">{title}</p>}
-      <p className="text-sm text-white/50">{children}</p>
+      <div className="text-sm text-white/50">{children}</div>
     </div>
   );
 }

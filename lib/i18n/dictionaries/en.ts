@@ -122,6 +122,8 @@ const en = {
     ruleRevshare: (percent: string) => `${percent}% of every deposit your friend makes, forever`,
     ruleFirstHarvest: (bonus: string, threshold: string) =>
       `${bonus} TON one-time bonus once your friend mines ${threshold} HASH`,
+    ruleExchangeCommission: (bonus: string, step: string) =>
+      `${bonus} TON referral commission for every ${step} HASH your friend exchanges/sells on the exchange`,
     yourLink: "Your referral link",
     share: "Share",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME is not configured.",

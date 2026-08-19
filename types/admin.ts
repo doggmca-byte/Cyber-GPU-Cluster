@@ -41,3 +41,41 @@ export interface AdminRejectResponse {
 export interface AdminTreasuryResponse {
   balance_ton: number;
 }
+
+/** Вкладка "Амбасадори" — пошук/призначення за telegram_id + таблиця вже призначених. */
+export interface AdminAmbassadorProfile {
+  telegram_id: number;
+  username: string | null;
+  first_name: string | null;
+  is_ambassador: boolean;
+}
+
+export interface AdminAmbassadorsListResponse {
+  items: AdminAmbassadorProfile[];
+}
+
+export interface AdminAmbassadorToggleResponse {
+  profile: AdminAmbassadorProfile;
+}
+
+/** Вкладка "Статистика" — аналітика по кожному амбасадору. */
+export interface AdminAmbassadorStatItem {
+  telegram_id: number;
+  username: string | null;
+  first_name: string | null;
+  referred_count: number;
+  referred_with_deposit_count: number;
+  total_real_deposit_ton: number;
+}
+
+export interface AdminAmbassadorStatsResponse {
+  items: AdminAmbassadorStatItem[];
+}
+
+/** Вкладка "Ручне нарахування" — грант на game_balance за telegram_id, is_manual:true. */
+export interface AdminGrantResponse {
+  telegram_id: number;
+  amount: number;
+  game_balance: number;
+  withdrawable_balance: number;
+}
