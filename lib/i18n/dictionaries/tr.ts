@@ -272,6 +272,10 @@ const tr: TranslationDictionary = {
         title: "Kanalımıza abone ol",
         description: "Haberler ve güncellemeler için resmi Telegram kanalımıza katıl.",
       },
+      subscribe_chat: {
+        title: "Sohbet grubumuza katıl",
+        description: "Toplulukla sohbet etmek için resmi Telegram grubumuza katıl.",
+      },
       visit_website: {
         title: "Web sitemizi ziyaret et",
         description: "Cyber GPU Cluster web sitesini aç.",

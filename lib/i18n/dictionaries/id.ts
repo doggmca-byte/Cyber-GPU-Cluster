@@ -272,6 +272,10 @@ const id: TranslationDictionary = {
         title: "Berlangganan channel kami",
         description: "Gabung ke channel Telegram resmi kami untuk berita dan info terbaru.",
       },
+      subscribe_chat: {
+        title: "Gabung ke grup chat kami",
+        description: "Gabung ke grup Telegram resmi kami untuk ngobrol dengan komunitas.",
+      },
       visit_website: {
         title: "Kunjungi situs web kami",
         description: "Buka situs web Cyber GPU Cluster.",

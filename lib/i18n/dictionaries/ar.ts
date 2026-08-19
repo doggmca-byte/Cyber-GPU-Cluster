@@ -271,6 +271,10 @@ const ar: TranslationDictionary = {
         title: "اشترك في قناتنا",
         description: "انضم إلى قناة تيليجرام الرسمية للأخبار والتحديثات.",
       },
+      subscribe_chat: {
+        title: "انضم إلى الدردشة",
+        description: "انضم إلى مجموعة تيليجرام الرسمية للتحدث مع المجتمع.",
+      },
       visit_website: {
         title: "زر موقعنا الإلكتروني",
         description: "افتح موقع Cyber GPU Cluster.",

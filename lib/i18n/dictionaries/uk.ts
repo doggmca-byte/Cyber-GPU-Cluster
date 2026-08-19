@@ -272,6 +272,10 @@ const uk: TranslationDictionary = {
         title: "Підпишись на наш канал",
         description: "Приєднайся до офіційного Telegram-каналу з новинами та оновленнями.",
       },
+      subscribe_chat: {
+        title: "Приєднайся до чату",
+        description: "Приєднайся до офіційного групового чату, щоб спілкуватись зі спільнотою.",
+      },
       visit_website: {
         title: "Відвідай наш сайт",
         description: "Відкрий сайт Cyber GPU Cluster.",

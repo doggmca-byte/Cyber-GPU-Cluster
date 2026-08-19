@@ -275,6 +275,10 @@ const en = {
         title: "Subscribe to our channel",
         description: "Join our official Telegram channel for news and updates.",
       },
+      subscribe_chat: {
+        title: "Join our chat",
+        description: "Join our official Telegram group chat to talk with the community.",
+      },
       visit_website: {
         title: "Visit our website",
         description: "Open the Cyber GPU Cluster website.",
