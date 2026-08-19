@@ -50,9 +50,11 @@ export const AD_QUOTA_BONUS_TON = 0.05;
 export const DEPOSIT_QUOTA_BONUS_RATE = 1.5; // +150% від суми депозиту
 export const REFERRAL_DEPOSIT_REVSHARE_RATE = 0.05; // 5%, назавжди з кожного депозиту referee
 // Мінімум для довільної суми депозиту (DepositModal, поле "своя сума") —
-// ЛИШЕ клієнтська UX-перевірка. Сервер (/api/wallet/deposit/verify →
-// process_successful_deposit) кредитує РІВНО ту суму, що реально прийшла
-// ончейн, незалежно від цього мінімуму — тут немає що обходити.
+// ЛИШЕ клієнтська UX-перевірка для TonConnect-флоу. Сервер
+// (/api/wallet/deposit/check, /api/cron/deposits, /api/admin/deposits/reconcile
+// → lib/wallet/depositMatching.ts → process_successful_deposit) кредитує
+// РІВНО ту суму, що реально прийшла ончейн, незалежно від цього мінімуму —
+// у ручного переказу за адресою+memo взагалі немає цієї перевірки.
 export const MIN_DEPOSIT_TON = 0.3;
 
 // harvest_user_hash (реферальний бонус за перший видобуток)

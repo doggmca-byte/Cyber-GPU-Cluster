@@ -1,65 +1,93 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { TonConnectButton, useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
 import { toNano } from "@ton/core";
+import { Copy, Check, TriangleAlert, RefreshCw } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
-import { buildCommentPayload, buildDepositComment } from "@/lib/ton/comment";
+import { buildCommentPayload, buildDepositMemo } from "@/lib/ton/comment";
 import { MIN_DEPOSIT_TON } from "@/lib/constants/economy";
-import {
-  readPendingDeposit,
-  savePendingDeposit,
-  clearPendingDeposit,
-  type PendingDeposit,
-} from "@/lib/wallet/pendingDeposit";
-import type { DepositVerifyResponse } from "@/types/api";
-import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
+import type { DepositCheckResponse } from "@/types/api";
 
 const PRESETS_TON = [1, 5, 10, 25, 50, 100] as const;
 const TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY_TON_ADDRESS ?? "";
 
 type DepositStatus = "idle" | "sending" | "verifying" | "success" | "error";
 
-async function verifyDepositWithRetries(
+async function checkDeposit(initData: string): Promise<DepositCheckResponse> {
+  const res = await fetch("/api/wallet/deposit/check", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ initData }),
+  });
+
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error ?? `check failed with status ${res.status}`);
+  }
+
+  return (await res.json()) as DepositCheckResponse;
+}
+
+/** Кілька автоматичних спроб одразу після TonConnect-переказу — та сама транзакція знайдеться за telegram_id. */
+async function pollDepositCheck(
   initData: string,
-  expectedComment: string,
-  t: TranslationDictionary,
   { maxAttempts = 10, delayMs = 3000 }: { maxAttempts?: number; delayMs?: number } = {},
-): Promise<DepositVerifyResponse> {
+): Promise<DepositCheckResponse> {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     if (attempt > 0) {
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
-    const res = await fetch("/api/wallet/deposit/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ initData, expected_comment: expectedComment }),
-    });
-
-    if (res.ok) {
-      return (await res.json()) as DepositVerifyResponse;
-    }
-
-    if (res.status !== 404) {
-      const body = (await res.json().catch(() => null)) as { error?: string } | null;
-      throw new Error(body?.error ?? `verify failed with status ${res.status}`);
-    }
-    // 404 = транзакція ще не в індексаторі toncenter — пробуємо ще раз
+    const result = await checkDeposit(initData);
+    if (result.credited.length > 0) return result;
+    // порожньо — транзакція ще не в індексаторі toncenter, пробуємо ще раз
   }
 
-  throw new Error(t.wallet.deposit.timeoutError);
+  return { credited: [], game_balance: 0, withdrawal_quota: 0, server_time: new Date().toISOString() };
+}
+
+function CopyableField({ value, label }: { value: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard API може бути недоступний — тихо ігноруємо, це лише зручність.
+    }
+  };
+
+  return (
+    <div>
+      <label className="block text-[11px] text-slate-500">{label}</label>
+      <button
+        type="button"
+        onClick={() => void copy()}
+        className="mt-1 flex w-full items-center justify-between gap-2 rounded-2xl border border-white/5 bg-[#0b0e14] px-3 py-2 text-left transition active:scale-[0.99]"
+      >
+        <span className="truncate font-mono text-xs text-white">{value}</span>
+        {copied ? (
+          <Check size={14} className="shrink-0 text-neon-green" />
+        ) : (
+          <Copy size={14} className="shrink-0 text-slate-500" />
+        )}
+      </button>
+    </div>
+  );
 }
 
 export function DepositModal({
-  profileId,
+  telegramId,
   initData,
   onClose,
 }: {
-  profileId: string;
+  telegramId: number;
   initData: string;
   onClose: () => void;
 }) {
@@ -74,22 +102,17 @@ export function DepositModal({
   const [error, setError] = useState<string | null>(null);
   const [creditedAmount, setCreditedAmount] = useState<number | null>(null);
 
-  // Незавершена спроба з попереднього сеансу (застосунок закрили/згорнули
-  // до того, як verifyDepositWithRetries знайшов матч) — детально в
-  // lib/wallet/pendingDeposit.ts.
-  const [resumeAttempt, setResumeAttempt] = useState<PendingDeposit | null>(null);
-  const [isCheckingResume, setIsCheckingResume] = useState(false);
-  const [resumeMessage, setResumeMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    setResumeAttempt(readPendingDeposit(profileId));
-  }, [profileId]);
+  const [isChecking, setIsChecking] = useState(false);
+  const [checkMessage, setCheckMessage] = useState<string | null>(null);
 
   const isConfigured = TREASURY_ADDRESS.length > 0;
   const isBusy = status === "sending" || status === "verifying";
 
+  const memo = buildDepositMemo(telegramId);
+
   const customAmountNumber = Number(customAmount.replace(",", "."));
-  const customAmountValid = customAmount.trim().length > 0 && Number.isFinite(customAmountNumber) && customAmountNumber >= MIN_DEPOSIT_TON;
+  const customAmountValid =
+    customAmount.trim().length > 0 && Number.isFinite(customAmountNumber) && customAmountNumber >= MIN_DEPOSIT_TON;
   const customAmountInvalid = customAmount.trim().length > 0 && !customAmountValid;
 
   const selectPreset = (preset: number) => {
@@ -103,16 +126,24 @@ export function DepositModal({
     setSelected(value.trim().length > 0 && Number.isFinite(parsed) && parsed >= MIN_DEPOSIT_TON ? parsed : null);
   };
 
+  const applyCredited = useCallback(
+    (result: DepositCheckResponse) => {
+      const total = result.credited.reduce((sum, item) => sum + item.amount, 0);
+      patchProfile({
+        game_balance: result.game_balance,
+        withdrawal_quota: result.withdrawal_quota,
+      });
+      setCreditedAmount(total);
+      setStatus("success");
+    },
+    [patchProfile],
+  );
+
   const deposit = useCallback(async () => {
     if (!selected || !walletAddress || isBusy) return;
 
     setError(null);
     setStatus("sending");
-
-    // Коментар транзакції (dep_<UUID профілю>_<nonce>) будується незалежно
-    // від обраної мови інтерфейсу — buildDepositComment працює лише з
-    // profileId, мова UI ніяк на нього не впливає.
-    const comment = buildDepositComment(profileId);
 
     try {
       await tonConnectUI.sendTransaction({
@@ -121,73 +152,46 @@ export function DepositModal({
           {
             address: TREASURY_ADDRESS,
             amount: toNano(String(selected)).toString(),
-            payload: buildCommentPayload(comment),
+            payload: buildCommentPayload(memo),
           },
         ],
       });
 
-      // Транзакція реально пішла в мережу — зберігаємо comment ДО початку
-      // polling, щоб навіть закриття вкладки посеред перевірки лишило слід,
-      // за яким наступний відкритий DepositModal зможе резюмувати перевірку
-      // замість того, щоб примусити відправити ще одну транзакцію.
-      savePendingDeposit(profileId, comment);
-      setResumeAttempt({ comment, createdAt: Date.now() });
-
       setStatus("verifying");
-      const result = await verifyDepositWithRetries(initData, comment, t);
+      const result = await pollDepositCheck(initData);
 
-      patchProfile({
-        game_balance: result.game_balance,
-        withdrawal_quota: result.withdrawal_quota,
-      });
-      setCreditedAmount(result.credited_amount);
-      setStatus("success");
-      clearPendingDeposit(profileId);
-      setResumeAttempt(null);
+      if (result.credited.length === 0) {
+        setStatus("error");
+        setError(t.wallet.deposit.timeoutError);
+        return;
+      }
+
+      applyCredited(result);
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : t.common.unknownError);
-      // НЕ чистимо pendingDeposit тут — саме на цей випадок (timeout/збій
-      // polling, а транзакція вже могла піти) він і існує, лишається для
-      // resume-банера при наступному відкритті модалки.
     }
-  }, [selected, walletAddress, isBusy, profileId, tonConnectUI, initData, patchProfile, t]);
+  }, [selected, walletAddress, isBusy, memo, tonConnectUI, initData, applyCredited, t]);
 
-  const checkPendingDeposit = useCallback(async () => {
-    if (!resumeAttempt || isCheckingResume) return;
+  const runManualCheck = useCallback(async () => {
+    if (isChecking) return;
 
-    setIsCheckingResume(true);
-    setResumeMessage(null);
+    setIsChecking(true);
+    setCheckMessage(null);
 
     try {
-      // Коротший поллінг, ніж свіжий депозит (3×2с) — це разовий "спот-чек"
-      // транзакції, яка вже могла давно потрапити в індексатор, а не перше
-      // очікування підтвердження в мережі.
-      const result = await verifyDepositWithRetries(initData, resumeAttempt.comment, t, {
-        maxAttempts: 3,
-        delayMs: 2000,
-      });
-
-      patchProfile({
-        game_balance: result.game_balance,
-        withdrawal_quota: result.withdrawal_quota,
-      });
-      setCreditedAmount(result.credited_amount);
-      setStatus("success");
-      clearPendingDeposit(profileId);
-      setResumeAttempt(null);
+      const result = await checkDeposit(initData);
+      if (result.credited.length > 0) {
+        applyCredited(result);
+      } else {
+        setCheckMessage(t.wallet.deposit.checkNotFound);
+      }
     } catch (err) {
-      setResumeMessage(err instanceof Error ? err.message : t.common.unknownError);
+      setCheckMessage(err instanceof Error ? err.message : t.common.unknownError);
     } finally {
-      setIsCheckingResume(false);
+      setIsChecking(false);
     }
-  }, [resumeAttempt, isCheckingResume, initData, t, patchProfile, profileId]);
-
-  const dismissResumeAttempt = useCallback(() => {
-    clearPendingDeposit(profileId);
-    setResumeAttempt(null);
-    setResumeMessage(null);
-  }, [profileId]);
+  }, [isChecking, initData, applyCredited, t]);
 
   return (
     <Modal title={t.wallet.deposit.title} onClose={onClose}>
@@ -211,39 +215,40 @@ export function DepositModal({
         </div>
       ) : (
         <>
-          {resumeAttempt && (
-            <div className="mb-3 rounded-2xl border border-neon-gold/30 bg-neon-gold/5 p-3">
-              <p className="text-[11px] font-semibold text-neon-gold">{t.wallet.deposit.resumeTitle}</p>
-              <p className="mt-1 text-[11px] text-slate-400">{t.wallet.deposit.resumeBody}</p>
-              <div className="mt-2 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => void checkPendingDeposit()}
-                  disabled={isCheckingResume}
-                  className="flex-1 rounded-xl bg-neon-gold py-2 text-[11px] font-semibold text-background transition active:scale-[0.98] disabled:opacity-50"
-                >
-                  {isCheckingResume ? t.wallet.deposit.resumeChecking : t.wallet.deposit.resumeCheckButton}
-                </button>
-                <button
-                  type="button"
-                  onClick={dismissResumeAttempt}
-                  disabled={isCheckingResume}
-                  className="rounded-xl border border-white/10 px-3 py-2 text-[11px] text-slate-400 transition hover:text-slate-200 disabled:opacity-50"
-                >
-                  {t.wallet.deposit.resumeDismissButton}
-                </button>
-              </div>
-              {resumeMessage && <p className="mt-1.5 text-[11px] text-red-400">{resumeMessage}</p>}
-            </div>
-          )}
+          <div className="flex flex-col gap-2.5">
+            <CopyableField value={TREASURY_ADDRESS} label={t.wallet.deposit.addressLabel} />
+            <CopyableField value={memo} label={t.wallet.deposit.memoLabel} />
+          </div>
 
-          <div className="mb-3 flex justify-center">
+          <div className="mt-2.5 flex items-start gap-2 rounded-2xl bg-neon-gold/10 p-2.5">
+            <TriangleAlert size={14} className="mt-0.5 shrink-0 text-neon-gold" />
+            <p className="text-[11px] font-semibold text-neon-gold">{t.wallet.deposit.memoWarning}</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void runManualCheck()}
+            disabled={isChecking}
+            className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-neon-cyan/30 py-2.5 text-xs font-semibold text-neon-cyan transition active:scale-[0.98] disabled:opacity-50"
+          >
+            <RefreshCw size={13} className={isChecking ? "animate-spin" : ""} />
+            {isChecking ? t.wallet.deposit.checking : t.wallet.deposit.checkButton}
+          </button>
+          {checkMessage && <p className="mt-1.5 text-center text-[11px] text-slate-400">{checkMessage}</p>}
+
+          <div className="my-3.5 flex items-center gap-2">
+            <div className="h-px flex-1 bg-white/5" />
+            <span className="text-[10px] uppercase tracking-wide text-slate-600">{t.wallet.deposit.orQuickPay}</span>
+            <div className="h-px flex-1 bg-white/5" />
+          </div>
+
+          <div className="flex justify-center">
             <TonConnectButton />
           </div>
 
           {walletAddress && (
             <>
-              <p className="text-[11px] text-slate-500">{t.wallet.deposit.chooseAmount}</p>
+              <p className="mt-2.5 text-[11px] text-slate-500">{t.wallet.deposit.chooseAmount}</p>
 
               <div className="mt-2.5 grid grid-cols-3 gap-2">
                 {PRESETS_TON.map((preset) => (

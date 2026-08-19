@@ -4,7 +4,7 @@ import { requireAdminAuth } from "@/lib/admin/auth";
 import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { readJsonBody } from "@/lib/api/request";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
-import { sendTreasuryPayout } from "@/lib/ton/treasury";
+import { sendTreasuryPayout, AmbiguousPayoutError } from "@/lib/ton/treasury";
 import type { AdminApproveResponse } from "@/types/admin";
 
 export const runtime = "nodejs";
@@ -114,7 +114,22 @@ async function approveAutomatically(transactionId: string) {
     );
     payoutTxHash = payout.txHash;
   } catch (err) {
-    // Гроші достеменно НЕ пішли (помилка сталась до/під час broadcast) —
+    if (err instanceof AmbiguousPayoutError) {
+      // sendTreasuryPayout сам перевірив seqno гаманця й визначив, що
+      // виплата, найімовірніше, УЖЕ пішла в мережу попри помилку — НЕ
+      // відкочуємо в pending (інакше повторний Approve міг би відправити
+      // ту саму виплату вдруге). Заявка лишається в 'processing'
+      // (застовплена begin_withdrawal_payout раніше в цій функції) — тепер
+      // видима в адмінці (GET /api/admin/withdrawals включає 'processing')
+      // з єдиною доступною дією "Ввести хеш вручну", щоб дожати вручну
+      // реальним хешем після перевірки в експлорері.
+      throw new ApiError(
+        500,
+        `AMBIGUOUS payout state — do NOT retry auto-approve for this transaction: ${err.message}`,
+      );
+    }
+
+    // Гроші достеменно НЕ пішли (seqno гаманця лишився незмінним) —
     // безпечно відкотити назад у pending для повторної спроби.
     const message = err instanceof Error ? err.message : "unknown treasury error";
     await revertSafely(admin, transactionId, message);

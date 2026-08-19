@@ -86,12 +86,38 @@ export async function fetchTreasuryTransactions(
   return transactions;
 }
 
-/** Точний збіг коментаря — унікальний nonce на кожну спробу депозиту виключає повторний матч. */
-export function findDepositTransaction(
+/**
+ * Парсить коментар транзакції як telegram_id — приймає ЛИШЕ рядок з самих
+ * цифр (після trim), інакше null. Навмисно суворо: жодних префіксів чи
+ * додаткового тексту довкола числа, щоб не зачепити випадковий сторонній
+ * коментар, що містить якісь цифри не за темою.
+ */
+export function parseTelegramIdFromComment(comment: string | null): number | null {
+  if (!comment) return null;
+  const trimmed = comment.trim();
+  if (!/^\d+$/.test(trimmed)) return null;
+  const id = Number(trimmed);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
+/**
+ * Усі транзакції на treasury, чий коментар парситься рівно як цей
+ * telegram_id — на відміну від старої (dep_<uuid>_<nonce>) схеми, коментар
+ * тепер СТАТИЧНИЙ на користувача, тож законно може збігтись у кількох
+ * окремих реальних депозитах одразу; повертаємо їх УСІ (не перший-ліпший).
+ * sinceUtimeSeconds (опційно) — відкидає транзакції старіші за цей unix-час,
+ * для "перевір мій платіж за останні N хвилин" (DepositModal, ручна кнопка).
+ */
+export function findDepositTransactionsForTelegramId(
   transactions: TreasuryTransaction[],
-  expectedComment: string,
-): TreasuryTransaction | null {
-  return transactions.find((tx) => tx.comment === expectedComment) ?? null;
+  telegramId: number,
+  sinceUtimeSeconds?: number,
+): TreasuryTransaction[] {
+  return transactions.filter((tx) => {
+    if (parseTelegramIdFromComment(tx.comment) !== telegramId) return false;
+    if (sinceUtimeSeconds !== undefined && tx.utime < sinceUtimeSeconds) return false;
+    return true;
+  });
 }
 
 export function nanoTonToTon(nanoTon: string): number {

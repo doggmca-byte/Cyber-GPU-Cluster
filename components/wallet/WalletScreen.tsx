@@ -72,7 +72,7 @@ function WalletScreenReady({ data, initData }: { data: SyncResponse; initData: s
       <WithdrawalHistory initData={initData} />
 
       {openModal === "deposit" && (
-        <DepositModal profileId={profile.id} initData={initData} onClose={() => setOpenModal(null)} />
+        <DepositModal telegramId={profile.telegram_id} initData={initData} onClose={() => setOpenModal(null)} />
       )}
       {openModal === "withdraw" && (
         <WithdrawModal profile={profile} initData={initData} onClose={() => setOpenModal(null)} />

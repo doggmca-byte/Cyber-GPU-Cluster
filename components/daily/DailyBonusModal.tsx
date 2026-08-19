@@ -25,13 +25,15 @@ type ModalState =
 
 /**
  * Автоматичний флоу без ручного чекліста: короткий відлік → rewarded-показ →
- * клейм. Rewarded-показ — через showRewardedAdRotating (lib/ads/rewardedAd.ts),
- * що чергує GigaPub (App ID 7784) і Monetag (zone 11600101) від виклику до
- * виклику, з автоматичним fallback на другого провайдера, якщо в першого
- * немає реклами. Якщо немає реклами в ОБОХ — клейм НЕ відправляється,
- * користувач бачить "спробуйте пізніше" (жодного автоматичного
- * fallback-нарахування через Direct Link чи щось подібне без реального
- * підтвердження перегляду).
+ * клейм. Rewarded-показ — ЛИШЕ Rewarded Interstitial (повноцінний внутрішній
+ * банер/відео, закривається хрестиком прямо в Telegram WebApp) через
+ * showRewardedAdRotating (lib/ads/rewardedAd.ts), що чергує GigaPub (App ID
+ * 7784) і Monetag (zone 11600101) від виклику до виклику, з автоматичним
+ * fallback на другого провайдера, якщо в першого немає реклами. Rewarded
+ * Popup (перехід у зовнішній браузер на офер-сторінку) свідомо не
+ * використовується ніде в цьому флоу. Якщо немає реклами в ОБОХ — клейм НЕ
+ * відправляється, користувач бачить "спробуйте пізніше" (жодного
+ * автоматичного fallback-нарахування без реального підтвердження перегляду).
  * Server-side callback від жодного з провайдерів немає, тож захист від
  * подвійного нарахування — атомарний кулдаун у claim_daily_bonus
  * (FOR UPDATE), не сам факт показу реклами.
@@ -239,11 +241,12 @@ function AutoAdView({
     setClaimError(null);
 
     try {
-      // Чергуємо GigaPub/Monetag (showRewardedAdRotating, lib/ads/rewardedAd.ts).
-      // Якщо в жодного з двох немає rewarded-інвентарю — чесно повідомляємо
-      // про це й НЕ клеймимо (жодного автоматичного fallback-нарахування
-      // через Direct Link, який не має промісу завершення).
-      const adWatched = await showRewardedAdRotating("pop");
+      // Чергуємо GigaPub/Monetag (showRewardedAdRotating, lib/ads/rewardedAd.ts)
+      // — лише Rewarded Interstitial, без переходу в зовнішній браузер. Якщо
+      // в жодного з двох немає rewarded-інвентарю — чесно повідомляємо про це
+      // й НЕ клеймимо (жодного автоматичного fallback-нарахування без
+      // реального промісу завершення показу).
+      const adWatched = await showRewardedAdRotating();
       if (!adWatched) {
         if (mountedRef.current) {
           setClaimError(t.dailyBonus.noAdAvailable);

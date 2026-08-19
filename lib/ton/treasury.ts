@@ -92,8 +92,30 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function describeError(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 export interface PayoutResult {
   txHash: string;
+}
+
+/**
+ * Кидається замість звичайної Error, коли ми НЕ можемо стверджувати, що
+ * реальна TON-виплата НЕ пішла в мережу (seqno гаманця вже зрушив і/або
+ * повторно перевірити його не вдалось). На відміну від "звичайного" збою
+ * (наприклад, toncenter повернув 500 ЩЕ ДО sendTransfer — seqno не змінився,
+ * нічого не відправлено), тут викликач (approve/route.ts) НЕ повинен
+ * автоматично відкочувати заявку назад у pending — інакше повторний Approve
+ * ризикує відправити ту саму виплату ВДРУГЕ (гаманець прийме нове зовнішнє
+ * повідомлення з наступним seqno незалежно від того, чи попереднє "згубилось"
+ * лише в HTTP-відповіді, чи справді ніколи не дійшло до мережі).
+ */
+export class AmbiguousPayoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AmbiguousPayoutError";
+  }
 }
 
 /**
@@ -101,6 +123,11 @@ export interface PayoutResult {
  * транзакції (для запису в approve_withdrawal). Чекає на інкремент seqno
  * (підтвердження, що зовнішнє повідомлення оброблено мережею), потім шукає
  * відповідну вихідну транзакцію в історії гаманця за адресою одержувача.
+ *
+ * На БУДЬ-ЯКУ помилку після старту відправки — перевіряє seqno ще раз перед
+ * тим, як кинути звичайну (безпечну для відкату) Error: якщо він УЖЕ зрушив
+ * відносно значення до відправки — кидає AmbiguousPayoutError замість цього,
+ * бо повідомлення, найімовірніше, реально прийняте мережею, попри збій.
  */
 export async function sendTreasuryPayout(
   destinationAddress: string,
@@ -110,33 +137,69 @@ export async function sendTreasuryPayout(
   const { contract, keyPair, address } = await getTreasuryWallet();
 
   const to = Address.parse(destinationAddress);
-  const seqno = await contract.getSeqno();
+  const seqnoBefore = await contract.getSeqno();
 
-  await contract.sendTransfer({
-    secretKey: keyPair.secretKey,
-    seqno,
-    sendMode: SendMode.PAY_GAS_SEPARATELY,
-    messages: [
-      internal({
-        to,
-        value: toNano(amountTon.toFixed(9)),
-        bounce: false,
-        body: comment,
-      }),
-    ],
-  });
+  try {
+    await contract.sendTransfer({
+      secretKey: keyPair.secretKey,
+      seqno: seqnoBefore,
+      sendMode: SendMode.PAY_GAS_SEPARATELY,
+      messages: [
+        internal({
+          to,
+          value: toNano(amountTon.toFixed(9)),
+          bounce: false,
+          body: comment,
+        }),
+      ],
+    });
 
-  await waitForSeqnoIncrement(contract, seqno);
+    await waitForSeqnoIncrement(contract, seqnoBefore);
 
-  const txHash = await findOutgoingTransactionHash(address, to, amountTon);
-  if (!txHash) {
-    throw new Error(
-      "payout was broadcast and seqno advanced, but the resulting transaction could not " +
-        "be located yet — check the treasury wallet explorer before retrying, to avoid a double payout",
-    );
+    const txHash = await findOutgoingTransactionHash(address, to, amountTon);
+    if (!txHash) {
+      // seqno ТОЧНО вже зрушив (waitForSeqnoIncrement це підтвердив) —
+      // виплата гарантовано пішла в мережу, просто ще не знайшли хеш.
+      // Завжди неоднозначний випадок, ніколи не "просто ретрай".
+      throw new AmbiguousPayoutError(
+        `payout was broadcast and the treasury wallet seqno advanced (${seqnoBefore} → seqno+1), but the ` +
+          `resulting transaction could not be located yet — check the treasury wallet explorer for a transfer ` +
+          `of ${amountTon} TON to ${to.toString()} and finalize manually (do NOT retry auto-approve).`,
+      );
+    }
+
+    return { txHash };
+  } catch (err) {
+    if (err instanceof AmbiguousPayoutError) throw err;
+
+    // Перевіряємо seqno ще раз ПІСЛЯ помилки — якщо він уже зрушив відносно
+    // значення до спроби, sendTransfer, найімовірніше, реально дійшов до
+    // мережі, попри те що ми отримали помилку (наприклад, toncenter впав
+    // саме на відповіді, а не на прийомі повідомлення).
+    let seqnoAfter: number;
+    try {
+      seqnoAfter = await contract.getSeqno();
+    } catch {
+      throw new AmbiguousPayoutError(
+        `payout attempt failed and the treasury wallet seqno could not be re-verified afterwards ` +
+          `(original error: ${describeError(err)}) — do NOT retry automatically; check the treasury wallet ` +
+          `explorer for a transfer of ${amountTon} TON to ${to.toString()} before resending.`,
+      );
+    }
+
+    if (seqnoAfter > seqnoBefore) {
+      throw new AmbiguousPayoutError(
+        `payout attempt failed (${describeError(err)}), but the treasury wallet seqno already advanced ` +
+          `(${seqnoBefore} → ${seqnoAfter}) — the transfer likely went through despite the error. Do NOT retry ` +
+          `automatically; check the treasury wallet explorer for a transfer of ${amountTon} TON to ${to.toString()} ` +
+          `and finalize manually with the real tx hash instead.`,
+      );
+    }
+
+    // seqno незмінний — нічого не пішло в мережу, ця помилка безпечна для
+    // автоматичного відкату заявки назад у pending.
+    throw err;
   }
-
-  return { txHash };
 }
 
 async function waitForSeqnoIncrement(

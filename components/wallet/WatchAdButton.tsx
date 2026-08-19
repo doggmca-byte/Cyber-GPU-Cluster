@@ -5,28 +5,28 @@ import { PlayCircle } from "lucide-react";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { showRewardedAdRotating } from "@/lib/ads/rewardedAd";
-import { openDirectAdLink } from "@/lib/ads/openAdLink";
 import type { AdWatchResponse } from "@/types/api";
 
 /**
  * "Ads for Cashout" лічильник (MIN_ADS_BEFORE_WITHDRAW/20) і швидка кнопка
- * бонусної реклами. Клік запускає два незалежні монетизаційні канали:
- *  - Monetag Direct Link (openDirectAdLink, lib/ads/openAdLink.ts) —
- *    відкривається одразу, без очікування. Немає промісу завершення, тож
- *    не впливає на інкремент лічильника — паралельний дохід.
- *  - Rewarded-показ через showRewardedAdRotating (lib/ads/rewardedAd.ts) —
- *    чергує GigaPub (App ID 7784) і Monetag (zone 11600101) від виклику до
- *    виклику, з автоматичним fallback на другого провайдера, якщо в
- *    першого немає реклами. /api/ads/watch (інкремент
- *    ads_watched_since_withdraw) викликається лише якщо БУДЬ-ЯКИЙ з двох
- *    показав рекламу успішно.
+ * бонусної реклами. Клік показує лише Rewarded Interstitial — повноцінний
+ * внутрішній банер/відео, що закривається хрестиком прямо в Telegram
+ * WebApp — через showRewardedAdRotating (lib/ads/rewardedAd.ts), який
+ * чергує GigaPub (App ID 7784) і Monetag (zone 11600101) від виклику до
+ * виклику, з автоматичним fallback на другого провайдера, якщо в першого
+ * немає реклами. /api/ads/watch (інкремент ads_watched_since_withdraw)
+ * викликається лише якщо БУДЬ-ЯКИЙ з двох показав рекламу успішно.
+ *
+ * Rewarded Popup / Monetag Direct Link (перехід у зовнішній браузер на
+ * офер-сторінку) свідомо ВИДАЛЕНО — користувача ніколи не можна виштовхувати
+ * з Mini App при перегляді реклами.
+ *
  * Немає server-side callback від жодного з провайдерів, тож справжній
  * захист від накрутки лишається на бекенді (RPC record_ad_watch).
  */
 export function WatchAdButton({ initData }: { initData: string }) {
   const { t } = useTranslation();
-  const { state: userDataState, patchProfile } = useUserData();
-  const telegramId = userDataState.status === "ready" ? userDataState.data.profile.telegram_id : undefined;
+  const { patchProfile } = useUserData();
   const [isWatching, setIsWatching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,8 +37,6 @@ export function WatchAdButton({ initData }: { initData: string }) {
     setError(null);
 
     try {
-      openDirectAdLink(telegramId);
-
       const adWatched = await showRewardedAdRotating();
       if (!adWatched) {
         setError(t.watchAd.adNotCompleted);

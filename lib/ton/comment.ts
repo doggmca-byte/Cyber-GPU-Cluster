@@ -6,13 +6,21 @@ export function buildCommentPayload(comment: string): string {
   return cell.toBoc().toString("base64");
 }
 
-/** Короткий випадковий nonce, щоб кожна спроба депозиту мала унікальний коментар. */
-export function randomDepositNonce(): string {
-  const bytes = new Uint8Array(4);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-export function buildDepositComment(profileId: string): string {
-  return `dep_${profileId}_${randomDepositNonce()}`;
+/**
+ * Memo/коментар депозиту — рівно telegram_id користувача, нічого більше
+ * (жодного префіксу/nonce). Це навмисно СТАТИЧНЕ значення для одного й того
+ * самого користувача, а не одноразовий токен, як було раніше (dep_<uuid>_
+ * <nonce>) — той самий підхід, що й у типових memo-based депозитах на
+ * біржах (Binance UID тощо): будь-яка вхідна транзакція на скарбницю з цим
+ * коментарем розпізнається як депозит цього користувача, незалежно від того,
+ * з якого гаманця й коли вона надіслана (lib/ton/deposit.ts
+ * findDepositTransactionsForTelegramId + lib/wallet/depositMatching.ts).
+ *
+ * Унікальність зарахування забезпечує НЕ унікальність коментаря (він
+ * навмисно один і той самий на кожен переказ), а унікальний індекс на
+ * tx_hash у process_successful_deposit — кожна ончейн-транзакція
+ * зараховується рівно один раз.
+ */
+export function buildDepositMemo(telegramId: number | string): string {
+  return String(telegramId).trim();
 }

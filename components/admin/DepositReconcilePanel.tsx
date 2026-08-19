@@ -5,7 +5,6 @@ import { Search, Loader2 } from "lucide-react";
 
 interface ReconcileCreditedItem {
   tx_hash: string;
-  comment: string;
   amount_ton: number;
 }
 
@@ -14,16 +13,16 @@ interface ReconcileResponse {
   scanned: number;
   matched_comments: number;
   credited: ReconcileCreditedItem[];
-  already_processed: number;
 }
 
 /**
- * Ручна санація "загублених" депозитів (code review finding: DepositModal
- * тримає перевірку транзакції лише в пам'яті вкладки — якщо вона обірвалась
- * до матчу, TON уже пішов у мережу, а game_balance так і не зарахувався, і
- * ніщо в застосунку більше сам це не перевірить). Шукає по telegram_id
- * власника серед останніх транзакцій treasury (POST /api/admin/deposits/reconcile)
- * і дозараховує все знайдене, чого ще нема в transactions.
+ * Ручна санація "загублених" депозитів по конкретному telegram_id — на
+ * випадок, коли ні автоматичний поллінг у DepositModal одразу після
+ * переказу, ні фоновий /api/cron/deposits ще не встигли (або платник ніколи
+ * не повертався в застосунок натиснути "Перевірити оплату"). Шукає серед
+ * останніх транзакцій treasury коментарі, що дорівнюють цьому telegram_id
+ * (POST /api/admin/deposits/reconcile), і дозараховує все знайдене, чого ще
+ * нема в transactions.
  */
 export function DepositReconcilePanel({ onUnauthorized }: { onUnauthorized: () => void }) {
   const [telegramIdInput, setTelegramIdInput] = useState("");
@@ -101,8 +100,7 @@ export function DepositReconcilePanel({ onUnauthorized }: { onUnauthorized: () =
       {result && (
         <div className="mt-3 rounded-xl border border-white/10 p-3 text-[11px] text-white/60">
           <p>
-            Проскановано транзакцій: {result.scanned} · збігів коментаря: {result.matched_comments} · вже було
-            в БД: {result.already_processed}
+            Проскановано транзакцій: {result.scanned} · збігів коментаря (telegram_id): {result.matched_comments}
           </p>
           {result.credited.length === 0 ? (
             <p className="mt-1.5 text-white/40">Нових депозитів для зарахування не знайдено.</p>

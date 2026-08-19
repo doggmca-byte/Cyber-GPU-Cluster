@@ -31,14 +31,17 @@ function nextFirstProvider(): RewardedProvider {
   return provider;
 }
 
-function showByProvider(provider: RewardedProvider, monetagType?: "pop" | "interstitial"): Promise<boolean> {
-  return provider === "gigapub" ? showGigaRewardedAd() : showRewardedAd(monetagType);
+function showByProvider(provider: RewardedProvider): Promise<boolean> {
+  return provider === "gigapub" ? showGigaRewardedAd() : showRewardedAd();
 }
 
 /**
- * Показує rewarded-рекламу, чергуючи двох провайдерів (GigaPub / Monetag
+ * Показує Rewarded Interstitial, чергуючи двох провайдерів (GigaPub / Monetag
  * SDK) від виклику до виклику замість того, щоб завжди пробувати одного й
- * того ж першим.
+ * того ж першим. ОБИДВА провайдери — лише повноцінний внутрішній
+ * банер/відео, що закривається в самому Telegram WebApp; жодного переходу в
+ * зовнішній браузер (Rewarded Popup / Direct Link) з цієї функції не
+ * викликається.
  *
  * showGigaRewardedAd/showRewardedAd НІКОЛИ не кидають — вони повертають
  * false у будь-якому "немає реклами" сценарії (SDK ще не завантажився, нема
@@ -46,14 +49,11 @@ function showByProvider(provider: RewardedProvider, monetagType?: "pop" | "inter
  * чия зараз черга, повернув false, одразу пробуємо другого як fallback —
  * true повертається, якщо БУДЬ-ЯКИЙ з двох показав рекламу успішно; false
  * лише якщо провалились обидва (і тоді бекенд-клейм/інкремент не викликати).
- *
- * monetagType прокидається в Monetag SDK, коли саме він і показує рекламу
- * (GigaPub-виклик його ігнорує — showGiga() без аргументів).
  */
-export async function showRewardedAdRotating(monetagType?: "pop" | "interstitial"): Promise<boolean> {
+export async function showRewardedAdRotating(): Promise<boolean> {
   const first = nextFirstProvider();
   const second: RewardedProvider = first === "gigapub" ? "monetag" : "gigapub";
 
-  if (await showByProvider(first, monetagType)) return true;
-  return showByProvider(second, monetagType);
+  if (await showByProvider(first)) return true;
+  return showByProvider(second);
 }

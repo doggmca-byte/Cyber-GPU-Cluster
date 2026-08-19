@@ -25,8 +25,10 @@ interface ClaimRequestBody {
 
 /**
  * Клієнт (DailyBonusModal) викликає цей роут лише після успішного резолву
- * промісу Monetag SDK (showRewardedAd("pop"), lib/ads/monetag.ts). Так само,
- * як і в /api/ads/watch, Monetag не надсилає server-side callback сюди, тож
+ * промісу showRewardedAdRotating (lib/ads/rewardedAd.ts) — лише Rewarded
+ * Interstitial (GigaPub/Monetag), без переходу в зовнішній браузер. Так само,
+ * як і в /api/ads/watch, жоден з провайдерів не надсилає server-side callback
+ * сюди, тож
  * ad_interactions/ad_watch_seconds (UI-чекліст: 2+ різні кнопки, 5+ секунд
  * на сторінці) — це не криптографічний доказ, лише мінімальний server-side
  * гейт проти прямого виклику API без проходження UI-флоу. Реальний захист

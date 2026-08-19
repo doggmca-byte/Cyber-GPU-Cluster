@@ -87,11 +87,17 @@ export interface WithdrawalHistoryResponse {
   items: WithdrawalHistoryItem[];
 }
 
-export interface DepositVerifyResponse {
-  credited_amount: number;
+export interface CreditedDepositItem {
+  transaction_id: string;
+  tx_hash: string;
+  amount: number;
+}
+
+export interface DepositCheckResponse {
+  /** Усі депозити, зараховані ЦИМ конкретним викликом — порожній масив, якщо нічого нового не знайдено. */
+  credited: CreditedDepositItem[];
   game_balance: number;
   withdrawal_quota: number;
-  transaction_id: string;
   server_time: string;
 }
 
