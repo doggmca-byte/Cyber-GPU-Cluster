@@ -24,6 +24,7 @@ export function Header() {
   const profile = state.status === "ready" ? state.data.profile : null;
   const hashBalance = profile?.hash_balance ?? 0;
   const tonBalance = (profile?.game_balance ?? 0) + (profile?.withdrawable_balance ?? 0);
+  const isAdmin = state.status === "ready" && state.data.is_admin;
 
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between gap-2 border-b border-white/5 bg-background/95 px-4 py-2.5">
@@ -56,22 +57,22 @@ export function Header() {
           </Link>
         </div>
 
-        {/* Непомітна іконка входу в /admin — навмисно завжди в розмітці (не
-            приховуємо за клієнтською перевіркою telegram_id, бо
-            TELEGRAM_ADMIN_IDS — серверний секрет, і його ніде не читати
-            в клієнтському коді). Справжній захист — requireAdminAuth() на
-            бекенді (lib/admin/auth.ts): для будь-кого, крім акаунтів зі
-            списку, /admin одразу поверне "403 Access Denied". Клік звідси
-            (а не за посиланням поза Telegram) — єдиний надійний спосіб
-            потрапити туди, бо це навігація ВСЕРЕДИНІ вже живої Mini App
-            WebView-сесії, тож window.Telegram.WebApp.initData точно є. */}
-        <Link
-          href="/admin"
-          aria-label="Admin"
-          className="rounded-full border border-white/5 bg-background-card p-1.5 text-slate-500 transition hover:text-neon-purple"
-        >
-          <ShieldCheck size={13} />
-        </Link>
+        {/* Іконка входу в /admin — рендериться лише коли /api/user/sync
+            повернув is_admin: true для ПОТОЧНОГО telegram_id (сервер звіряє
+            його з TELEGRAM_ADMIN_IDS, сам список ніколи не покидає бекенд —
+            див. коментар біля SyncResponse.is_admin). Це лише UX-приховування
+            для сторонніх акаунтів; справжній захист лишається на
+            requireAdminAuth() (lib/admin/auth.ts): навіть знаючи прямий URL
+            /admin, хтось поза списком все одно отримає "403 Access Denied". */}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            aria-label="Admin"
+            className="rounded-full border border-white/5 bg-background-card p-1.5 text-slate-500 transition hover:text-neon-purple"
+          >
+            <ShieldCheck size={13} />
+          </Link>
+        )}
 
         <SupportButton />
       </div>

@@ -9,6 +9,8 @@ export interface SyncResponse {
   user_gpus: UserGpu[];
   gpu_templates: GpuTemplate[];
   total_hash_per_second: number;
+  /** TRUE лише для telegram_id зі списку TELEGRAM_ADMIN_IDS — сам список ніколи не йде в клієнт. */
+  is_admin: boolean;
   server_time: string;
 }
 

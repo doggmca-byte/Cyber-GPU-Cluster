@@ -4,6 +4,7 @@ import { verifyInitData, getTelegramBotToken } from "@/lib/telegram/verifyInitDa
 import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { readJsonBody } from "@/lib/api/request";
 import { findProfileByTelegramId } from "@/lib/api/profile";
+import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
 import type { SyncResponse } from "@/types/api";
 import type { Database } from "@/types/database.types";
 
@@ -63,6 +64,12 @@ export async function POST(request: Request) {
       user_gpus: userGpus ?? [],
       gpu_templates: gpuTemplates ?? [],
       total_hash_per_second: totalHashPerSecond,
+      // Лише TRUE/FALSE для ЦЬОГО конкретного telegram_id — сам список
+      // TELEGRAM_ADMIN_IDS лишається серверним секретом і ніколи не йде в
+      // клієнтський бандл чи цю відповідь. Header ховає посилання на /admin
+      // для всіх, крім is_admin: true — справжній захист лишається на
+      // requireAdminAuth() (lib/admin/auth.ts), це поле лише про UX/приховування.
+      is_admin: isTelegramAdmin(user.id),
       server_time: new Date().toISOString(),
     };
 
