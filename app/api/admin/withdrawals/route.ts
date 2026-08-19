@@ -18,11 +18,16 @@ export async function GET() {
 
     const admin = createAdminClient();
 
+    // 'processing' навмисно теж включено — інакше заявка, "застовплена"
+    // begin_withdrawal_payout під авто-виплату, чий подальший approve_withdrawal
+    // не завершився (гроші вже могли піти з казначейства), назавжди зникає з
+    // адмінки без жодного способу її знайти й дожати вручну (Fix: раніше тут
+    // був лише .eq("status", "pending")).
     const { data: pendingTx, error: txError } = await admin
       .from("transactions")
-      .select("id, user_id, amount, fee, payload, created_at")
+      .select("id, user_id, amount, fee, status, payload, created_at")
       .eq("type", "withdraw")
-      .eq("status", "pending")
+      .in("status", ["pending", "processing"])
       .order("created_at", { ascending: true });
 
     if (txError) {
@@ -56,6 +61,7 @@ export async function GET() {
         fee: t.fee,
         net_payout: payload.net_payout ?? requestedAmount - t.fee,
         destination_address: payload.destination_address ?? "",
+        status: t.status as AdminWithdrawalItem["status"],
         created_at: t.created_at,
       };
     });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { TonConnectButton, useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
 import { toNano } from "@ton/core";
 import { Modal } from "@/components/ui/Modal";
@@ -9,6 +9,12 @@ import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import { buildCommentPayload, buildDepositComment } from "@/lib/ton/comment";
 import { MIN_DEPOSIT_TON } from "@/lib/constants/economy";
+import {
+  readPendingDeposit,
+  savePendingDeposit,
+  clearPendingDeposit,
+  type PendingDeposit,
+} from "@/lib/wallet/pendingDeposit";
 import type { DepositVerifyResponse } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 
@@ -68,6 +74,17 @@ export function DepositModal({
   const [error, setError] = useState<string | null>(null);
   const [creditedAmount, setCreditedAmount] = useState<number | null>(null);
 
+  // Незавершена спроба з попереднього сеансу (застосунок закрили/згорнули
+  // до того, як verifyDepositWithRetries знайшов матч) — детально в
+  // lib/wallet/pendingDeposit.ts.
+  const [resumeAttempt, setResumeAttempt] = useState<PendingDeposit | null>(null);
+  const [isCheckingResume, setIsCheckingResume] = useState(false);
+  const [resumeMessage, setResumeMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setResumeAttempt(readPendingDeposit(profileId));
+  }, [profileId]);
+
   const isConfigured = TREASURY_ADDRESS.length > 0;
   const isBusy = status === "sending" || status === "verifying";
 
@@ -109,6 +126,13 @@ export function DepositModal({
         ],
       });
 
+      // Транзакція реально пішла в мережу — зберігаємо comment ДО початку
+      // polling, щоб навіть закриття вкладки посеред перевірки лишило слід,
+      // за яким наступний відкритий DepositModal зможе резюмувати перевірку
+      // замість того, щоб примусити відправити ще одну транзакцію.
+      savePendingDeposit(profileId, comment);
+      setResumeAttempt({ comment, createdAt: Date.now() });
+
       setStatus("verifying");
       const result = await verifyDepositWithRetries(initData, comment, t);
 
@@ -118,11 +142,52 @@ export function DepositModal({
       });
       setCreditedAmount(result.credited_amount);
       setStatus("success");
+      clearPendingDeposit(profileId);
+      setResumeAttempt(null);
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : t.common.unknownError);
+      // НЕ чистимо pendingDeposit тут — саме на цей випадок (timeout/збій
+      // polling, а транзакція вже могла піти) він і існує, лишається для
+      // resume-банера при наступному відкритті модалки.
     }
   }, [selected, walletAddress, isBusy, profileId, tonConnectUI, initData, patchProfile, t]);
+
+  const checkPendingDeposit = useCallback(async () => {
+    if (!resumeAttempt || isCheckingResume) return;
+
+    setIsCheckingResume(true);
+    setResumeMessage(null);
+
+    try {
+      // Коротший поллінг, ніж свіжий депозит (3×2с) — це разовий "спот-чек"
+      // транзакції, яка вже могла давно потрапити в індексатор, а не перше
+      // очікування підтвердження в мережі.
+      const result = await verifyDepositWithRetries(initData, resumeAttempt.comment, t, {
+        maxAttempts: 3,
+        delayMs: 2000,
+      });
+
+      patchProfile({
+        game_balance: result.game_balance,
+        withdrawal_quota: result.withdrawal_quota,
+      });
+      setCreditedAmount(result.credited_amount);
+      setStatus("success");
+      clearPendingDeposit(profileId);
+      setResumeAttempt(null);
+    } catch (err) {
+      setResumeMessage(err instanceof Error ? err.message : t.common.unknownError);
+    } finally {
+      setIsCheckingResume(false);
+    }
+  }, [resumeAttempt, isCheckingResume, initData, t, patchProfile, profileId]);
+
+  const dismissResumeAttempt = useCallback(() => {
+    clearPendingDeposit(profileId);
+    setResumeAttempt(null);
+    setResumeMessage(null);
+  }, [profileId]);
 
   return (
     <Modal title={t.wallet.deposit.title} onClose={onClose}>
@@ -146,6 +211,32 @@ export function DepositModal({
         </div>
       ) : (
         <>
+          {resumeAttempt && (
+            <div className="mb-3 rounded-2xl border border-neon-gold/30 bg-neon-gold/5 p-3">
+              <p className="text-[11px] font-semibold text-neon-gold">{t.wallet.deposit.resumeTitle}</p>
+              <p className="mt-1 text-[11px] text-slate-400">{t.wallet.deposit.resumeBody}</p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void checkPendingDeposit()}
+                  disabled={isCheckingResume}
+                  className="flex-1 rounded-xl bg-neon-gold py-2 text-[11px] font-semibold text-background transition active:scale-[0.98] disabled:opacity-50"
+                >
+                  {isCheckingResume ? t.wallet.deposit.resumeChecking : t.wallet.deposit.resumeCheckButton}
+                </button>
+                <button
+                  type="button"
+                  onClick={dismissResumeAttempt}
+                  disabled={isCheckingResume}
+                  className="rounded-xl border border-white/10 px-3 py-2 text-[11px] text-slate-400 transition hover:text-slate-200 disabled:opacity-50"
+                >
+                  {t.wallet.deposit.resumeDismissButton}
+                </button>
+              </div>
+              {resumeMessage && <p className="mt-1.5 text-[11px] text-red-400">{resumeMessage}</p>}
+            </div>
+          )}
+
           <div className="mb-3 flex justify-center">
             <TonConnectButton />
           </div>

@@ -43,7 +43,11 @@ const TONCENTER_BASE_URL = "https://toncenter.com/api/v2";
 
 export async function fetchTreasuryTransactions(
   treasuryAddress: string,
-  limit = 30,
+  // 100, не 30: під навантаженням (багато депозитів від РІЗНИХ користувачів
+  // на ту саму treasury-адресу) вузьке вікно ризикувало "виштовхнути" ще не
+  // знайдений матч за 30-секундне вікно поллінгу DepositModal — див. Fix у
+  // code review (втрачені депозити).
+  limit = 100,
 ): Promise<TreasuryTransaction[]> {
   const url = new URL(`${TONCENTER_BASE_URL}/getTransactions`);
   url.searchParams.set("address", treasuryAddress);

@@ -208,7 +208,7 @@ function ProfileCard({
       <button
         type="button"
         onClick={onOpenDailyBonus}
-        className="flex shrink-0 items-center gap-1.5 rounded-xl bg-neon-gold px-3 py-2 text-xs font-semibold text-background transition active:scale-95"
+        className="flex shrink-0 items-center gap-1.5 rounded-xl bg-neon-gold px-3 py-2 text-xs font-semibold text-background shadow-neon-gold transition active:scale-95"
       >
         <Gift size={13} />
         {t.farm.dailyBonus}
@@ -235,7 +235,7 @@ function MiningPanel({
   const { t, language } = useTranslation();
 
   return (
-    <div className="glass-card flex flex-col items-center gap-2 rounded-2xl px-5 py-5">
+    <div className="glass-card flex flex-col items-center gap-2 rounded-2xl border-neon-cyan/40 px-5 py-5 shadow-neon-cyan">
       <div className="flex w-full items-center justify-between text-slate-600">
         <Bot size={16} className="shrink-0 text-slate-500" />
         <span className="text-[10px] font-medium uppercase tracking-widest text-slate-500">
@@ -271,7 +271,7 @@ function MiningPanel({
         type="button"
         onClick={onHarvest}
         disabled={isHarvesting}
-        className="mt-1 flex w-full items-center justify-center gap-2 rounded-2xl bg-neon-green py-2.5 text-xs font-semibold text-background transition active:scale-[0.98] disabled:opacity-50"
+        className="mt-1 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-neon-cyan to-neon-green py-2.5 text-xs font-semibold text-background shadow-neon-green transition active:scale-[0.98] disabled:opacity-50 disabled:shadow-none"
       >
         {isHarvesting ? t.farm.harvesting : t.farm.harvestButton}
         {!isHarvesting && <Zap size={14} fill="currentColor" />}
@@ -332,7 +332,7 @@ function ActiveServersSection({
 
       <Link
         href="/market"
-        className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 py-2.5 text-xs font-semibold text-slate-300 transition active:scale-[0.98] hover:bg-white/5"
+        className="flex items-center justify-center gap-2 rounded-2xl border border-neon-cyan/30 py-2.5 text-xs font-semibold text-neon-cyan transition active:scale-[0.98] hover:bg-neon-cyan/5"
       >
         <CirclePlus size={14} />
         {t.farm.buyNewServer}

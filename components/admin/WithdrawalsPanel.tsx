@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, X, LogOut, RefreshCw, Wallet, Loader2, PenLine } from "lucide-react";
+import { Check, X, LogOut, RefreshCw, Wallet, Loader2, PenLine, AlertTriangle } from "lucide-react";
+import { DepositReconcilePanel } from "@/components/admin/DepositReconcilePanel";
 import type { AdminWithdrawalItem, AdminWithdrawalsListResponse, AdminTreasuryResponse } from "@/types/admin";
 
 type RowMode = { transactionId: string; type: "sending" | "manual" } | null;
@@ -236,6 +237,8 @@ export function WithdrawalsPanel({ onUnauthorized }: { onUnauthorized: () => voi
         </span>
       </div>
 
+      <DepositReconcilePanel onUnauthorized={onUnauthorized} />
+
       {loadError && <div className="glass-card p-4 text-sm text-red-400">{loadError}</div>}
 
       {items === null && !loadError && (
@@ -256,9 +259,17 @@ export function WithdrawalsPanel({ onUnauthorized }: { onUnauthorized: () => voi
                 </p>
                 <p className="text-xs text-white/40">Telegram ID: {item.telegram_id}</p>
               </div>
-              <p className="text-[11px] text-white/30">
-                {new Date(item.created_at).toLocaleString("uk-UA")}
-              </p>
+              <div className="flex flex-col items-end gap-1">
+                {item.status === "processing" && (
+                  <span className="flex items-center gap-1 rounded-full bg-neon-gold/10 px-2 py-0.5 text-[10px] font-semibold text-neon-gold">
+                    <AlertTriangle size={10} />
+                    У ПРОЦЕСІ
+                  </span>
+                )}
+                <p className="text-[11px] text-white/30">
+                  {new Date(item.created_at).toLocaleString("uk-UA")}
+                </p>
+              </div>
             </div>
 
             <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
@@ -344,6 +355,27 @@ export function WithdrawalsPanel({ onUnauthorized }: { onUnauthorized: () => voi
                   </button>
                 </div>
                 {rowError && <p className="mt-1.5 text-[11px] text-red-400">{rowError}</p>}
+              </div>
+            ) : item.status === "processing" ? (
+              <div className="mt-3 flex flex-col gap-2">
+                <p className="rounded-xl border border-neon-gold/30 bg-neon-gold/5 p-2.5 text-[11px] text-neon-gold">
+                  Авто-виплата вже застовпила цю заявку раніше, але не завершилась — гроші, ймовірно,
+                  вже пішли з казначейства. Approve (авто) і відхилення тут недоступні (RPC вимагає
+                  status=pending) — введи хеш реальної виплати вручну, щоб завершити заявку.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode({ transactionId: item.transaction_id, type: "manual" });
+                    setManualHash("");
+                    setRowError(null);
+                  }}
+                  disabled={mode !== null || isSubmitting}
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-neon-gold/10 py-2 text-xs font-bold text-neon-gold transition active:scale-[0.98] disabled:opacity-50"
+                >
+                  <PenLine size={14} />
+                  Ввести хеш виплати вручну
+                </button>
               </div>
             ) : (
               <div className="mt-3 flex flex-col gap-2">

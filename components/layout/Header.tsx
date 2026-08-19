@@ -30,7 +30,7 @@ export function Header() {
       <LanguageSelector />
 
       <div className="flex items-center gap-1.5">
-        <div className="glass-card flex items-center gap-1.5 px-2.5 py-1.5">
+        <div className="glass-card flex items-center gap-1.5 border-neon-green/30 px-2.5 py-1.5 shadow-neon-green">
           <Hexagon size={13} className="text-neon-green" fill="currentColor" fillOpacity={0.2} />
           <span className="text-xs font-semibold tabular-nums text-white">
             {formatNumber(language, hashBalance, { maximumFractionDigits: 2 })}
@@ -38,7 +38,7 @@ export function Header() {
           <span className="text-[10px] font-medium uppercase text-slate-500">{t.common.hash}</span>
         </div>
 
-        <div className="glass-card flex items-center gap-1.5 py-1.5 pl-2.5 pr-1">
+        <div className="glass-card flex items-center gap-1.5 border-neon-purple/30 py-1.5 pl-2.5 pr-1 shadow-neon-purple">
           <Gem size={13} className="text-neon-purple" />
           <span className="text-xs font-semibold tabular-nums text-white">
             {formatNumber(language, tonBalance, { maximumFractionDigits: 2 })}
@@ -49,7 +49,7 @@ export function Header() {
           <Link
             href="/wallet"
             aria-label={t.nav.wallet}
-            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neon-cyan/15 text-neon-cyan transition active:scale-90"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neon-cyan text-background shadow-neon-cyan transition active:scale-90"
           >
             <Plus size={12} />
           </Link>

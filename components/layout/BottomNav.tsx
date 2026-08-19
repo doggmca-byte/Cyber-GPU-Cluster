@@ -37,12 +37,12 @@ export function BottomNav() {
               <Link
                 href={href}
                 className={`flex flex-col items-center gap-1 py-2 text-[10px] font-medium transition-colors ${
-                  active ? "text-neon-green" : "text-slate-500 hover:text-slate-300"
+                  active ? "text-neon-green" : "text-neon-cyan/50 hover:text-neon-cyan"
                 }`}
               >
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
-                    active ? "bg-neon-green" : ""
+                    active ? "bg-neon-green shadow-neon-green" : ""
                   }`}
                 >
                   <Icon size={18} strokeWidth={1.75} className={active ? "text-background" : ""} />

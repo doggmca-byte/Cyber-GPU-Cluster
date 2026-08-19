@@ -69,6 +69,24 @@ export interface WithdrawResponse {
   server_time: string;
 }
 
+export type WithdrawalStatus = "pending" | "processing" | "completed" | "failed" | "cancelled" | "rejected";
+
+export interface WithdrawalHistoryItem {
+  transaction_id: string;
+  requested_amount: number;
+  fee: number;
+  net_payout: number;
+  destination_address: string;
+  status: WithdrawalStatus;
+  rejection_reason: string | null;
+  payout_tx_hash: string | null;
+  created_at: string;
+}
+
+export interface WithdrawalHistoryResponse {
+  items: WithdrawalHistoryItem[];
+}
+
 export interface DepositVerifyResponse {
   credited_amount: number;
   game_balance: number;

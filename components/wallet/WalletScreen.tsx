@@ -8,6 +8,7 @@ import { formatNumber } from "@/lib/i18n/formatNumber";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { DepositModal } from "@/components/wallet/DepositModal";
 import { WithdrawModal } from "@/components/wallet/WithdrawModal";
+import { WithdrawalHistory } from "@/components/wallet/WithdrawalHistory";
 import { MIN_ADS_BEFORE_WITHDRAW } from "@/lib/constants/economy";
 import type { SyncResponse } from "@/types/api";
 
@@ -67,6 +68,8 @@ function WalletScreenReady({ data, initData }: { data: SyncResponse; initData: s
           {t.wallet.withdrawButton}
         </button>
       </div>
+
+      <WithdrawalHistory initData={initData} />
 
       {openModal === "deposit" && (
         <DepositModal profileId={profile.id} initData={initData} onClose={() => setOpenModal(null)} />
