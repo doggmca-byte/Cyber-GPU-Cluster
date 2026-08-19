@@ -18,6 +18,9 @@ const ar: TranslationDictionary = {
     market: "المتجر",
     friends: "الأصدقاء",
   },
+  support: {
+    label: "الدعم",
+  },
   noTelegram: {
     title: "افتح عبر تيليجرام",
     description: "يعمل هذا التطبيق فقط كتطبيق Telegram Mini App. افتح البوت واضغط على زر التشغيل.",

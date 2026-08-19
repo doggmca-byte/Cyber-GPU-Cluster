@@ -21,6 +21,9 @@ const en = {
     market: "Market",
     friends: "Friends",
   },
+  support: {
+    label: "Support",
+  },
   noTelegram: {
     title: "Open via Telegram",
     description: "This app only works as a Telegram Mini App. Open the bot and tap the launch button.",

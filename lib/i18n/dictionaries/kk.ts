@@ -18,6 +18,9 @@ const kk: TranslationDictionary = {
     market: "Дүкен",
     friends: "Достар",
   },
+  support: {
+    label: "Қолдау",
+  },
   noTelegram: {
     title: "Telegram арқылы аш",
     description: "Бұл қосымша тек Telegram Mini App ретінде жұмыс істейді. Ботты ашып, іске қосу түймесін бас.",

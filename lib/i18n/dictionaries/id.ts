@@ -18,6 +18,9 @@ const id: TranslationDictionary = {
     market: "Pasar",
     friends: "Teman",
   },
+  support: {
+    label: "Dukungan",
+  },
   noTelegram: {
     title: "Buka lewat Telegram",
     description: "Aplikasi ini hanya berjalan sebagai Telegram Mini App. Buka bot dan tekan tombol mulai.",

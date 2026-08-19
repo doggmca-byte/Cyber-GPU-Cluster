@@ -18,6 +18,9 @@ const ru: TranslationDictionary = {
     market: "Маркет",
     friends: "Друзья",
   },
+  support: {
+    label: "Поддержка",
+  },
   noTelegram: {
     title: "Открой через Telegram",
     description: "Это приложение работает только как Telegram Mini App. Открой бота и нажми кнопку запуска.",

@@ -7,6 +7,7 @@ import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import { LanguageSelector } from "./LanguageSelector";
+import { SupportButton } from "./SupportButton";
 
 export function Header() {
   const pathname = usePathname();
@@ -71,6 +72,8 @@ export function Header() {
         >
           <ShieldCheck size={13} />
         </Link>
+
+        <SupportButton />
       </div>
     </header>
   );

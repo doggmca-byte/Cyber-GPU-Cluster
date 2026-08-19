@@ -22,6 +22,7 @@ import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import { showRewardedAdRotating } from "@/lib/ads/rewardedAd";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
+import { SupportButton } from "@/components/layout/SupportButton";
 import type {
   TaskCategory,
   TaskItem,
@@ -111,13 +112,16 @@ function TasksTopBar() {
       style={{ paddingTop: "calc(0.625rem + env(safe-area-inset-top))" }}
     >
       <h1 className="text-sm font-semibold text-white">{t.tasks.title}</h1>
-      <Link
-        href="/"
-        aria-label={t.common.close}
-        className="rounded-full p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-white"
-      >
-        <X size={18} />
-      </Link>
+      <div className="flex items-center gap-1.5">
+        <SupportButton />
+        <Link
+          href="/"
+          aria-label={t.common.close}
+          className="rounded-full p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-white"
+        >
+          <X size={18} />
+        </Link>
+      </div>
     </div>
   );
 }

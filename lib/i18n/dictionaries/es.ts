@@ -18,6 +18,9 @@ const es: TranslationDictionary = {
     market: "Mercado",
     friends: "Amigos",
   },
+  support: {
+    label: "Soporte",
+  },
   noTelegram: {
     title: "Abre a través de Telegram",
     description:

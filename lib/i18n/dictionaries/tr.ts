@@ -18,6 +18,9 @@ const tr: TranslationDictionary = {
     market: "Market",
     friends: "Arkadaşlar",
   },
+  support: {
+    label: "Destek",
+  },
   noTelegram: {
     title: "Telegram üzerinden aç",
     description: "Bu uygulama yalnızca Telegram Mini App olarak çalışır. Botu aç ve başlat düğmesine bas.",

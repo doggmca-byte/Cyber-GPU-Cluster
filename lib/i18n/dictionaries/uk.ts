@@ -18,6 +18,9 @@ const uk: TranslationDictionary = {
     market: "Маркет",
     friends: "Друзі",
   },
+  support: {
+    label: "Підтримка",
+  },
   noTelegram: {
     title: "Відкрий через Telegram",
     description: "Цей застосунок працює лише як Telegram Mini App. Відкрий бота і натисни кнопку запуску.",
