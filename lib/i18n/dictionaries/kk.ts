@@ -296,6 +296,15 @@ const kk: TranslationDictionary = {
         description: "Уақыты шектеулі арнайы сыйақы.",
       },
     },
+    partnerAds: {
+      title: "Серіктес жарнамасын көру",
+      description: "GigaPub пен Monetag жарнамаларын көріп, әр көрсетілім үшін TON тап.",
+      button: "Жарнаманы көру",
+      loading: "Жарнама жүктелуде...",
+      adNotCompleted: "Жарнама соңына дейін көрілмеді. Қайта көріңіз.",
+      progress: (watched, limit) => `${watched}/${limit} бүгін`,
+      limitReached: "Күндізгі лимитке жетті — ертең қайта орал.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

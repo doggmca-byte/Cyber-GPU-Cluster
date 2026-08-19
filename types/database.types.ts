@@ -1,6 +1,3 @@
-// Автогенеровано з живої схеми Supabase (mcp__supabase__generate_typescript_types).
-// Не редагувати вручну — перегенерувати після кожної нової міграції в supabase/migrations.
-
 export type Json =
   | string
   | number
@@ -59,6 +56,8 @@ export type Database = {
           last_withdrawal_request_date: string | null
           lifetime_deposited_ton: number
           lifetime_hash_generated: number
+          partner_ads_reset_date: string
+          partner_ads_watched_today: number
           referrer_id: string | null
           telegram_id: number
           username: string | null
@@ -80,6 +79,8 @@ export type Database = {
           last_withdrawal_request_date?: string | null
           lifetime_deposited_ton?: number
           lifetime_hash_generated?: number
+          partner_ads_reset_date?: string
+          partner_ads_watched_today?: number
           referrer_id?: string | null
           telegram_id: number
           username?: string | null
@@ -101,6 +102,8 @@ export type Database = {
           last_withdrawal_request_date?: string | null
           lifetime_deposited_ton?: number
           lifetime_hash_generated?: number
+          partner_ads_reset_date?: string
+          partner_ads_watched_today?: number
           referrer_id?: string | null
           telegram_id?: number
           username?: string | null
@@ -448,6 +451,15 @@ export type Database = {
         Returns: {
           ads_watched_since_withdraw: number
           withdrawal_quota: number
+        }[]
+      }
+      record_partner_ad_watch: {
+        Args: { p_user_id: string }
+        Returns: {
+          daily_limit: number
+          partner_ads_watched_today: number
+          reward_amount: number
+          withdrawable_balance: number
         }[]
       }
       reject_withdrawal: {

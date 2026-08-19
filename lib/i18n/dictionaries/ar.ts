@@ -295,6 +295,15 @@ const ar: TranslationDictionary = {
         description: "مكافأة خاصة متاحة لفترة محدودة.",
       },
     },
+    partnerAds: {
+      title: "شاهد إعلانات الشركاء",
+      description: "شاهد إعلانات من GigaPub وMonetag واربح TON عن كل مشاهدة.",
+      button: "مشاهدة الإعلان",
+      loading: "جارٍ تحميل الإعلان...",
+      adNotCompleted: "لم يكتمل الإعلان. حاول مرة أخرى.",
+      progress: (watched, limit) => `${watched}/${limit} اليوم`,
+      limitReached: "تم الوصول للحد اليومي — عد غدًا.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

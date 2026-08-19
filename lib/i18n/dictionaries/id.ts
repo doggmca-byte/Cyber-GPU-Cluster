@@ -296,6 +296,15 @@ const id: TranslationDictionary = {
         description: "Hadiah spesial yang tersedia dalam waktu terbatas.",
       },
     },
+    partnerAds: {
+      title: "Tonton iklan mitra",
+      description: "Tonton iklan dari GigaPub dan Monetag dan dapatkan TON untuk setiap tontonan.",
+      button: "Tonton iklan",
+      loading: "Memuat iklan...",
+      adNotCompleted: "Iklan belum selesai ditonton. Coba lagi.",
+      progress: (watched, limit) => `${watched}/${limit} hari ini`,
+      limitReached: "Batas harian tercapai — kembali besok.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

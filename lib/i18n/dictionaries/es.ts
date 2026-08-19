@@ -297,6 +297,15 @@ const es: TranslationDictionary = {
         description: "Una recompensa especial disponible por tiempo limitado.",
       },
     },
+    partnerAds: {
+      title: "Mira anuncios de socios",
+      description: "Mira anuncios de GigaPub y Monetag y gana TON por cada visualización.",
+      button: "Ver anuncio",
+      loading: "Cargando anuncio...",
+      adNotCompleted: "El anuncio no se completó. Inténtalo de nuevo.",
+      progress: (watched, limit) => `${watched}/${limit} hoy`,
+      limitReached: "Límite diario alcanzado — vuelve mañana.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

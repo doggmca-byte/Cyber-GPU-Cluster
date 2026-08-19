@@ -299,6 +299,15 @@ const en = {
         description: "A special reward available for a limited time.",
       },
     },
+    partnerAds: {
+      title: "Watch partner ads",
+      description: "Watch ads from GigaPub and Monetag and earn TON for every view.",
+      button: "Watch ad",
+      loading: "Loading ad...",
+      adNotCompleted: "Ad wasn't completed. Try again.",
+      progress: (watched: number, limit: number) => `${watched}/${limit} today`,
+      limitReached: "Daily limit reached — come back tomorrow.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

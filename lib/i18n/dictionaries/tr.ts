@@ -296,6 +296,15 @@ const tr: TranslationDictionary = {
         description: "Sınırlı süre için geçerli özel bir ödül.",
       },
     },
+    partnerAds: {
+      title: "Ortak reklamlarını izle",
+      description: "GigaPub ve Monetag reklamlarını izle, her izleme için TON kazan.",
+      button: "Reklamı izle",
+      loading: "Reklam yükleniyor...",
+      adNotCompleted: "Reklam tamamlanmadı. Tekrar dene.",
+      progress: (watched, limit) => `${watched}/${limit} bugün`,
+      limitReached: "Günlük limit doldu — yarın tekrar gel.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

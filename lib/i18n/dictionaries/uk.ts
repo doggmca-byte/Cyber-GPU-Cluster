@@ -296,6 +296,15 @@ const uk: TranslationDictionary = {
         description: "Особлива нагорода, доступна протягом обмеженого часу.",
       },
     },
+    partnerAds: {
+      title: "Дивись рекламу партнерів",
+      description: "Переглядай рекламу від GigaPub та Monetag і отримуй TON за кожен перегляд.",
+      button: "Переглянути рекламу",
+      loading: "Завантаження реклами...",
+      adNotCompleted: "Рекламу не переглянуто до кінця. Спробуй ще раз.",
+      progress: (watched, limit) => `${watched}/${limit} сьогодні`,
+      limitReached: "Денний ліміт вичерпано — повернись завтра.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

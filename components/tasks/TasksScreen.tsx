@@ -13,15 +13,31 @@ import {
   Star,
   Gift,
   Loader2,
+  PlayCircle,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { useUserData, type UserDataState } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
+import { showRewardedAdRotating } from "@/lib/ads/rewardedAd";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
-import type { TaskCategory, TaskItem, TasksResponse, TaskVerifyResponse, TaskClaimResponse } from "@/types/api";
+import type {
+  TaskCategory,
+  TaskItem,
+  TasksResponse,
+  TaskVerifyResponse,
+  TaskClaimResponse,
+  PartnerAdWatchResponse,
+} from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
+
+// Дзеркалить константи в record_partner_ad_watch
+// (supabase/migrations/20260819170000_partner_ad_watch_reward.sql) — лише
+// для відображення (сервер — єдине джерело правди для фактичного нарахування
+// й ліміту, тут це тільки початкове значення до першого перегляду за сесію).
+const PARTNER_AD_REWARD_TON = 0.003;
+const PARTNER_AD_DAILY_LIMIT = 20;
 
 const CATEGORY_ORDER: TaskCategory[] = ["in_game", "general", "partners", "wallet", "friends", "special"];
 
@@ -324,11 +340,15 @@ function TasksScreenReady({ initData }: { initData: string }) {
         })}
       </div>
 
-      {categoryTasks.length === 0 ? (
-        <div className="glass-card p-4 text-center text-xs text-slate-500">{t.tasks.empty}</div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {categoryTasks.map((task) => (
+      <div className="flex flex-col gap-2">
+        {activeCategory === "partners" && <PartnerAdsCard initData={initData} />}
+
+        {categoryTasks.length === 0 ? (
+          activeCategory !== "partners" && (
+            <div className="glass-card p-4 text-center text-xs text-slate-500">{t.tasks.empty}</div>
+          )
+        ) : (
+          categoryTasks.map((task) => (
             <TaskRow
               key={task.id}
               task={task}
@@ -340,9 +360,109 @@ function TasksScreenReady({ initData }: { initData: string }) {
               onVerify={() => verify(task)}
               onClaim={() => claim(task)}
             />
-          ))}
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Rewarded-реклама від GigaPub/Monetag (ротація — lib/ads/rewardedAd.ts, той
+// самий SDK-шар, що й WatchAdButton у гаманці) з прямим TON-нарахуванням на
+// withdrawable_balance. На відміну від TaskRow це НЕ task_templates-рядок —
+// повторювана дія з денним лічильником (record_partner_ad_watch), тож живе
+// окремою карткою над списком завдань вкладки "Партнери", а не в
+// task_templates/user_tasks (там термінальний claimed один раз назавжди).
+function PartnerAdsCard({ initData }: { initData: string }) {
+  const { t, language } = useTranslation();
+  const { state, patchProfile } = useUserData();
+  const [isWatching, setIsWatching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (state.status !== "ready") return null;
+  const { profile } = state.data;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const watchedToday =
+    profile.partner_ads_reset_date === today ? profile.partner_ads_watched_today : 0;
+  const limitReached = watchedToday >= PARTNER_AD_DAILY_LIMIT;
+
+  const watch = async () => {
+    if (isWatching || limitReached) return;
+
+    setIsWatching(true);
+    setError(null);
+
+    try {
+      const adWatched = await showRewardedAdRotating();
+      if (!adWatched) {
+        setError(t.tasks.partnerAds.adNotCompleted);
+        return;
+      }
+
+      const res = await fetch("/api/ads/partner-watch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData }),
+      });
+
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? `partner ad watch failed with status ${res.status}`);
+      }
+
+      const result = (await res.json()) as PartnerAdWatchResponse;
+      patchProfile({
+        partner_ads_watched_today: result.partner_ads_watched_today,
+        partner_ads_reset_date: today,
+        withdrawable_balance: result.withdrawable_balance,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t.common.unknownError);
+    } finally {
+      setIsWatching(false);
+    }
+  };
+
+  return (
+    <div className="glass-card p-3.5">
+      <div className="flex items-start gap-2.5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neon-gold/10 text-neon-gold">
+          <PlayCircle size={16} />
         </div>
-      )}
+
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold text-white">{t.tasks.partnerAds.title}</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">{t.tasks.partnerAds.description}</p>
+
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold text-neon-green">
+              {t.tasks.reward.ton(formatNumber(language, PARTNER_AD_REWARD_TON, { maximumFractionDigits: 3 }))}
+            </span>
+            <span className="text-[10px] font-medium text-slate-500">
+              {t.tasks.partnerAds.progress(watchedToday, PARTNER_AD_DAILY_LIMIT)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-2.5">
+        <button
+          type="button"
+          onClick={watch}
+          disabled={isWatching || limitReached}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-neon-gold py-2 text-[11px] font-semibold text-background transition active:scale-[0.98] disabled:opacity-50"
+        >
+          {isWatching && <Loader2 size={13} className="animate-spin" />}
+          {limitReached
+            ? t.tasks.partnerAds.limitReached
+            : isWatching
+              ? t.tasks.partnerAds.loading
+              : t.tasks.partnerAds.button}
+        </button>
+      </div>
+
+      {error && <p className="mt-2 text-center text-[11px] text-red-400">{error}</p>}
     </div>
   );
 }

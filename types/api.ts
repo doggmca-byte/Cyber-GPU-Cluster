@@ -113,6 +113,14 @@ export interface AdWatchResponse {
   server_time: string;
 }
 
+export interface PartnerAdWatchResponse {
+  partner_ads_watched_today: number;
+  daily_limit: number;
+  reward_amount: number;
+  withdrawable_balance: number;
+  server_time: string;
+}
+
 // ---------------------------------------------------------------------------
 // Task Center (Центр Завдань)
 // ---------------------------------------------------------------------------
