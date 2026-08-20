@@ -24,6 +24,11 @@ const en = {
   support: {
     label: "Support",
   },
+  notifications: {
+    productionPaused: (hashBalance: string) =>
+      `⛏️ Your GPU Cluster has stopped mining — no HASH collected in over 12 hours.\n\nCurrent balance: ${hashBalance} HASH. Open the app and tap "Collect HASH" to keep earning.`,
+    openAppButton: "Open Cyber GPU Cluster",
+  },
   intro: {
     title: "Cyber GPU Cluster",
     statusInit: "Initializing GPU Cluster nodes...",

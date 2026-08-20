@@ -21,6 +21,11 @@ const id: TranslationDictionary = {
   support: {
     label: "Dukungan",
   },
+  notifications: {
+    productionPaused: (hashBalance) =>
+      `⛏️ GPU Cluster kamu berhenti menambang — belum ada HASH yang dikumpulkan lebih dari 12 jam.\n\nSaldo saat ini: ${hashBalance} HASH. Buka aplikasi dan ketuk "Kumpulkan HASH" untuk terus menghasilkan.`,
+    openAppButton: "Buka Cyber GPU Cluster",
+  },
   intro: {
     title: "Cyber GPU Cluster",
     statusInit: "Menginisialisasi node GPU Cluster...",

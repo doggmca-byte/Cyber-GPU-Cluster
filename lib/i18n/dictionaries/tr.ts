@@ -21,6 +21,11 @@ const tr: TranslationDictionary = {
   support: {
     label: "Destek",
   },
+  notifications: {
+    productionPaused: (hashBalance) =>
+      `⛏️ GPU Cluster'ın madenciliği durdurdu — 12 saatten fazladır HASH toplanmadı.\n\nGüncel bakiye: ${hashBalance} HASH. Kazanmaya devam etmek için uygulamayı aç ve "HASH Topla"ya dokun.`,
+    openAppButton: "Cyber GPU Cluster'ı Aç",
+  },
   intro: {
     title: "Cyber GPU Cluster",
     statusInit: "GPU Cluster düğümleri başlatılıyor...",

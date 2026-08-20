@@ -21,6 +21,11 @@ const es: TranslationDictionary = {
   support: {
     label: "Soporte",
   },
+  notifications: {
+    productionPaused: (hashBalance) =>
+      `⛏️ Tu GPU Cluster ha dejado de minar — no se ha recolectado HASH en más de 12 horas.\n\nSaldo actual: ${hashBalance} HASH. Abre la app y toca «Recolectar HASH» para seguir ganando.`,
+    openAppButton: "Abrir Cyber GPU Cluster",
+  },
   intro: {
     title: "Cyber GPU Cluster",
     statusInit: "Inicializando nodos de GPU Cluster...",

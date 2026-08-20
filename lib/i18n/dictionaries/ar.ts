@@ -21,6 +21,11 @@ const ar: TranslationDictionary = {
   support: {
     label: "الدعم",
   },
+  notifications: {
+    productionPaused: (hashBalance) =>
+      `⛏️ توقّف GPU Cluster الخاص بك عن التعدين — لم يتم جمع HASH منذ أكثر من 12 ساعة.\n\nالرصيد الحالي: ${hashBalance} HASH. افتح التطبيق واضغط على «جمع HASH» لمواصلة الربح.`,
+    openAppButton: "افتح Cyber GPU Cluster",
+  },
   intro: {
     title: "Cyber GPU Cluster",
     statusInit: "جارٍ تهيئة عقد GPU Cluster...",

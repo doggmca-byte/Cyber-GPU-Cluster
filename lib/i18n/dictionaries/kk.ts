@@ -21,6 +21,11 @@ const kk: TranslationDictionary = {
   support: {
     label: "Қолдау",
   },
+  notifications: {
+    productionPaused: (hashBalance) =>
+      `⛏️ Сенің GPU Cluster-ің тоқтады — 12 сағаттан астам HASH жиналмады.\n\nАғымдағы баланс: ${hashBalance} HASH. Қолданбаны аш және табыс табуды жалғастыру үшін «HASH жинау» түймесін бас.`,
+    openAppButton: "Cyber GPU Cluster ашу",
+  },
   intro: {
     title: "Cyber GPU Cluster",
     statusInit: "GPU Cluster тораптары іске қосылуда...",

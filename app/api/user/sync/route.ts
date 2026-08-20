@@ -81,7 +81,7 @@ export async function POST(request: Request) {
 
 async function createProfileWithOptionalReferral(
   admin: ReturnType<typeof createAdminClient>,
-  user: { id: number; username?: string; first_name: string },
+  user: { id: number; username?: string; first_name: string; language_code?: string },
   startParam: string | null,
 ): Promise<Profile> {
   let referrerProfileId: string | null = null;
@@ -101,6 +101,11 @@ async function createProfileWithOptionalReferral(
       telegram_id: user.id,
       username: user.username ?? null,
       first_name: user.first_name ?? null,
+      // Сирий Telegram language_code ("en-US", "uk" тощо) — нормалізація
+      // (мовна частина до дефіса, фолбек на DEFAULT_LANGUAGE) відбувається
+      // при фактичній відправці сповіщення (lib/telegram/pickNotificationLanguage.ts),
+      // не тут — тримаємо оригінал на випадок майбутнього використання.
+      telegram_language_code: user.language_code ?? null,
       referrer_id: referrerProfileId,
     })
     .select("*")
@@ -134,18 +139,23 @@ async function createProfileWithOptionalReferral(
 async function syncDisplayFields(
   admin: ReturnType<typeof createAdminClient>,
   profile: Profile,
-  user: { username?: string; first_name: string },
+  user: { username?: string; first_name: string; language_code?: string },
 ): Promise<Profile> {
   const nextUsername = user.username ?? null;
   const nextFirstName = user.first_name ?? null;
+  const nextLanguageCode = user.language_code ?? null;
 
-  if (profile.username === nextUsername && profile.first_name === nextFirstName) {
+  if (
+    profile.username === nextUsername &&
+    profile.first_name === nextFirstName &&
+    profile.telegram_language_code === nextLanguageCode
+  ) {
     return profile;
   }
 
   const { data: updated, error: updateError } = await admin
     .from("profiles")
-    .update({ username: nextUsername, first_name: nextFirstName })
+    .update({ username: nextUsername, first_name: nextFirstName, telegram_language_code: nextLanguageCode })
     .eq("id", profile.id)
     .select("*")
     .single();

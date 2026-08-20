@@ -58,8 +58,10 @@ export type Database = {
           lifetime_hash_generated: number
           partner_ads_reset_date: string
           partner_ads_watched_today: number
+          production_paused_notified_at: string | null
           referrer_id: string | null
           telegram_id: number
+          telegram_language_code: string | null
           username: string | null
           withdrawable_balance: number
           withdrawal_quota: number
@@ -81,8 +83,10 @@ export type Database = {
           lifetime_hash_generated?: number
           partner_ads_reset_date?: string
           partner_ads_watched_today?: number
+          production_paused_notified_at?: string | null
           referrer_id?: string | null
           telegram_id: number
+          telegram_language_code?: string | null
           username?: string | null
           withdrawable_balance?: number
           withdrawal_quota?: number
@@ -104,8 +108,10 @@ export type Database = {
           lifetime_hash_generated?: number
           partner_ads_reset_date?: string
           partner_ads_watched_today?: number
+          production_paused_notified_at?: string | null
           referrer_id?: string | null
           telegram_id?: number
+          telegram_language_code?: string | null
           username?: string | null
           withdrawable_balance?: number
           withdrawal_quota?: number
@@ -438,6 +444,19 @@ export type Database = {
         }[]
       }
       harvest_user_hash: { Args: { p_user_id: string }; Returns: number }
+      list_paused_production_users: {
+        Args: { p_max_unclaimed_hours?: number }
+        Returns: {
+          hash_balance: number
+          profile_id: string
+          telegram_id: number
+          telegram_language_code: string
+        }[]
+      }
+      mark_production_paused_notified: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       process_successful_deposit: {
         Args: { p_amount: number; p_tx_hash: string; p_user_id: string }
         Returns: {
