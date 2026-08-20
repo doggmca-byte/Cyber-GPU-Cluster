@@ -34,10 +34,10 @@ import type {
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 
 // Дзеркалить константи в record_partner_ad_watch
-// (supabase/migrations/20260819170000_partner_ad_watch_reward.sql) — лише
+// (supabase/migrations/20260820100000_lower_partner_ad_reward.sql) — лише
 // для відображення (сервер — єдине джерело правди для фактичного нарахування
 // й ліміту, тут це тільки початкове значення до першого перегляду за сесію).
-const PARTNER_AD_REWARD_TON = 0.003;
+const PARTNER_AD_REWARD_TON = 0.001;
 const PARTNER_AD_DAILY_LIMIT = 20;
 
 const CATEGORY_ORDER: TaskCategory[] = ["in_game", "general", "partners", "wallet", "friends", "special"];
