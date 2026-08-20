@@ -293,8 +293,32 @@ const ru: TranslationDictionary = {
         description: "Пополни Game Balance реальным TON хотя бы один раз.",
       },
       deposit_5: {
-        title: "Сделай 5 депозитов",
-        description: "Пополни Game Balance 5 раз.",
+        title: "Задепонируй 5 TON суммарно",
+        description: "Пополни Game Balance на 5 TON суммарно — любым количеством депозитов.",
+      },
+      deposit_10: {
+        title: "Задепонируй 10 TON суммарно",
+        description: "Пополни Game Balance на 10 TON суммарно — любым количеством депозитов.",
+      },
+      deposit_25: {
+        title: "Задепонируй 25 TON суммарно",
+        description: "Пополни Game Balance на 25 TON суммарно — любым количеством депозитов.",
+      },
+      deposit_50: {
+        title: "Задепонируй 50 TON суммарно",
+        description: "Пополни Game Balance на 50 TON суммарно — любым количеством депозитов.",
+      },
+      deposit_100: {
+        title: "Задепонируй 100 TON суммарно",
+        description: "Пополни Game Balance на 100 TON суммарно — любым количеством депозитов.",
+      },
+      deposit_500: {
+        title: "Задепонируй 500 TON суммарно",
+        description: "Пополни Game Balance на 500 TON суммарно — любым количеством депозитов.",
+      },
+      deposit_1000: {
+        title: "Задепонируй 1000 TON суммарно",
+        description: "Пополни Game Balance на 1000 TON суммарно — любым количеством депозитов.",
       },
       invite_1: {
         title: "Пригласи 1 друга",

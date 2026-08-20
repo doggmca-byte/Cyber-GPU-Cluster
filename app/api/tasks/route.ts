@@ -18,6 +18,7 @@ interface LiveStats {
   harvestCount: number;
   referralCount: number;
   depositCount: number;
+  depositTotalTon: number;
 }
 
 /**
@@ -91,6 +92,9 @@ export async function POST(request: Request) {
       harvestCount: profile.harvest_count,
       referralCount: referralCountRes.count ?? 0,
       depositCount: depositCountRes.count ?? 0,
+      // Уже є на profile з /api/user/sync (lifetime_deposited_ton) — жодного
+      // додаткового запиту не треба, на відміну від депозит-лічильника вище.
+      depositTotalTon: profile.lifetime_deposited_ton,
     };
 
     const tasks: TaskItem[] = (templates ?? []).map((tmpl) => {
@@ -148,6 +152,8 @@ function computeLiveProgress(
       return { current: live.referralCount, target };
     case "deposit_count":
       return { current: live.depositCount, target };
+    case "deposit_total_ton":
+      return { current: live.depositTotalTon, target };
     default:
       // telegram_channel / external_link не мають "живого" числового прогресу —
       // їх статус визначається виключно /api/tasks/verify.

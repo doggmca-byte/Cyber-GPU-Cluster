@@ -296,8 +296,32 @@ const en = {
         description: "Top up your Game Balance with real TON at least once.",
       },
       deposit_5: {
-        title: "Make 5 deposits",
-        description: "Top up your Game Balance 5 times.",
+        title: "Deposit 5 TON total",
+        description: "Top up your Game Balance with 5 TON in total, across any number of deposits.",
+      },
+      deposit_10: {
+        title: "Deposit 10 TON total",
+        description: "Top up your Game Balance with 10 TON in total, across any number of deposits.",
+      },
+      deposit_25: {
+        title: "Deposit 25 TON total",
+        description: "Top up your Game Balance with 25 TON in total, across any number of deposits.",
+      },
+      deposit_50: {
+        title: "Deposit 50 TON total",
+        description: "Top up your Game Balance with 50 TON in total, across any number of deposits.",
+      },
+      deposit_100: {
+        title: "Deposit 100 TON total",
+        description: "Top up your Game Balance with 100 TON in total, across any number of deposits.",
+      },
+      deposit_500: {
+        title: "Deposit 500 TON total",
+        description: "Top up your Game Balance with 500 TON in total, across any number of deposits.",
+      },
+      deposit_1000: {
+        title: "Deposit 1000 TON total",
+        description: "Top up your Game Balance with 1000 TON in total, across any number of deposits.",
       },
       invite_1: {
         title: "Invite 1 friend",

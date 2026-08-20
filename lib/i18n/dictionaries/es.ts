@@ -294,8 +294,32 @@ const es: TranslationDictionary = {
         description: "Recarga tu Game Balance con TON real al menos una vez.",
       },
       deposit_5: {
-        title: "Haz 5 depósitos",
-        description: "Recarga tu Game Balance 5 veces.",
+        title: "Deposita un total de 5 TON",
+        description: "Recarga tu Game Balance con un total de 5 TON, en cualquier número de depósitos.",
+      },
+      deposit_10: {
+        title: "Deposita un total de 10 TON",
+        description: "Recarga tu Game Balance con un total de 10 TON, en cualquier número de depósitos.",
+      },
+      deposit_25: {
+        title: "Deposita un total de 25 TON",
+        description: "Recarga tu Game Balance con un total de 25 TON, en cualquier número de depósitos.",
+      },
+      deposit_50: {
+        title: "Deposita un total de 50 TON",
+        description: "Recarga tu Game Balance con un total de 50 TON, en cualquier número de depósitos.",
+      },
+      deposit_100: {
+        title: "Deposita un total de 100 TON",
+        description: "Recarga tu Game Balance con un total de 100 TON, en cualquier número de depósitos.",
+      },
+      deposit_500: {
+        title: "Deposita un total de 500 TON",
+        description: "Recarga tu Game Balance con un total de 500 TON, en cualquier número de depósitos.",
+      },
+      deposit_1000: {
+        title: "Deposita un total de 1000 TON",
+        description: "Recarga tu Game Balance con un total de 1000 TON, en cualquier número de depósitos.",
       },
       invite_1: {
         title: "Invita a 1 amigo",

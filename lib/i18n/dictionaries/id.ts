@@ -293,8 +293,32 @@ const id: TranslationDictionary = {
         description: "Isi ulang Game Balance dengan TON asli setidaknya sekali.",
       },
       deposit_5: {
-        title: "Lakukan 5 deposit",
-        description: "Isi ulang Game Balance 5 kali.",
+        title: "Deposit total 5 TON",
+        description: "Isi ulang Game Balance kamu dengan total 5 TON, lewat berapa pun jumlah deposit.",
+      },
+      deposit_10: {
+        title: "Deposit total 10 TON",
+        description: "Isi ulang Game Balance kamu dengan total 10 TON, lewat berapa pun jumlah deposit.",
+      },
+      deposit_25: {
+        title: "Deposit total 25 TON",
+        description: "Isi ulang Game Balance kamu dengan total 25 TON, lewat berapa pun jumlah deposit.",
+      },
+      deposit_50: {
+        title: "Deposit total 50 TON",
+        description: "Isi ulang Game Balance kamu dengan total 50 TON, lewat berapa pun jumlah deposit.",
+      },
+      deposit_100: {
+        title: "Deposit total 100 TON",
+        description: "Isi ulang Game Balance kamu dengan total 100 TON, lewat berapa pun jumlah deposit.",
+      },
+      deposit_500: {
+        title: "Deposit total 500 TON",
+        description: "Isi ulang Game Balance kamu dengan total 500 TON, lewat berapa pun jumlah deposit.",
+      },
+      deposit_1000: {
+        title: "Deposit total 1000 TON",
+        description: "Isi ulang Game Balance kamu dengan total 1000 TON, lewat berapa pun jumlah deposit.",
       },
       invite_1: {
         title: "Undang 1 teman",

@@ -293,8 +293,32 @@ const kk: TranslationDictionary = {
         description: "Game Balance-ты нақты TON-мен кемінде бір рет толықтыр.",
       },
       deposit_5: {
-        title: "5 депозит жаса",
-        description: "Game Balance-ты 5 рет толықтыр.",
+        title: "Жалпы 5 TON депозит жаса",
+        description: "Game Balance-ты жалпы 5 TON-ға толтыр — кез келген депозит саны арқылы.",
+      },
+      deposit_10: {
+        title: "Жалпы 10 TON депозит жаса",
+        description: "Game Balance-ты жалпы 10 TON-ға толтыр — кез келген депозит саны арқылы.",
+      },
+      deposit_25: {
+        title: "Жалпы 25 TON депозит жаса",
+        description: "Game Balance-ты жалпы 25 TON-ға толтыр — кез келген депозит саны арқылы.",
+      },
+      deposit_50: {
+        title: "Жалпы 50 TON депозит жаса",
+        description: "Game Balance-ты жалпы 50 TON-ға толтыр — кез келген депозит саны арқылы.",
+      },
+      deposit_100: {
+        title: "Жалпы 100 TON депозит жаса",
+        description: "Game Balance-ты жалпы 100 TON-ға толтыр — кез келген депозит саны арқылы.",
+      },
+      deposit_500: {
+        title: "Жалпы 500 TON депозит жаса",
+        description: "Game Balance-ты жалпы 500 TON-ға толтыр — кез келген депозит саны арқылы.",
+      },
+      deposit_1000: {
+        title: "Жалпы 1000 TON депозит жаса",
+        description: "Game Balance-ты жалпы 1000 TON-ға толтыр — кез келген депозит саны арқылы.",
       },
       invite_1: {
         title: "1 досты шақыр",

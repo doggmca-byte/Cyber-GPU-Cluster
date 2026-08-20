@@ -293,8 +293,32 @@ const tr: TranslationDictionary = {
         description: "Game Balance'ını en az bir kez gerçek TON ile yükle.",
       },
       deposit_5: {
-        title: "5 yatırım yap",
-        description: "Game Balance'ını 5 kez yükle.",
+        title: "Toplam 5 TON yatır",
+        description: "Game Balance'ını herhangi bir sayıda depozitoyla toplam 5 TON yatırarak doldur.",
+      },
+      deposit_10: {
+        title: "Toplam 10 TON yatır",
+        description: "Game Balance'ını herhangi bir sayıda depozitoyla toplam 10 TON yatırarak doldur.",
+      },
+      deposit_25: {
+        title: "Toplam 25 TON yatır",
+        description: "Game Balance'ını herhangi bir sayıda depozitoyla toplam 25 TON yatırarak doldur.",
+      },
+      deposit_50: {
+        title: "Toplam 50 TON yatır",
+        description: "Game Balance'ını herhangi bir sayıda depozitoyla toplam 50 TON yatırarak doldur.",
+      },
+      deposit_100: {
+        title: "Toplam 100 TON yatır",
+        description: "Game Balance'ını herhangi bir sayıda depozitoyla toplam 100 TON yatırarak doldur.",
+      },
+      deposit_500: {
+        title: "Toplam 500 TON yatır",
+        description: "Game Balance'ını herhangi bir sayıda depozitoyla toplam 500 TON yatırarak doldur.",
+      },
+      deposit_1000: {
+        title: "Toplam 1000 TON yatır",
+        description: "Game Balance'ını herhangi bir sayıda depozitoyla toplam 1000 TON yatırarak doldur.",
       },
       invite_1: {
         title: "1 arkadaş davet et",
