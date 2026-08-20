@@ -45,7 +45,10 @@ export async function POST(request: Request) {
       throw new ApiError(500, "server misconfigured: NEXT_PUBLIC_TREASURY_TON_ADDRESS is not set");
     }
 
-    const transactions = await fetchTreasuryTransactions(treasuryAddress, 200);
+    // Без sinceUtimeSeconds — ручна санація адміном навмисно гортає углиб,
+    // доки не вичерпає всю історію адреси або не впреться в safety cap
+    // (DEFAULT_MAX_PAGES у lib/ton/deposit.ts, 20×100 = 2000 транзакцій).
+    const transactions = await fetchTreasuryTransactions(treasuryAddress);
     const matched = findDepositTransactionsForTelegramId(transactions, body.telegram_id);
 
     let credited;

@@ -47,9 +47,16 @@ export async function POST(request: Request) {
       throw new ApiError(500, "server misconfigured: NEXT_PUBLIC_TREASURY_TON_ADDRESS is not set");
     }
 
+    const sinceUtimeSeconds = Math.floor(Date.now() / 1000) - CHECK_WINDOW_SECONDS;
+
     let transactions;
     try {
-      transactions = await fetchTreasuryTransactions(treasuryAddress);
+      // sinceUtimeSeconds іде прямо у fetchTreasuryTransactions — пагінація
+      // (lib/ton/deposit.ts) сама гортає стільки сторінок toncenter, скільки
+      // треба, щоб ГАРАНТОВАНО покрити все 15-хвилинне вікно, а не лише
+      // останні 100 транзакцій адреси (які під навантаженням могли й не
+      // сягати так далеко в минуле).
+      transactions = await fetchTreasuryTransactions(treasuryAddress, { sinceUtimeSeconds });
     } catch (err) {
       throw new ApiError(
         502,
@@ -57,8 +64,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const sinceUtimeSeconds = Math.floor(Date.now() / 1000) - CHECK_WINDOW_SECONDS;
-    const mine = findDepositTransactionsForTelegramId(transactions, profile.telegram_id, sinceUtimeSeconds);
+    const mine = findDepositTransactionsForTelegramId(transactions, profile.telegram_id);
 
     let credited;
     try {

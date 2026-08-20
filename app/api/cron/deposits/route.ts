@@ -51,10 +51,14 @@ export async function GET(request: Request) {
       throw new ApiError(500, "server misconfigured: NEXT_PUBLIC_TREASURY_TON_ADDRESS is not set");
     }
 
-    // 200, не типовий дефолт 100 — цей воркер на Hobby-плані триґериться лише
-    // раз/добу (див. коментар вище), тож вікно має покривати цілий день
-    // активності treasury, а не лише останні кілька хвилин.
-    const transactions = await fetchTreasuryTransactions(treasuryAddress, 200);
+    // 25 годин, не рівно 24 — цей воркер на Hobby-плані триґериться лише
+    // раз/добу (див. коментар вище), запас в 1 годину покриває можливий
+    // дрейф точного часу спрацювання Vercel Cron між сусідніми днями.
+    // fetchTreasuryTransactions (lib/ton/deposit.ts) сам гортає стільки
+    // сторінок toncenter, скільки треба, щоб покрити ВСЕ це вікно — а не
+    // лише фіксовану кількість останніх транзакцій, як раніше.
+    const sinceUtimeSeconds = Math.floor(Date.now() / 1000) - 25 * 60 * 60;
+    const transactions = await fetchTreasuryTransactions(treasuryAddress, { sinceUtimeSeconds });
     const credited = await creditMatchingDeposits(admin, transactions);
 
     if (credited.length > 0) {
