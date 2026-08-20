@@ -28,12 +28,15 @@ export function SupportButton() {
 
   const profile = state.status === "ready" ? state.data.profile : null;
 
+  // Повідомлення в підтримку навмисно ЗАВЖДИ англійською, незалежно від
+  // t.support/мови застосунку (LanguageProvider) — це текст ДЛЯ саппорту,
+  // а не UI-копія користувачу, тож не з i18n dictionaries.
   const handleClick = () => {
     const message = profile
-      ? `Cyber GPU Cluster — потрібна допомога.\nTelegram ID: ${profile.telegram_id}${
+      ? `Cyber GPU Cluster — need help.\nTelegram ID: ${profile.telegram_id}${
           profile.username ? ` (@${profile.username})` : ""
         }`
-      : "Cyber GPU Cluster — потрібна допомога.";
+      : "Cyber GPU Cluster — need help.";
 
     const url = `${SUPPORT_URL}?text=${encodeURIComponent(message)}`;
     const webApp = window.Telegram?.WebApp;
