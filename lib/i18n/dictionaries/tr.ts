@@ -336,6 +336,14 @@ const tr: TranslationDictionary = {
         title: "Sınırlı süreli bonus",
         description: "Sınırlı süre için geçerli özel bir ödül.",
       },
+      harvest_1000_hash: {
+        title: "Toplam 1000 HASH topla",
+        description: "Oyun boyunca 1000 $HASH biriktir — herhangi bir sayıda toplamayla.",
+      },
+      own_legendary_gpu: {
+        title: "Legendary GPU edin",
+        description: "NVIDIA A100 Substation'ı — Legendary nadirlikte bir kart — satın al.",
+      },
     },
     partnerAds: {
       title: "Ortak reklamlarını izle",

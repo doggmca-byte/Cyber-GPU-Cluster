@@ -136,7 +136,9 @@ export type TaskActionType =
   | "harvest_count"
   | "invite_count"
   | "deposit_count"
-  | "deposit_total_ton";
+  | "deposit_total_ton"
+  | "harvest_total_hash"
+  | "own_gpu_level";
 export type TaskStatus = "pending" | "completed" | "claimed";
 
 export interface TaskItem {

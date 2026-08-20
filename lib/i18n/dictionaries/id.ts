@@ -336,6 +336,14 @@ const id: TranslationDictionary = {
         title: "Bonus waktu terbatas",
         description: "Hadiah spesial yang tersedia dalam waktu terbatas.",
       },
+      harvest_1000_hash: {
+        title: "Kumpulkan total 1000 HASH",
+        description: "Kumpulkan 1000 $HASH sepanjang masa bermain — lewat berapa pun jumlah panen.",
+      },
+      own_legendary_gpu: {
+        title: "Dapatkan GPU Legendary",
+        description: "Beli NVIDIA A100 Substation — kartu dengan rarity Legendary.",
+      },
     },
     partnerAds: {
       title: "Tonton iklan mitra",

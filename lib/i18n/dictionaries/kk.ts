@@ -336,6 +336,14 @@ const kk: TranslationDictionary = {
         title: "Уақыты шектеулі бонус",
         description: "Уақыты шектеулі арнайы сыйақы.",
       },
+      harvest_1000_hash: {
+        title: "Жалпы 1000 HASH жина",
+        description: "Ойын барысында 1000 $HASH жина — кез келген жинау саны арқылы.",
+      },
+      own_legendary_gpu: {
+        title: "Legendary GPU ал",
+        description: "NVIDIA A100 Substation — Legendary дәрежелі картаны сатып ал.",
+      },
     },
     partnerAds: {
       title: "Серіктес жарнамасын көру",

@@ -337,6 +337,14 @@ const es: TranslationDictionary = {
         title: "Bono por tiempo limitado",
         description: "Una recompensa especial disponible por tiempo limitado.",
       },
+      harvest_1000_hash: {
+        title: "Acumula 1000 HASH en total",
+        description: "Acumula 1000 $HASH a lo largo del juego — en cualquier número de recolecciones.",
+      },
+      own_legendary_gpu: {
+        title: "Consigue una GPU Legendaria",
+        description: "Compra la NVIDIA A100 Substation — una tarjeta de rareza Legendaria.",
+      },
     },
     partnerAds: {
       title: "Mira anuncios de socios",

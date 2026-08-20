@@ -336,6 +336,14 @@ const ru: TranslationDictionary = {
         title: "Бонус на ограниченное время",
         description: "Особая награда, доступная ограниченное время.",
       },
+      harvest_1000_hash: {
+        title: "Собери 1000 HASH суммарно",
+        description: "Накопи 1000 $HASH за всё время игры — любым количеством сборов.",
+      },
+      own_legendary_gpu: {
+        title: "Получи легендарную GPU",
+        description: "Приобрети NVIDIA A100 Substation — карту уровня Legendary.",
+      },
     },
     partnerAds: {
       title: "Смотри рекламу партнёров",

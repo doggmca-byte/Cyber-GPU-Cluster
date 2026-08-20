@@ -339,6 +339,14 @@ const en = {
         title: "Limited-time bonus",
         description: "A special reward available for a limited time.",
       },
+      harvest_1000_hash: {
+        title: "Collect 1000 HASH total",
+        description: "Accumulate 1000 $HASH over your lifetime — across any number of collects.",
+      },
+      own_legendary_gpu: {
+        title: "Get a Legendary GPU",
+        description: "Purchase the NVIDIA A100 Substation — a Legendary-rarity card.",
+      },
     },
     partnerAds: {
       title: "Watch partner ads",

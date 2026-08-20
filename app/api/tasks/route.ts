@@ -19,6 +19,8 @@ interface LiveStats {
   referralCount: number;
   depositCount: number;
   depositTotalTon: number;
+  harvestTotalHash: number;
+  ownedGpuLevels: Set<number>;
 }
 
 /**
@@ -66,7 +68,9 @@ export async function POST(request: Request) {
     const statusByTask = new Map((userTasks ?? []).map((ut) => [ut.task_id, ut.status]));
 
     const [gpuRows, referralCountRes, depositCountRes] = await Promise.all([
-      admin.from("user_gpus").select("amount").eq("user_id", profile.id),
+      // gpu_level теж вибираємо — потрібен own_gpu_level (володіння КОНКРЕТНИМ
+      // рівнем картки, не лише сумарна кількість, як own_gpus_count).
+      admin.from("user_gpus").select("amount, gpu_level").eq("user_id", profile.id),
       admin
         .from("referrals")
         .select("id", { count: "exact", head: true })
@@ -87,14 +91,24 @@ export async function POST(request: Request) {
       throw new ApiError(500, `failed to load deposits: ${depositCountRes.error.message}`);
     }
 
+    // Рівень вважається "володію", якщо сумарна amount по ньому > 0 — навіть
+    // якщо конкретний рядок зараз is_dead (той самий принцип, що й у
+    // own_gpu_level гілці claim_task_reward: мертва картка все одно "твоя",
+    // просто тимчасово не виробляє).
+    const ownedGpuLevels = new Set(
+      (gpuRows.data ?? []).filter((g) => g.amount > 0).map((g) => g.gpu_level),
+    );
+
     const live: LiveStats = {
       gpuTotal: (gpuRows.data ?? []).reduce((sum, g) => sum + g.amount, 0),
       harvestCount: profile.harvest_count,
       referralCount: referralCountRes.count ?? 0,
       depositCount: depositCountRes.count ?? 0,
-      // Уже є на profile з /api/user/sync (lifetime_deposited_ton) — жодного
-      // додаткового запиту не треба, на відміну від депозит-лічильника вище.
+      // Обидва вже є на profile з /api/user/sync — жодного додаткового
+      // запиту не треба, на відміну від депозит-/реф-лічильників вище.
       depositTotalTon: profile.lifetime_deposited_ton,
+      harvestTotalHash: profile.lifetime_hash_generated,
+      ownedGpuLevels,
     };
 
     const tasks: TaskItem[] = (templates ?? []).map((tmpl) => {
@@ -154,6 +168,12 @@ function computeLiveProgress(
       return { current: live.depositCount, target };
     case "deposit_total_ton":
       return { current: live.depositTotalTon, target };
+    case "harvest_total_hash":
+      return { current: live.harvestTotalHash, target };
+    case "own_gpu_level":
+      // target_value тут = НОМЕР рівня GPU, не поріг кількості — ціль
+      // прогресу завжди "1" (володію / не володію), а не сам номер рівня.
+      return { current: live.ownedGpuLevels.has(target) ? 1 : 0, target: 1 };
     default:
       // telegram_channel / external_link не мають "живого" числового прогресу —
       // їх статус визначається виключно /api/tasks/verify.

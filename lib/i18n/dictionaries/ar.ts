@@ -335,6 +335,14 @@ const ar: TranslationDictionary = {
         title: "مكافأة لوقت محدود",
         description: "مكافأة خاصة متاحة لفترة محدودة.",
       },
+      harvest_1000_hash: {
+        title: "اجمع 1000 HASH إجمالاً",
+        description: "اجمع 1000 $HASH طوال مدة اللعب — عبر أي عدد من عمليات الجمع.",
+      },
+      own_legendary_gpu: {
+        title: "احصل على GPU أسطورية",
+        description: "اشترِ NVIDIA A100 Substation — بطاقة من فئة Legendary.",
+      },
     },
     partnerAds: {
       title: "شاهد إعلانات الشركاء",
