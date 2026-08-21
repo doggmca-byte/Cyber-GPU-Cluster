@@ -6,8 +6,13 @@ import { Modal } from "@/components/ui/Modal";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
-import { showRewardedAdRotating } from "@/lib/ads/rewardedAd";
-import { DAILY_BONUS_MIN_AD_INTERACTIONS, DAILY_BONUS_MIN_AD_WATCH_SECONDS } from "@/lib/constants/economy";
+import { showRewardedAdRotating, showRewardedAdRotatingWithProvider } from "@/lib/ads/rewardedAd";
+import { startVerifiedAttempt, pollVerifiedAttempt } from "@/lib/ads/verifiedAdWatch";
+import {
+  DAILY_BONUS_MIN_AD_INTERACTIONS,
+  DAILY_BONUS_MIN_AD_WATCH_SECONDS,
+  DAILY_BONUS_REWARD_TON,
+} from "@/lib/constants/economy";
 import type { DailyBonusClaimResponse, DailyBonusStatusResponse } from "@/types/api";
 
 // Скільки секунд показуємо чекліст-заглушку перед автоматичним запуском
@@ -27,16 +32,21 @@ type ModalState =
  * Автоматичний флоу без ручного чекліста: короткий відлік → rewarded-показ →
  * клейм. Rewarded-показ — ЛИШЕ Rewarded Interstitial (повноцінний внутрішній
  * банер/відео, закривається хрестиком прямо в Telegram WebApp) через
- * showRewardedAdRotating (lib/ads/rewardedAd.ts), що чергує GigaPub (App ID
- * 7784) і Monetag (zone 11600101) від виклику до виклику, з автоматичним
- * fallback на другого провайдера, якщо в першого немає реклами. Rewarded
- * Popup (перехід у зовнішній браузер на офер-сторінку) свідомо не
- * використовується ніде в цьому флоу. Якщо немає реклами в ОБОХ — клейм НЕ
- * відправляється, користувач бачить "спробуйте пізніше" (жодного
- * автоматичного fallback-нарахування без реального підтвердження перегляду).
- * Server-side callback від жодного з провайдерів немає, тож захист від
- * подвійного нарахування — атомарний кулдаун у claim_daily_bonus
- * (FOR UPDATE), не сам факт показу реклами.
+ * showRewardedAdRotatingWithProvider (lib/ads/rewardedAd.ts), що чергує
+ * GigaPub / Monetag / AdsGram від виклику до виклику, з автоматичним
+ * fallback на наступного провайдера, якщо в попереднього немає реклами.
+ * Rewarded Popup (перехід у зовнішній браузер на офер-сторінку) свідомо не
+ * використовується ніде в цьому флоу. Якщо немає реклами в жодного з
+ * трьох — клейм НЕ відправляється, користувач бачить "спробуйте пізніше"
+ * (жодного автоматичного fallback-нарахування без реального підтвердження
+ * перегляду).
+ *
+ * Monetag-показ реально підтверджується через S2S postback
+ * (app/api/ads/monetag-postback, purpose: 'daily_bonus_watch') — клейм
+ * відправляється лише ПІСЛЯ підтвердження, не одразу після резолву
+ * клієнтського проміса. GigaPub і AdsGram лишаються на клієнтській довірі
+ * (як і раніше) — захист від подвійного нарахування для них лишається
+ * атомарний кулдаун у claim_daily_bonus (FOR UPDATE), не сам факт показу.
  */
 export function DailyBonusModal({ initData, onClose }: { initData: string; onClose: () => void }) {
   const { t } = useTranslation();
@@ -221,6 +231,7 @@ function AutoAdView({
 
   const [countdown, setCountdown] = useState(AD_COUNTDOWN_SECONDS);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
 
   // Захист від подвійного запуску (React StrictMode двічі монтує ефекти в
@@ -236,18 +247,55 @@ function AutoAdView({
     [],
   );
 
+  const claimTrusted = useCallback(async () => {
+    const res = await fetch("/api/daily-bonus/claim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        initData,
+        // Реальний ручний чекліст (кліки/сесія) прибрано — обов'язковий
+        // AD_COUNTDOWN_SECONDS-відлік і сам факт rewarded-показу тепер
+        // сильніший сигнал, ніж попередні "2+ кнопки/5+ секунд". Шлемо
+        // мінімально необхідні за контрактом /api/daily-bonus/claim значення.
+        ad_interactions: DAILY_BONUS_MIN_AD_INTERACTIONS,
+        ad_watch_seconds: DAILY_BONUS_MIN_AD_WATCH_SECONDS,
+      }),
+    });
+
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(body?.error ?? `claim failed with status ${res.status}`);
+    }
+
+    return (await res.json()) as DailyBonusClaimResponse;
+  }, [initData]);
+
   const runAdAndClaim = useCallback(async () => {
     setIsProcessing(true);
     setClaimError(null);
 
     try {
-      // Чергуємо GigaPub/Monetag (showRewardedAdRotating, lib/ads/rewardedAd.ts)
-      // — лише Rewarded Interstitial, без переходу в зовнішній браузер. Якщо
-      // в жодного з двох немає rewarded-інвентарю — чесно повідомляємо про це
-      // й НЕ клеймимо (жодного автоматичного fallback-нарахування без
-      // реального промісу завершення показу).
-      const adWatched = await showRewardedAdRotating();
-      if (!adWatched) {
+      const ymid = await startVerifiedAttempt(initData, "daily_bonus_watch");
+
+      if (!ymid) {
+        // Запит на відкриття спроби не вдався — повністю клієнто-довірчий
+        // шлях для БУДЬ-ЯКОГО провайдера, як і раніше цієї фічі.
+        const adWatched = await showRewardedAdRotating();
+        if (!adWatched) {
+          if (mountedRef.current) {
+            setClaimError(t.dailyBonus.noAdAvailable);
+            setIsProcessing(false);
+          }
+          return;
+        }
+
+        const result = await claimTrusted();
+        if (mountedRef.current) onClaimed(result);
+        return;
+      }
+
+      const shown = await showRewardedAdRotatingWithProvider(ymid);
+      if (!shown.watched) {
         if (mountedRef.current) {
           setClaimError(t.dailyBonus.noAdAvailable);
           setIsProcessing(false);
@@ -255,34 +303,54 @@ function AutoAdView({
         return;
       }
 
-      const res = await fetch("/api/daily-bonus/claim", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          initData,
-          // Реальний ручний чекліст (кліки/сесія) прибрано — обов'язковий
-          // AD_COUNTDOWN_SECONDS-відлік і сам факт rewarded-показу тепер
-          // сильніший сигнал, ніж попередні "2+ кнопки/5+ секунд". Шлемо
-          // мінімально необхідні за контрактом /api/daily-bonus/claim значення.
-          ad_interactions: DAILY_BONUS_MIN_AD_INTERACTIONS,
-          ad_watch_seconds: DAILY_BONUS_MIN_AD_WATCH_SECONDS,
-        }),
-      });
-
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? `claim failed with status ${res.status}`);
+      if (shown.provider !== "monetag") {
+        // gigapub: немає S2S postback. adsgram: Reward URL підтверджує лише
+        // purpose 'partner_ad_watch' — не можемо чекати на неможливе
+        // підтвердження для щоденного бонусу, лишається довіра.
+        const result = await claimTrusted();
+        if (mountedRef.current) onClaimed(result);
+        return;
       }
 
-      const result = (await res.json()) as DailyBonusClaimResponse;
-      if (mountedRef.current) onClaimed(result);
+      if (mountedRef.current) setIsConfirming(true);
+      const outcome = await pollVerifiedAttempt(initData, ymid);
+
+      if (!mountedRef.current) return;
+
+      if (outcome.kind === "confirmed") {
+        onClaimed({
+          reward_amount: DAILY_BONUS_REWARD_TON,
+          game_balance: outcome.profile.game_balance,
+          withdrawable_balance: outcome.profile.withdrawable_balance,
+          last_daily_bonus_at: outcome.profile.last_daily_bonus_at ?? new Date().toISOString(),
+          server_time: new Date().toISOString(),
+        });
+      } else if (outcome.kind === "rejected") {
+        setClaimError(t.dailyBonus.notCounted);
+        setIsProcessing(false);
+        setIsConfirming(false);
+      } else {
+        setClaimError(t.dailyBonus.stillProcessing);
+        setIsProcessing(false);
+        setIsConfirming(false);
+      }
     } catch (err) {
       if (!mountedRef.current) return;
       const message = err instanceof Error ? err.message : t.common.unknownError;
       setClaimError(message === "Cooldown active" ? t.dailyBonus.cooldownActiveError : message);
       setIsProcessing(false);
+      setIsConfirming(false);
     }
-  }, [initData, onClaimed, t.common.unknownError, t.dailyBonus.cooldownActiveError, t.dailyBonus.noAdAvailable]);
+  }, [
+    initData,
+    onClaimed,
+    claimTrusted,
+    t.common.unknownError,
+    t.dailyBonus.cooldownActiveError,
+    t.dailyBonus.noAdAvailable,
+    t.dailyBonus.notCounted,
+    t.dailyBonus.stillProcessing,
+  ]);
 
   // Відлік 5 → 0, раз/секунду; по завершенню — рівно один автоматичний запуск.
   useEffect(() => {
@@ -312,7 +380,7 @@ function AutoAdView({
 
       <div className="flex items-center justify-center gap-2 rounded-2xl bg-neon-cyan/10 px-4 py-2.5 text-center text-xs font-semibold text-neon-cyan">
         <Clock size={14} className={countdown > 0 ? "shrink-0 animate-pulse" : "shrink-0 animate-spin"} />
-        {countdown > 0 ? t.dailyBonus.adStartingIn(countdown) : t.dailyBonus.adInProgress}
+        {countdown > 0 ? t.dailyBonus.adStartingIn(countdown) : isConfirming ? t.dailyBonus.confirming : t.dailyBonus.adInProgress}
       </div>
 
       {claimError && <p className="text-center text-[11px] text-red-400">{claimError}</p>}

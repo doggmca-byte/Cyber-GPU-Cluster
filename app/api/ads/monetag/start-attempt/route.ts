@@ -13,7 +13,11 @@ interface StartAttemptRequestBody {
   purpose?: string;
 }
 
-const SUPPORTED_PURPOSES = new Set(["partner_ad_watch"]);
+// Усі три rewarded-ad flows застосунку: Партнери (record_partner_ad_watch),
+// щоденний бонус (claim_daily_bonus, DailyBonusModal) і квота виводу
+// (record_ad_watch, WatchAdButton) — /api/ads/monetag-postback сам вибирає
+// правильну RPC за цим значенням.
+const SUPPORTED_PURPOSES = new Set(["partner_ad_watch", "daily_bonus_watch", "withdraw_ad_watch"]);
 
 /**
  * Крок ПЕРЕД показом Monetag-реклами (лише коли ротація showByProvider

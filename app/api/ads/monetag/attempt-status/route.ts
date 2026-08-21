@@ -19,6 +19,11 @@ interface AttemptStatusRequestBody {
  * (app/api/ads/monetag-postback/route.ts) — саме він, а не клієнтський SDK,
  * є єдиним джерелом правди для нарахування. 'pending' тут не помилка —
  * postback може прийти з затримкою в кілька секунд.
+ *
+ * Повертає ПОВНИЙ набір полів профілю, релевантних для БУДЬ-ЯКОГО з трьох
+ * purpose (partner_ad_watch/daily_bonus_watch/withdraw_ad_watch) — так
+ * caller сам бере лише те поле, яке йому потрібне, а роут лишається одним
+ * спільним для всіх трьох flows, а не окремим під кожен.
  */
 export async function POST(request: Request) {
   try {
@@ -45,17 +50,15 @@ export async function POST(request: Request) {
 
     const { data: freshProfile, error: profileError } = await admin
       .from("profiles")
-      .select("withdrawable_balance, partner_ads_watched_today")
+      .select(
+        "game_balance, withdrawable_balance, withdrawal_quota, ads_watched_since_withdraw, partner_ads_watched_today, partner_ads_reset_date, last_daily_bonus_at",
+      )
       .eq("id", profile.id)
       .single();
 
-    if (profileError) throw new ApiError(500, `failed to load updated balance: ${profileError.message}`);
+    if (profileError) throw new ApiError(500, `failed to load updated profile: ${profileError.message}`);
 
-    return NextResponse.json({
-      status: "confirmed",
-      withdrawable_balance: freshProfile.withdrawable_balance,
-      partner_ads_watched_today: freshProfile.partner_ads_watched_today,
-    });
+    return NextResponse.json({ status: "confirmed", profile: freshProfile });
   } catch (error) {
     return handleRouteError(error);
   }

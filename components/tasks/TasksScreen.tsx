@@ -21,6 +21,7 @@ import { useUserData, type UserDataState } from "@/components/providers/UserData
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import { showRewardedAdRotating, showRewardedAdRotatingWithProvider } from "@/lib/ads/rewardedAd";
+import { startVerifiedAttempt, pollVerifiedAttempt, type VerifiedPollResult } from "@/lib/ads/verifiedAdWatch";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { SupportButton } from "@/components/layout/SupportButton";
 import type {
@@ -440,59 +441,15 @@ function TasksScreenReady({ initData }: { initData: string }) {
   );
 }
 
-// Rewarded-реклама від GigaPub/Monetag (ротація — lib/ads/rewardedAd.ts, той
-// самий SDK-шар, що й WatchAdButton у гаманці) з прямим TON-нарахуванням на
-// withdrawable_balance. На відміну від TaskRow це НЕ task_templates-рядок —
-// повторювана дія з денним лічильником (record_partner_ad_watch), тож живе
-// окремою карткою над списком завдань вкладки "Партнери", а не в
-// task_templates/user_tasks (там термінальний claimed один раз назавжди).
-// Скільки разів/як часто опитувати /api/ads/monetag/attempt-status ПІСЛЯ
-// того, як Monetag SDK резолвився (реклама показана) — реальний postback
-// від сервера Monetag (не клієнт) приходить із затримкою в кілька секунд.
-const MONETAG_POLL_ATTEMPTS = 8;
-const MONETAG_POLL_DELAY_MS = 2000;
-
-type MonetagPollResult =
-  | { kind: "confirmed"; partnerAdsWatchedToday: number; withdrawableBalance: number }
-  | { kind: "rejected" }
-  | { kind: "timeout" };
-
-async function pollMonetagAttemptStatus(initData: string, ymid: string): Promise<MonetagPollResult> {
-  for (let attempt = 0; attempt < MONETAG_POLL_ATTEMPTS; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, MONETAG_POLL_DELAY_MS));
-
-    try {
-      const res = await fetch("/api/ads/monetag/attempt-status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ initData, ymid }),
-      });
-      if (!res.ok) continue; // тимчасовий збій опитування — просто спробуємо ще раз наступного тику
-
-      const data = (await res.json()) as {
-        status: string;
-        withdrawable_balance?: number;
-        partner_ads_watched_today?: number;
-      };
-
-      if (data.status === "confirmed") {
-        return {
-          kind: "confirmed",
-          partnerAdsWatchedToday: data.partner_ads_watched_today ?? 0,
-          withdrawableBalance: data.withdrawable_balance ?? 0,
-        };
-      }
-      if (data.status === "rejected") return { kind: "rejected" };
-      // 'pending' — тікаємо далі
-    } catch {
-      // мережевий збій самого запиту (не лише !res.ok) — так само не фатально,
-      // просто пробуємо ще раз наступного тику, а не обриваємо весь потік
-      // загальною помилкою в watch().
-    }
-  }
-
-  return { kind: "timeout" };
-}
+// Rewarded-реклама від GigaPub/Monetag/AdsGram (ротація — lib/ads/rewardedAd.ts,
+// той самий SDK-шар, що й WatchAdButton/DailyBonusModal) з прямим
+// TON-нарахуванням на withdrawable_balance. На відміну від TaskRow це НЕ
+// task_templates-рядок — повторювана дія з денним лічильником
+// (record_partner_ad_watch), тож живе окремою карткою над списком завдань
+// вкладки "Партнери", а не в task_templates/user_tasks (там термінальний
+// claimed один раз назавжди).
+const ADSGRAM_POLL_ATTEMPTS = 8;
+const ADSGRAM_POLL_DELAY_MS = 2000;
 
 // AdsGram, на відміну від Monetag, не видає нам токен спроби наперед —
 // їхній Reward URL postback (app/api/ads/adsgram-postback) кореляує
@@ -500,13 +457,17 @@ async function pollMonetagAttemptStatus(initData: string, ymid: string): Promise
 // підтвердження тут — це не пошук статусу конкретної спроби, а порівняння
 // лічильника partner_ads_watched_today "до" й "після": як тільки бекенд
 // реально нарахував через постбек, лічильник зростає. Той самий принцип, що
-// й у поллінгу Monetag — просто інший спосіб виявити подію без power токена.
+// й у поллінгу Monetag (lib/ads/verifiedAdWatch.ts) — просто інший спосіб
+// виявити подію без токена. Працює ЛИШЕ для partner_ad_watch — AdsGram Reward
+// URL жорстко прив'язаний саме до цієї purpose (не може передати нам, яку
+// саме дію показ мав підтвердити), тож для daily_bonus_watch/withdraw_ad_watch
+// AdsGram-показ лишається на клієнтській довірі (як і GigaPub).
 async function pollAdsgramConfirmation(
   initData: string,
   baselineWatchedToday: number,
-): Promise<MonetagPollResult> {
-  for (let attempt = 0; attempt < MONETAG_POLL_ATTEMPTS; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, MONETAG_POLL_DELAY_MS));
+): Promise<VerifiedPollResult> {
+  for (let attempt = 0; attempt < ADSGRAM_POLL_ATTEMPTS; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, ADSGRAM_POLL_DELAY_MS));
 
     try {
       const res = await fetch("/api/user/sync", {
@@ -518,11 +479,7 @@ async function pollAdsgramConfirmation(
 
       const data = (await res.json()) as SyncResponse;
       if (data.profile.partner_ads_watched_today > baselineWatchedToday) {
-        return {
-          kind: "confirmed",
-          partnerAdsWatchedToday: data.profile.partner_ads_watched_today,
-          withdrawableBalance: data.profile.withdrawable_balance,
-        };
+        return { kind: "confirmed", profile: data.profile };
       }
       // лічильник не зріс — постбек ще не прийшов (чи ніколи не прийде,
       // AdsGram не дає нам жодного явного "rejected"-сигналу для polling'у).
@@ -561,25 +518,11 @@ function PartnerAdsCard({ initData }: { initData: string }) {
 
     try {
       // Ротація (lib/ads/rewardedAd.ts) сама вирішує, чий зараз показ —
-      // GigaPub чи Monetag. Monetag-показ зараз ЄДИНИЙ, для якого можливе
-      // реальне server-side підтвердження (S2S postback,
-      // app/api/ads/monetag-postback), тож заводимо ymid ДО показу. Якщо цей
-      // запит сам не вдався — не блокуємо юзера повністю, а падаємо назад на
-      // старий повністю клієнто-довірчий шлях (showRewardedAdRotating) для
-      // ОБОХ провайдерів, як було раніше цієї фічі.
-      let ymid: string | null = null;
-      try {
-        const attemptRes = await fetch("/api/ads/monetag/start-attempt", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData, purpose: "partner_ad_watch" }),
-        });
-        if (attemptRes.ok) {
-          ({ ymid } = (await attemptRes.json()) as { ymid: string });
-        }
-      } catch {
-        // ignore — ymid лишається null, працюємо повністю клієнто-довірчим шляхом нижче
-      }
+      // GigaPub, Monetag чи AdsGram. Заводимо ymid ДО показу (потрібен лише
+      // для Monetag-верифікації) — якщо цей запит сам не вдався, не блокуємо
+      // юзера повністю, а падаємо назад на старий повністю клієнто-довірчий
+      // шлях (showRewardedAdRotating) для всіх провайдерів.
+      const ymid = await startVerifiedAttempt(initData, "partner_ad_watch");
 
       if (!ymid) {
         const adWatched = await showRewardedAdRotating();
@@ -647,16 +590,16 @@ function PartnerAdsCard({ initData }: { initData: string }) {
       // інтервалами. Monetag дає нам токен спроби (ymid) — опитуємо його
       // напряму; AdsGram токена не дає, тож порівнюємо лічильник
       // partner_ads_watched_today "до" й "після" виклику показу.
-      const outcome =
+      const outcome: VerifiedPollResult =
         shown.provider === "adsgram"
           ? await pollAdsgramConfirmation(initData, profile.partner_ads_watched_today)
-          : await pollMonetagAttemptStatus(initData, ymid);
+          : await pollVerifiedAttempt(initData, ymid);
 
       if (outcome.kind === "confirmed") {
         patchProfile({
-          partner_ads_watched_today: outcome.partnerAdsWatchedToday,
-          partner_ads_reset_date: today,
-          withdrawable_balance: outcome.withdrawableBalance,
+          partner_ads_watched_today: outcome.profile.partner_ads_watched_today,
+          partner_ads_reset_date: outcome.profile.partner_ads_reset_date,
+          withdrawable_balance: outcome.profile.withdrawable_balance,
         });
       } else if (outcome.kind === "rejected") {
         setError(t.tasks.partnerAds.notCounted);

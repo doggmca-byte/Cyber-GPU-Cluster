@@ -3,6 +3,41 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
 import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
+import { DAILY_BONUS_REWARD_TON } from "@/lib/constants/economy";
+import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database.types";
+
+type AdminClient = SupabaseClient<Database>;
+
+/**
+ * Три rewarded-ad flows застосунку мають РІЗНІ RPC для фактичного
+ * нарахування — postback лише коректно диспетчеризує за purpose, самé
+ * нарахування (кулдауни/ліміти/суми) лишається повністю в SQL-функціях.
+ */
+async function creditForPurpose(
+  admin: AdminClient,
+  purpose: string,
+  userId: string,
+  bypassLimit: boolean,
+): Promise<{ error: PostgrestError | null }> {
+  if (purpose === "daily_bonus_watch") {
+    const { error } = await admin.rpc("claim_daily_bonus", {
+      p_user_id: userId,
+      p_reward_amount: DAILY_BONUS_REWARD_TON,
+    });
+    return { error };
+  }
+  if (purpose === "withdraw_ad_watch") {
+    const { error } = await admin.rpc("record_ad_watch", { p_user_id: userId });
+    return { error };
+  }
+  // partner_ad_watch (єдине інше значення, дозволене CHECK-обмеженням purpose)
+  const { error } = await admin.rpc("record_partner_ad_watch", {
+    p_user_id: userId,
+    p_bypass_limit: bypassLimit,
+  });
+  return { error };
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -90,18 +125,17 @@ export async function GET(request: Request) {
     }
     const bypassLimit = attemptProfile ? isTelegramAdmin(attemptProfile.telegram_id) : false;
 
-    // purpose наразі завжди 'partner_ad_watch' (єдине значення, дозволене
-    // CHECK-обмеженням ad_verification_attempts.purpose) — record_partner_ad_watch
-    // сам застосовує денний ліміт (20/день), той самий, що й для
-    // GigaPub-довірчого шляху (крім адміна — bypassLimit вище).
-    const { error: rpcError } = await admin.rpc("record_partner_ad_watch", {
-      p_user_id: attempt.user_id,
-      p_bypass_limit: bypassLimit,
-    });
+    // purpose — один з трьох (partner_ad_watch/daily_bonus_watch/
+    // withdraw_ad_watch), кожен зі своєю RPC (creditForPurpose вище).
+    // Власні ліміти/кулдауни кожної RPC лишаються тими самими, що й для
+    // клієнто-довірчого шляху (крім адміна — bypassLimit, стосується лише
+    // partner_ad_watch).
+    const { error: rpcError } = await creditForPurpose(admin, attempt.purpose, attempt.user_id, bypassLimit);
 
     if (rpcError) {
-      // Ліміт на добу вичерпаний — не критична помилка нашого боку, просто
-      // не нараховуємо, але ПОЗНАЧАЄМО rejected, щоб не намагатись знову.
+      // Денний ліміт (partner_ad_watch) чи кулдаун (daily_bonus_watch) —
+      // не критична помилка нашого боку, просто не нараховуємо, але
+      // ПОЗНАЧАЄМО rejected, щоб не намагатись знову.
       if (rpcError.code === "P0001") {
         await admin
           .from("ad_verification_attempts")
