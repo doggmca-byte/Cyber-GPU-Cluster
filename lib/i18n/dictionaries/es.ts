@@ -169,7 +169,7 @@ const es: TranslationDictionary = {
       customAmountLabel: (min) => `O introduce tu propio monto (mín. ${min} TON)`,
       customAmountPlaceholder: "ej. 0.5",
       minAmountError: (min) => `El depósito mínimo es ${min} TON`,
-      minDepositNote: (min) => `Depósito mínimo recomendado: ${min} TON (los importes menores también se acreditan, pero las comisiones de red los hacen poco prácticos).`,
+      minDepositNote: (min) => `Depósito mínimo recomendado: ${min} TON.`,
       disclaimer: "Los fondos se abonan solo tras confirmarse la transacción en la red TON.",
       timeoutError: "La transacción no se confirmó a tiempo. Prueba el botón «Comprobar pago» en un momento.",
       addressLabel: "Dirección de la billetera del proyecto",

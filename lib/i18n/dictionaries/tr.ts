@@ -168,7 +168,7 @@ const tr: TranslationDictionary = {
       customAmountLabel: (min) => `Ya da kendi tutarını gir (min ${min} TON)`,
       customAmountPlaceholder: "örn. 0.5",
       minAmountError: (min) => `Minimum yatırım tutarı ${min} TON`,
-      minDepositNote: (min) => `Önerilen minimum yatırım tutarı: ${min} TON (daha küçük tutarlar teknik olarak yine de hesaba geçer, ancak ağ ücretleri nedeniyle pratik değildir).`,
+      minDepositNote: (min) => `Önerilen minimum yatırım tutarı: ${min} TON.`,
       disclaimer: "Bakiye yalnızca işlem TON ağında onaylandıktan sonra yüklenir.",
       timeoutError: "İşlem zamanında onaylanmadı. Biraz sonra \"Ödemeyi kontrol et\" düğmesini dene.",
       addressLabel: "Proje cüzdan adresi",
