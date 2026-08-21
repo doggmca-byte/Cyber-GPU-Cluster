@@ -301,6 +301,10 @@ const ar: TranslationDictionary = {
         title: "Crybble",
         description: "ادخل إلى ساحة Crybble مقابل 1 CBW (هدية).",
       },
+      cookie_hunters_signup: {
+        title: "Cookie Hunters",
+        description: "+3$ مكافأة فقط للتسجيل — أطلق النار واربح.",
+      },
       first_deposit: {
         title: "قم بأول عملية إيداع",
         description: "اشحن رصيد اللعبة بـ TON حقيقي مرة واحدة على الأقل.",

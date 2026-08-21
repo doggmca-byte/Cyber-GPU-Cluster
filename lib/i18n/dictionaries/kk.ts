@@ -302,6 +302,10 @@ const kk: TranslationDictionary = {
         title: "Crybble",
         description: "Crybble аренасына 1 CBW-мен кір (сыйлық).",
       },
+      cookie_hunters_signup: {
+        title: "Cookie Hunters",
+        description: "+$3 бонус тек тіркелгені үшін — ат да таба бер.",
+      },
       first_deposit: {
         title: "Алғашқы депозитіңді жаса",
         description: "Game Balance-ты нақты TON-мен кемінде бір рет толықтыр.",

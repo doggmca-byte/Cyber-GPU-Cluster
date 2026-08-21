@@ -302,6 +302,10 @@ const uk: TranslationDictionary = {
         title: "Crybble",
         description: "Зайди на арену Crybble за 1 CBW (подарунок).",
       },
+      cookie_hunters_signup: {
+        title: "Cookie Hunters",
+        description: "+$3 на бонусний рахунок просто за реєстрацію — стріляй і заробляй.",
+      },
       first_deposit: {
         title: "Зроби свій перший депозит",
         description: "Поповни Game Balance реальним TON хоча б один раз.",

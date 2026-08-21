@@ -303,6 +303,10 @@ const es: TranslationDictionary = {
         title: "Crybble",
         description: "Entra en la arena de Crybble por 1 CBW (regalo).",
       },
+      cookie_hunters_signup: {
+        title: "Cookie Hunters",
+        description: "+$3 de bono solo por registrarte — dispara y gana.",
+      },
       first_deposit: {
         title: "Haz tu primer depósito",
         description: "Recarga tu Game Balance con TON real al menos una vez.",

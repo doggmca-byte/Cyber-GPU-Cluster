@@ -302,6 +302,10 @@ const id: TranslationDictionary = {
         title: "Crybble",
         description: "Masuk ke arena Crybble dengan 1 CBW (hadiah).",
       },
+      cookie_hunters_signup: {
+        title: "Cookie Hunters",
+        description: "+$3 bonus hanya dengan mendaftar — tembak dan hasilkan.",
+      },
       first_deposit: {
         title: "Lakukan deposit pertamamu",
         description: "Isi ulang Game Balance dengan TON asli setidaknya sekali.",

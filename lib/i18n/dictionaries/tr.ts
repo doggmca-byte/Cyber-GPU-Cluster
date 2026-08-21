@@ -302,6 +302,10 @@ const tr: TranslationDictionary = {
         title: "Crybble",
         description: "Crybble arenasına 1 CBW (hediye) ile gir.",
       },
+      cookie_hunters_signup: {
+        title: "Cookie Hunters",
+        description: "+$3 bonus sadece kayıt olduğun için — ateş et ve kazan.",
+      },
       first_deposit: {
         title: "İlk yatırımını yap",
         description: "Game Balance'ını en az bir kez gerçek TON ile yükle.",

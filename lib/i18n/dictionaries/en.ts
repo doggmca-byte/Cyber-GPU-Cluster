@@ -305,6 +305,10 @@ const en = {
         title: "Crybble",
         description: "Enter the Crybble arena for 1 CBW (gift).",
       },
+      cookie_hunters_signup: {
+        title: "Cookie Hunters",
+        description: "+$3 bonus just for signing up — shoot and earn.",
+      },
       first_deposit: {
         title: "Make your first deposit",
         description: "Top up your Game Balance with real TON at least once.",
