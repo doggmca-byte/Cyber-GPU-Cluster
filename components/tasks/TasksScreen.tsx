@@ -68,6 +68,19 @@ function getTaskIcon(task: TaskItem): LucideIcon {
   return CATEGORY_FALLBACK_ICON[task.category];
 }
 
+/**
+ * task_templates.icon для партнерських завдань може бути НЕ ключем ICON_MAP,
+ * а прямим емодзі-символом (адмін вписує його напряму в БД) — на відміну від
+ * решти завдань, де один Lucide-набір на всю категорію не давав би
+ * достатньої різноманітності для окремих партнерів. Якщо значення відоме
+ * ICON_MAP — це звичайна Lucide-іконка (getTaskIcon вище), інакше рендеримо
+ * сам рядок як емодзі-текст.
+ */
+function getEmojiIcon(task: TaskItem): string | null {
+  if (task.icon && !ICON_MAP[task.icon]) return task.icon;
+  return null;
+}
+
 // Адмін може додати нове завдання в task_templates без відповідного перекладу —
 // у такому разі показуємо сам слаг замість краху рендера (як getRarityLabel у
 // FarmScreen/MarketScreen).
@@ -531,6 +544,7 @@ function TaskRow({
 }) {
   const { t, language } = useTranslation();
   const Icon = getTaskIcon(task);
+  const emojiIcon = getEmojiIcon(task);
   const copy = getTaskCopy(t, task.title_key);
   const isLinkTask =
     task.action_type === "telegram_channel" ||
@@ -542,7 +556,13 @@ function TaskRow({
     <div className="glass-card p-3">
       <div className="flex items-start gap-2.5">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neon-cyan/10 text-neon-cyan">
-          <Icon size={16} />
+          {emojiIcon ? (
+            <span className="text-base leading-none" aria-hidden="true">
+              {emojiIcon}
+            </span>
+          ) : (
+            <Icon size={16} />
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
@@ -552,7 +572,12 @@ function TaskRow({
           <div className="mt-1.5 flex items-center justify-between gap-2">
             <span className="text-[11px] font-semibold text-neon-green">
               {t.tasks.reward[task.reward_type](
-                formatNumber(language, task.reward_amount, { maximumFractionDigits: 2 }),
+                // 3, не 2 — партнерські nagороди (0.003 TON) округлювались би
+                // до "0" при двох знаках після коми (той самий баг, що вже
+                // ловили в PartnerAdsCard). Trailing zeros Intl сам не додає
+                // (minimumFractionDigits не задано), тож 0.05/4/20 і далі
+                // виглядають чисто, без зайвих ".000".
+                formatNumber(language, task.reward_amount, { maximumFractionDigits: 3 }),
               )}
             </span>
 
