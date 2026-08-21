@@ -298,6 +298,10 @@ const kk: TranslationDictionary = {
         title: "Cookie Wars",
         description: "Cookie Wars қолданбасын аш.",
       },
+      crybble_game_enter: {
+        title: "Crybble",
+        description: "Crybble аренасына 1 CBW-мен кір (сыйлық).",
+      },
       first_deposit: {
         title: "Алғашқы депозитіңді жаса",
         description: "Game Balance-ты нақты TON-мен кемінде бір рет толықтыр.",

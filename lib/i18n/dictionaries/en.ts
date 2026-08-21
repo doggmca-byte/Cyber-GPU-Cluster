@@ -301,6 +301,10 @@ const en = {
         title: "Cookie Wars",
         description: "Open the Cookie Wars app.",
       },
+      crybble_game_enter: {
+        title: "Crybble",
+        description: "Enter the Crybble arena for 1 CBW (gift).",
+      },
       first_deposit: {
         title: "Make your first deposit",
         description: "Top up your Game Balance with real TON at least once.",

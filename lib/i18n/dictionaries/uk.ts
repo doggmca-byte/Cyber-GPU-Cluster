@@ -298,6 +298,10 @@ const uk: TranslationDictionary = {
         title: "Cookie Wars",
         description: "Відкрий застосунок Cookie Wars.",
       },
+      crybble_game_enter: {
+        title: "Crybble",
+        description: "Зайди на арену Crybble за 1 CBW (подарунок).",
+      },
       first_deposit: {
         title: "Зроби свій перший депозит",
         description: "Поповни Game Balance реальним TON хоча б один раз.",

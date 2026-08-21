@@ -298,6 +298,10 @@ const id: TranslationDictionary = {
         title: "Cookie Wars",
         description: "Buka aplikasi Cookie Wars.",
       },
+      crybble_game_enter: {
+        title: "Crybble",
+        description: "Masuk ke arena Crybble dengan 1 CBW (hadiah).",
+      },
       first_deposit: {
         title: "Lakukan deposit pertamamu",
         description: "Isi ulang Game Balance dengan TON asli setidaknya sekali.",

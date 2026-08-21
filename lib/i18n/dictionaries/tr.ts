@@ -298,6 +298,10 @@ const tr: TranslationDictionary = {
         title: "Cookie Wars",
         description: "Cookie Wars uygulamasını aç.",
       },
+      crybble_game_enter: {
+        title: "Crybble",
+        description: "Crybble arenasına 1 CBW (hediye) ile gir.",
+      },
       first_deposit: {
         title: "İlk yatırımını yap",
         description: "Game Balance'ını en az bir kez gerçek TON ile yükle.",

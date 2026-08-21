@@ -297,6 +297,10 @@ const ar: TranslationDictionary = {
         title: "Cookie Wars",
         description: "افتح تطبيق Cookie Wars.",
       },
+      crybble_game_enter: {
+        title: "Crybble",
+        description: "ادخل إلى ساحة Crybble مقابل 1 CBW (هدية).",
+      },
       first_deposit: {
         title: "قم بأول عملية إيداع",
         description: "اشحن رصيد اللعبة بـ TON حقيقي مرة واحدة على الأقل.",
