@@ -371,6 +371,9 @@ const ru: TranslationDictionary = {
       adNotCompleted: "Реклама не досмотрена до конца. Попробуй ещё раз.",
       progress: (watched, limit) => `${watched}/${limit} сегодня`,
       limitReached: "Дневной лимит исчерпан — возвращайся завтра.",
+      confirming: "Подтверждаем просмотр...",
+      notCounted: "Просмотр не засчитан — попробуй ещё раз.",
+      stillProcessing: "Ещё обрабатывается — проверь баланс чуть позже.",
     },
   },
   dailyBonus: {

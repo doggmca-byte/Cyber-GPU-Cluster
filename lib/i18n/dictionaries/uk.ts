@@ -371,6 +371,9 @@ const uk: TranslationDictionary = {
       adNotCompleted: "Рекламу не переглянуто до кінця. Спробуй ще раз.",
       progress: (watched, limit) => `${watched}/${limit} сьогодні`,
       limitReached: "Денний ліміт вичерпано — повернись завтра.",
+      confirming: "Підтверджуємо перегляд...",
+      notCounted: "Перегляд не зараховано — спробуй ще раз.",
+      stillProcessing: "Ще обробляється — перевір баланс трохи пізніше.",
     },
   },
   dailyBonus: {

@@ -20,7 +20,7 @@ import {
 import { useUserData, type UserDataState } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
-import { showRewardedAdRotating } from "@/lib/ads/rewardedAd";
+import { showRewardedAdRotating, showRewardedAdRotatingWithProvider } from "@/lib/ads/rewardedAd";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { SupportButton } from "@/components/layout/SupportButton";
 import type {
@@ -429,10 +429,53 @@ function TasksScreenReady({ initData }: { initData: string }) {
 // повторювана дія з денним лічильником (record_partner_ad_watch), тож живе
 // окремою карткою над списком завдань вкладки "Партнери", а не в
 // task_templates/user_tasks (там термінальний claimed один раз назавжди).
+// Скільки разів/як часто опитувати /api/ads/monetag/attempt-status ПІСЛЯ
+// того, як Monetag SDK резолвився (реклама показана) — реальний postback
+// від сервера Monetag (не клієнт) приходить із затримкою в кілька секунд.
+const MONETAG_POLL_ATTEMPTS = 8;
+const MONETAG_POLL_DELAY_MS = 2000;
+
+type MonetagPollResult =
+  | { kind: "confirmed"; partnerAdsWatchedToday: number; withdrawableBalance: number }
+  | { kind: "rejected" }
+  | { kind: "timeout" };
+
+async function pollMonetagAttemptStatus(initData: string, ymid: string): Promise<MonetagPollResult> {
+  for (let attempt = 0; attempt < MONETAG_POLL_ATTEMPTS; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, MONETAG_POLL_DELAY_MS));
+
+    const res = await fetch("/api/ads/monetag/attempt-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData, ymid }),
+    });
+    if (!res.ok) continue; // тимчасовий збій опитування — просто спробуємо ще раз наступного тику
+
+    const data = (await res.json()) as {
+      status: string;
+      withdrawable_balance?: number;
+      partner_ads_watched_today?: number;
+    };
+
+    if (data.status === "confirmed") {
+      return {
+        kind: "confirmed",
+        partnerAdsWatchedToday: data.partner_ads_watched_today ?? 0,
+        withdrawableBalance: data.withdrawable_balance ?? 0,
+      };
+    }
+    if (data.status === "rejected") return { kind: "rejected" };
+    // 'pending' — тікаємо далі
+  }
+
+  return { kind: "timeout" };
+}
+
 function PartnerAdsCard({ initData }: { initData: string }) {
   const { t, language } = useTranslation();
   const { state, patchProfile } = useUserData();
   const [isWatching, setIsWatching] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (state.status !== "ready") return null;
@@ -447,36 +490,112 @@ function PartnerAdsCard({ initData }: { initData: string }) {
     if (isWatching || limitReached) return;
 
     setIsWatching(true);
+    setIsConfirming(false);
     setError(null);
 
     try {
-      const adWatched = await showRewardedAdRotating();
-      if (!adWatched) {
+      // Ротація (lib/ads/rewardedAd.ts) сама вирішує, чий зараз показ —
+      // GigaPub чи Monetag. Monetag-показ зараз ЄДИНИЙ, для якого можливе
+      // реальне server-side підтвердження (S2S postback,
+      // app/api/ads/monetag-postback), тож заводимо ymid ДО показу. Якщо цей
+      // запит сам не вдався — не блокуємо юзера повністю, а падаємо назад на
+      // старий повністю клієнто-довірчий шлях (showRewardedAdRotating) для
+      // ОБОХ провайдерів, як було раніше цієї фічі.
+      let ymid: string | null = null;
+      try {
+        const attemptRes = await fetch("/api/ads/monetag/start-attempt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ initData, purpose: "partner_ad_watch" }),
+        });
+        if (attemptRes.ok) {
+          ({ ymid } = (await attemptRes.json()) as { ymid: string });
+        }
+      } catch {
+        // ignore — ymid лишається null, працюємо повністю клієнто-довірчим шляхом нижче
+      }
+
+      if (!ymid) {
+        const adWatched = await showRewardedAdRotating();
+        if (!adWatched) {
+          setError(t.tasks.partnerAds.adNotCompleted);
+          return;
+        }
+
+        const res = await fetch("/api/ads/partner-watch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ initData }),
+        });
+
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(body?.error ?? `partner ad watch failed with status ${res.status}`);
+        }
+
+        const result = (await res.json()) as PartnerAdWatchResponse;
+        patchProfile({
+          partner_ads_watched_today: result.partner_ads_watched_today,
+          partner_ads_reset_date: today,
+          withdrawable_balance: result.withdrawable_balance,
+        });
+        return;
+      }
+
+      const shown = await showRewardedAdRotatingWithProvider(ymid);
+      if (!shown.watched) {
         setError(t.tasks.partnerAds.adNotCompleted);
         return;
       }
 
-      const res = await fetch("/api/ads/partner-watch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ initData }),
-      });
+      if (shown.provider === "gigapub") {
+        // GigaPub не має S2S postback — лишається на клієнтській довірі
+        // (ymid, заведений вище для можливого Monetag-показу, просто
+        // лишається невикористаним pending-рядком — нешкідливо, без
+        // реального postback від Monetag ніколи не підтвердиться).
+        const res = await fetch("/api/ads/partner-watch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ initData }),
+        });
 
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? `partner ad watch failed with status ${res.status}`);
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(body?.error ?? `partner ad watch failed with status ${res.status}`);
+        }
+
+        const result = (await res.json()) as PartnerAdWatchResponse;
+        patchProfile({
+          partner_ads_watched_today: result.partner_ads_watched_today,
+          partner_ads_reset_date: today,
+          withdrawable_balance: result.withdrawable_balance,
+        });
+        return;
       }
 
-      const result = (await res.json()) as PartnerAdWatchResponse;
-      patchProfile({
-        partner_ads_watched_today: result.partner_ads_watched_today,
-        partner_ads_reset_date: today,
-        withdrawable_balance: result.withdrawable_balance,
-      });
+      // provider === "monetag": НІЧОГО не нараховуємо тут — чекаємо на
+      // реальний postback від сервера Monetag (app/api/ads/monetag-postback),
+      // опитуючи короткими інтервалами.
+      setIsConfirming(true);
+      const outcome = await pollMonetagAttemptStatus(initData, ymid);
+
+      if (outcome.kind === "confirmed") {
+        patchProfile({
+          partner_ads_watched_today: outcome.partnerAdsWatchedToday,
+          partner_ads_reset_date: today,
+          withdrawable_balance: outcome.withdrawableBalance,
+        });
+      } else if (outcome.kind === "rejected") {
+        setError(t.tasks.partnerAds.notCounted);
+      } else {
+        // timeout — НЕ помилка: postback міг просто затриматись довше опитування.
+        setError(t.tasks.partnerAds.stillProcessing);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t.common.unknownError);
     } finally {
       setIsWatching(false);
+      setIsConfirming(false);
     }
   };
 
@@ -512,9 +631,11 @@ function PartnerAdsCard({ initData }: { initData: string }) {
           {isWatching && <Loader2 size={13} className="animate-spin" />}
           {limitReached
             ? t.tasks.partnerAds.limitReached
-            : isWatching
-              ? t.tasks.partnerAds.loading
-              : t.tasks.partnerAds.button}
+            : isConfirming
+              ? t.tasks.partnerAds.confirming
+              : isWatching
+                ? t.tasks.partnerAds.loading
+                : t.tasks.partnerAds.button}
         </button>
       </div>
 

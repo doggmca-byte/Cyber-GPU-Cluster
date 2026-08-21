@@ -371,6 +371,9 @@ const tr: TranslationDictionary = {
       adNotCompleted: "Reklam tamamlanmadı. Tekrar dene.",
       progress: (watched, limit) => `${watched}/${limit} bugün`,
       limitReached: "Günlük limit doldu — yarın tekrar gel.",
+      confirming: "İzlemen onaylanıyor...",
+      notCounted: "İzleme sayılmadı — tekrar dene.",
+      stillProcessing: "Hâlâ işleniyor — bakiyeni biraz sonra kontrol et.",
     },
   },
   dailyBonus: {

@@ -374,6 +374,9 @@ const en = {
       adNotCompleted: "Ad wasn't completed. Try again.",
       progress: (watched: number, limit: number) => `${watched}/${limit} today`,
       limitReached: "Daily limit reached — come back tomorrow.",
+      confirming: "Confirming your view...",
+      notCounted: "View wasn't counted — try again.",
+      stillProcessing: "Still processing — check your balance again shortly.",
     },
   },
   dailyBonus: {

@@ -371,6 +371,9 @@ const id: TranslationDictionary = {
       adNotCompleted: "Iklan belum selesai ditonton. Coba lagi.",
       progress: (watched, limit) => `${watched}/${limit} hari ini`,
       limitReached: "Batas harian tercapai — kembali besok.",
+      confirming: "Mengonfirmasi tontonanmu...",
+      notCounted: "Tontonan tidak dihitung — coba lagi.",
+      stillProcessing: "Masih diproses — cek saldomu sebentar lagi.",
     },
   },
   dailyBonus: {

@@ -371,6 +371,9 @@ const kk: TranslationDictionary = {
       adNotCompleted: "Жарнама соңына дейін көрілмеді. Қайта көріңіз.",
       progress: (watched, limit) => `${watched}/${limit} бүгін`,
       limitReached: "Күндізгі лимитке жетті — ертең қайта орал.",
+      confirming: "Көрсетілімді растап жатырмыз...",
+      notCounted: "Көрсетілім есептелмеді — қайта көр.",
+      stillProcessing: "Әлі өңделуде — балансты сәл кейін тексер.",
     },
   },
   dailyBonus: {

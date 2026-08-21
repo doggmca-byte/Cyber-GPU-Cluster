@@ -372,6 +372,9 @@ const es: TranslationDictionary = {
       adNotCompleted: "El anuncio no se completó. Inténtalo de nuevo.",
       progress: (watched, limit) => `${watched}/${limit} hoy`,
       limitReached: "Límite diario alcanzado — vuelve mañana.",
+      confirming: "Confirmando tu visualización...",
+      notCounted: "La vista no se contabilizó — inténtalo de nuevo.",
+      stillProcessing: "Aún se está procesando — revisa tu saldo en un momento.",
     },
   },
   dailyBonus: {

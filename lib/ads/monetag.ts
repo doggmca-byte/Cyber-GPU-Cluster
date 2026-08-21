@@ -18,7 +18,7 @@
  */
 declare global {
   interface Window {
-    show_11600101?: () => Promise<void>;
+    show_11600101?: (options?: { ymid?: string; type?: string; requestVar?: string }) => Promise<void>;
   }
 }
 
@@ -28,14 +28,21 @@ declare global {
  * зсередини застосунку). Повертає false, якщо SDK ще не завантажений, показ
  * закрито достроково, або завершився помилкою — виклик бекенду (claim/watch)
  * не повинен відбуватись у цьому випадку.
+ *
+ * ymid (опційно) — унікальний ідентифікатор спроби (app/api/ads/monetag/
+ * start-attempt/route.ts), який Monetag повертає БЕЗ ЗМІН у своєму S2S
+ * postback (docs.monetag.com/docs/postbacks/macroses) — так бекенд зіставляє
+ * реальне підтвердження перегляду з конкретним showRewardedAd()-викликом
+ * конкретного юзера. Без ymid (як і раніше) — просто client-side результат
+ * без можливості server-side підтвердження.
  */
-export async function showRewardedAd(): Promise<boolean> {
+export async function showRewardedAd(ymid?: string): Promise<boolean> {
   if (typeof window === "undefined" || typeof window.show_11600101 !== "function") {
     return false;
   }
 
   try {
-    await window.show_11600101();
+    await window.show_11600101(ymid ? { ymid } : undefined);
     return true;
   } catch {
     return false;

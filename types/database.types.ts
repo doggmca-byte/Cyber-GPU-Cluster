@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_verification_attempts: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          purpose: string
+          reported_reward_event_type: string | null
+          reported_telegram_id: number | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          purpose: string
+          reported_reward_event_type?: string | null
+          reported_telegram_id?: number | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          purpose?: string
+          reported_reward_event_type?: string | null
+          reported_telegram_id?: number | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_verification_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gpu_templates: {
         Row: {
           cost_ton: number

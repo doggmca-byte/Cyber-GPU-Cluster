@@ -370,6 +370,9 @@ const ar: TranslationDictionary = {
       adNotCompleted: "لم يكتمل الإعلان. حاول مرة أخرى.",
       progress: (watched, limit) => `${watched}/${limit} اليوم`,
       limitReached: "تم الوصول للحد اليومي — عد غدًا.",
+      confirming: "جارٍ تأكيد المشاهدة...",
+      notCounted: "لم تُحتسب المشاهدة — حاول مرة أخرى.",
+      stillProcessing: "لا تزال قيد المعالجة — تحقق من رصيدك بعد قليل.",
     },
   },
   dailyBonus: {

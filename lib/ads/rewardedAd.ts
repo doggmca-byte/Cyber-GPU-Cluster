@@ -1,7 +1,7 @@
 import { showRewardedAd } from "./monetag";
 import { showGigaRewardedAd } from "./gigapub";
 
-type RewardedProvider = "gigapub" | "monetag";
+export type RewardedProvider = "gigapub" | "monetag";
 
 const ROTATION_STORAGE_KEY = "cgc_ad_provider_rotation";
 
@@ -56,4 +56,34 @@ export async function showRewardedAdRotating(): Promise<boolean> {
 
   if (await showByProvider(first)) return true;
   return showByProvider(second);
+}
+
+export interface RewardedAdWithProviderResult {
+  watched: boolean;
+  /** Хто саме показав — null, якщо watched: false (обидва провайдери не спрацювали). */
+  provider: RewardedProvider | null;
+}
+
+/**
+ * Той самий алгоритм чергування, що й showRewardedAdRotating, але для
+ * flows, де нарахування залежить від ТОГО, ХТО саме показав рекламу
+ * (наразі — PartnerAdsCard/record_partner_ad_watch): Monetag передає
+ * monetagYmid у SDK-виклик (server-side S2S-підтвердження через
+ * /api/ads/monetag-postback), GigaPub — і далі на клієнтській довірі (немає
+ * аналогічного postback-механізму). Викликач сам вирішує, що робити з
+ * кожним provider — тут лише сирий факт "хто показав".
+ */
+export async function showRewardedAdRotatingWithProvider(monetagYmid: string): Promise<RewardedAdWithProviderResult> {
+  const first = nextFirstProvider();
+  const second: RewardedProvider = first === "gigapub" ? "monetag" : "gigapub";
+
+  const showFirst =
+    first === "monetag" ? showRewardedAd(monetagYmid) : showByProvider(first);
+  if (await showFirst) return { watched: true, provider: first };
+
+  const showSecond =
+    second === "monetag" ? showRewardedAd(monetagYmid) : showByProvider(second);
+  if (await showSecond) return { watched: true, provider: second };
+
+  return { watched: false, provider: null };
 }
