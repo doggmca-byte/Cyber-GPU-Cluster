@@ -41,6 +41,33 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_check_definitions: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          slug: string
+          target_value: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          slug: string
+          target_value: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          slug?: string
+          target_value?: string
+        }
+        Relationships: []
+      }
       partner_integrations: {
         Row: {
           created_at: string
@@ -530,6 +557,14 @@ export type Database = {
           game_balance: number
           withdrawable_balance: number
         }[]
+      }
+      evaluate_partner_check_condition: {
+        Args: {
+          p_action_type: string
+          p_target_value: string
+          p_telegram_id: number
+        }
+        Returns: boolean
       }
       exchange_hash_to_ton: {
         Args: {
