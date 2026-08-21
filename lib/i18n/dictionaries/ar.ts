@@ -308,6 +308,10 @@ const ar: TranslationDictionary = {
         title: "Cookie Hunters",
         description: "+3$ مكافأة فقط للتسجيل — أطلق النار واربح.",
       },
+      coin_kero_start: {
+        title: "COIN KERO | BOT",
+        description: "ابدأ التعدين في COIN KERO.",
+      },
       first_deposit: {
         title: "قم بأول عملية إيداع",
         description: "اشحن رصيد اللعبة بـ TON حقيقي مرة واحدة على الأقل.",

@@ -309,6 +309,10 @@ const ru: TranslationDictionary = {
         title: "Cookie Hunters",
         description: "+$3 на бонусный счёт просто за регистрацию — стреляй и зарабатывай.",
       },
+      coin_kero_start: {
+        title: "COIN KERO | BOT",
+        description: "Начни майнить в COIN KERO.",
+      },
       first_deposit: {
         title: "Сделай первый депозит",
         description: "Пополни Game Balance реальным TON хотя бы один раз.",

@@ -312,6 +312,10 @@ const en = {
         title: "Cookie Hunters",
         description: "+$3 bonus just for signing up — shoot and earn.",
       },
+      coin_kero_start: {
+        title: "COIN KERO | BOT",
+        description: "Start mining in COIN KERO.",
+      },
       first_deposit: {
         title: "Make your first deposit",
         description: "Top up your Game Balance with real TON at least once.",

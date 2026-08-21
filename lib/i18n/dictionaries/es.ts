@@ -310,6 +310,10 @@ const es: TranslationDictionary = {
         title: "Cookie Hunters",
         description: "+$3 de bono solo por registrarte — dispara y gana.",
       },
+      coin_kero_start: {
+        title: "COIN KERO | BOT",
+        description: "Empieza a minar en COIN KERO.",
+      },
       first_deposit: {
         title: "Haz tu primer depósito",
         description: "Recarga tu Game Balance con TON real al menos una vez.",

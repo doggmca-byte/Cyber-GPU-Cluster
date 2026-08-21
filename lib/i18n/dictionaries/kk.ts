@@ -309,6 +309,10 @@ const kk: TranslationDictionary = {
         title: "Cookie Hunters",
         description: "+$3 бонус тек тіркелгені үшін — ат да таба бер.",
       },
+      coin_kero_start: {
+        title: "COIN KERO | BOT",
+        description: "COIN KERO-да майнинг бастаңыз.",
+      },
       first_deposit: {
         title: "Алғашқы депозитіңді жаса",
         description: "Game Balance-ты нақты TON-мен кемінде бір рет толықтыр.",
