@@ -1,16 +1,18 @@
 import { showRewardedAd } from "./monetag";
 import { showGigaRewardedAd } from "./gigapub";
+import { showAdsgramRewardedAd } from "./adsgram";
 
-export type RewardedProvider = "gigapub" | "monetag";
+export type RewardedProvider = "gigapub" | "monetag" | "adsgram";
 
+const PROVIDER_ORDER: readonly RewardedProvider[] = ["gigapub", "monetag", "adsgram"];
 const ROTATION_STORAGE_KEY = "cgc_ad_provider_rotation";
 
 // Чия черга йти першим — зберігаємо в localStorage, а не в змінній модуля,
 // щоб чергування тримало лад між перезавантаженнями сторінки/сесіями, а не
-// скидалось на "завжди GigaPub спочатку" при кожному новому монтуванні
-// DailyBonusModal/WatchAdButton.
-function nextFirstProvider(): RewardedProvider {
-  if (typeof window === "undefined") return "gigapub";
+// скидалось на "завжди перший у списку" при кожному новому монтуванні
+// DailyBonusModal/WatchAdButton/PartnerAdsCard.
+function rotatedProviderOrder(): RewardedProvider[] {
+  if (typeof window === "undefined") return [...PROVIDER_ORDER];
 
   let index = 0;
   try {
@@ -20,47 +22,47 @@ function nextFirstProvider(): RewardedProvider {
     // WebView) — просто не чергуємо між сесіями, це не критично.
   }
 
-  const provider: RewardedProvider = index % 2 === 0 ? "gigapub" : "monetag";
-
   try {
     window.localStorage.setItem(ROTATION_STORAGE_KEY, String(index + 1));
   } catch {
     // ignore
   }
 
-  return provider;
+  const start = index % PROVIDER_ORDER.length;
+  return [...PROVIDER_ORDER.slice(start), ...PROVIDER_ORDER.slice(0, start)];
 }
 
 function showByProvider(provider: RewardedProvider): Promise<boolean> {
-  return provider === "gigapub" ? showGigaRewardedAd() : showRewardedAd();
+  if (provider === "gigapub") return showGigaRewardedAd();
+  if (provider === "monetag") return showRewardedAd();
+  return showAdsgramRewardedAd();
 }
 
 /**
- * Показує Rewarded Interstitial, чергуючи двох провайдерів (GigaPub / Monetag
- * SDK) від виклику до виклику замість того, щоб завжди пробувати одного й
- * того ж першим. ОБИДВА провайдери — лише повноцінний внутрішній
+ * Показує Rewarded Interstitial, чергуючи трьох провайдерів (GigaPub /
+ * Monetag / AdsGram SDK) від виклику до виклику замість того, щоб завжди
+ * пробувати одного й того ж першим. Усі три — лише повноцінний внутрішній
  * банер/відео, що закривається в самому Telegram WebApp; жодного переходу в
  * зовнішній браузер (Rewarded Popup / Direct Link) з цієї функції не
  * викликається.
  *
- * showGigaRewardedAd/showRewardedAd НІКОЛИ не кидають — вони повертають
- * false у будь-якому "немає реклами" сценарії (SDK ще не завантажився, нема
- * інвентарю в провайдера, показ закрито достроково). Тож якщо провайдер,
- * чия зараз черга, повернув false, одразу пробуємо другого як fallback —
- * true повертається, якщо БУДЬ-ЯКИЙ з двох показав рекламу успішно; false
- * лише якщо провалились обидва (і тоді бекенд-клейм/інкремент не викликати).
+ * show*RewardedAd НІКОЛИ не кидають — вони повертають false у будь-якому
+ * "немає реклами" сценарії (SDK ще не завантажився, нема інвентарю в
+ * провайдера, показ закрито достроково). Тож якщо провайдер, чия зараз
+ * черга, повернув false, пробуємо наступного за списком — true повертається,
+ * якщо БУДЬ-ЯКИЙ з трьох показав рекламу успішно; false лише якщо
+ * провалились усі (і тоді бекенд-клейм/інкремент не викликати).
  */
 export async function showRewardedAdRotating(): Promise<boolean> {
-  const first = nextFirstProvider();
-  const second: RewardedProvider = first === "gigapub" ? "monetag" : "gigapub";
-
-  if (await showByProvider(first)) return true;
-  return showByProvider(second);
+  for (const provider of rotatedProviderOrder()) {
+    if (await showByProvider(provider)) return true;
+  }
+  return false;
 }
 
 export interface RewardedAdWithProviderResult {
   watched: boolean;
-  /** Хто саме показав — null, якщо watched: false (обидва провайдери не спрацювали). */
+  /** Хто саме показав — null, якщо watched: false (жоден провайдер не спрацював). */
   provider: RewardedProvider | null;
 }
 
@@ -69,21 +71,17 @@ export interface RewardedAdWithProviderResult {
  * flows, де нарахування залежить від ТОГО, ХТО саме показав рекламу
  * (наразі — PartnerAdsCard/record_partner_ad_watch): Monetag передає
  * monetagYmid у SDK-виклик (server-side S2S-підтвердження через
- * /api/ads/monetag-postback), GigaPub — і далі на клієнтській довірі (немає
- * аналогічного postback-механізму). Викликач сам вирішує, що робити з
- * кожним provider — тут лише сирий факт "хто показав".
+ * /api/ads/monetag-postback), AdsGram підтверджує через власний Reward URL
+ * postback (app/api/ads/adsgram-postback, кореляція по telegramId, без
+ * потреби в токені спроби з нашого боку) — GigaPub і далі на клієнтській
+ * довірі (немає жодного S2S-механізму, підтверджено їхньою ж документацією).
+ * Викликач сам вирішує, що робити з кожним provider — тут лише сирий факт
+ * "хто показав".
  */
 export async function showRewardedAdRotatingWithProvider(monetagYmid: string): Promise<RewardedAdWithProviderResult> {
-  const first = nextFirstProvider();
-  const second: RewardedProvider = first === "gigapub" ? "monetag" : "gigapub";
-
-  const showFirst =
-    first === "monetag" ? showRewardedAd(monetagYmid) : showByProvider(first);
-  if (await showFirst) return { watched: true, provider: first };
-
-  const showSecond =
-    second === "monetag" ? showRewardedAd(monetagYmid) : showByProvider(second);
-  if (await showSecond) return { watched: true, provider: second };
-
+  for (const provider of rotatedProviderOrder()) {
+    const shown = provider === "monetag" ? await showRewardedAd(monetagYmid) : await showByProvider(provider);
+    if (shown) return { watched: true, provider };
+  }
   return { watched: false, provider: null };
 }

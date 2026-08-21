@@ -60,6 +60,15 @@ export default function RootLayout({
           обидва послідовно перед клеймом/нарахуванням.
         */}
         <Script src="https://ad.gigapub.tech/script?id=7784" strategy="afterInteractive" />
+        {/*
+          AdsGram SDK — реєструє window.Adsgram, який дергає lib/ads/adsgram.ts
+          (showAdsgramRewardedAd). Третій rewarded-провайдер у ротації поряд
+          із Monetag/GigaPub (lib/ads/rewardedAd.ts) — на відміну від обох
+          інших, реально підтверджує перегляд через S2S postback (Reward URL
+          у дашборді AdsGram -> /api/ads/adsgram-postback), а не лише
+          клієнтську довіру.
+        */}
+        <Script src="https://sad.adsgram.ai/js/sad.min.js" strategy="afterInteractive" />
         {children}
       </body>
     </html>

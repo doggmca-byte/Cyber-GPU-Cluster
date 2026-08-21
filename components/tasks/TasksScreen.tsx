@@ -30,6 +30,7 @@ import type {
   TaskVerifyResponse,
   TaskClaimResponse,
   PartnerAdWatchResponse,
+  SyncResponse,
 } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 
@@ -493,6 +494,46 @@ async function pollMonetagAttemptStatus(initData: string, ymid: string): Promise
   return { kind: "timeout" };
 }
 
+// AdsGram, на відміну від Monetag, не видає нам токен спроби наперед —
+// їхній Reward URL postback (app/api/ads/adsgram-postback) кореляує
+// виключно по telegramId, без ідентифікатора конкретного показу. Тож
+// підтвердження тут — це не пошук статусу конкретної спроби, а порівняння
+// лічильника partner_ads_watched_today "до" й "після": як тільки бекенд
+// реально нарахував через постбек, лічильник зростає. Той самий принцип, що
+// й у поллінгу Monetag — просто інший спосіб виявити подію без power токена.
+async function pollAdsgramConfirmation(
+  initData: string,
+  baselineWatchedToday: number,
+): Promise<MonetagPollResult> {
+  for (let attempt = 0; attempt < MONETAG_POLL_ATTEMPTS; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, MONETAG_POLL_DELAY_MS));
+
+    try {
+      const res = await fetch("/api/user/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData }),
+      });
+      if (!res.ok) continue;
+
+      const data = (await res.json()) as SyncResponse;
+      if (data.profile.partner_ads_watched_today > baselineWatchedToday) {
+        return {
+          kind: "confirmed",
+          partnerAdsWatchedToday: data.profile.partner_ads_watched_today,
+          withdrawableBalance: data.profile.withdrawable_balance,
+        };
+      }
+      // лічильник не зріс — постбек ще не прийшов (чи ніколи не прийде,
+      // AdsGram не дає нам жодного явного "rejected"-сигналу для polling'у).
+    } catch {
+      // мережевий збій самого запиту — не фатально, пробуємо ще раз наступного тику.
+    }
+  }
+
+  return { kind: "timeout" };
+}
+
 function PartnerAdsCard({ initData }: { initData: string }) {
   const { t, language } = useTranslation();
   const { state, patchProfile } = useUserData();
@@ -595,11 +636,18 @@ function PartnerAdsCard({ initData }: { initData: string }) {
         return;
       }
 
-      // provider === "monetag": НІЧОГО не нараховуємо тут — чекаємо на
-      // реальний postback від сервера Monetag (app/api/ads/monetag-postback),
-      // опитуючи короткими інтервалами.
       setIsConfirming(true);
-      const outcome = await pollMonetagAttemptStatus(initData, ymid);
+
+      // provider === "monetag" | "adsgram": НІЧОГО не нараховуємо тут —
+      // чекаємо на реальний postback (app/api/ads/monetag-postback чи
+      // app/api/ads/adsgram-postback відповідно), опитуючи короткими
+      // інтервалами. Monetag дає нам токен спроби (ymid) — опитуємо його
+      // напряму; AdsGram токена не дає, тож порівнюємо лічильник
+      // partner_ads_watched_today "до" й "після" виклику показу.
+      const outcome =
+        shown.provider === "adsgram"
+          ? await pollAdsgramConfirmation(initData, profile.partner_ads_watched_today)
+          : await pollMonetagAttemptStatus(initData, ymid);
 
       if (outcome.kind === "confirmed") {
         patchProfile({
