@@ -19,6 +19,7 @@ export type Database = {
           confirmed_at: string | null
           created_at: string
           id: string
+          provider: string
           purpose: string
           reported_reward_event_type: string | null
           reported_telegram_id: number | null
@@ -29,6 +30,7 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           id?: string
+          provider?: string
           purpose: string
           reported_reward_event_type?: string | null
           reported_telegram_id?: number | null
@@ -39,6 +41,7 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           id?: string
+          provider?: string
           purpose?: string
           reported_reward_event_type?: string | null
           reported_telegram_id?: number | null

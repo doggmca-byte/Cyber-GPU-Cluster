@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
     const { data: attempt, error } = await admin
       .from("ad_verification_attempts")
-      .insert({ user_id: profile.id, purpose: body.purpose })
+      .insert({ user_id: profile.id, purpose: body.purpose, provider: "monetag" })
       .select("id")
       .single();
 
