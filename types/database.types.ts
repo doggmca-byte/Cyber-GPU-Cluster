@@ -654,7 +654,7 @@ export type Database = {
         }[]
       }
       record_partner_ad_watch: {
-        Args: { p_user_id: string }
+        Args: { p_bypass_limit?: boolean; p_user_id: string }
         Returns: {
           daily_limit: number
           partner_ads_watched_today: number

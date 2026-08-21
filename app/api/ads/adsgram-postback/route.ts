@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { findProfileByTelegramId } from "@/lib/api/profile";
 import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
+import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,7 +69,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: true, status: "confirmed", deduped: true });
     }
 
-    const { error: rpcError } = await admin.rpc("record_partner_ad_watch", { p_user_id: profile.id });
+    // Адмін дивиться без обмеження денним лімітом — telegramId тут уже той
+    // самий, за яким щойно знайдено profile (findProfileByTelegramId), тож
+    // джерело правди для авторизаційного рішення не потребує окремого запиту.
+    const { error: rpcError } = await admin.rpc("record_partner_ad_watch", {
+      p_user_id: profile.id,
+      p_bypass_limit: isTelegramAdmin(telegramId),
+    });
 
     if (rpcError) {
       if (rpcError.code === "P0001") {

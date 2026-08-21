@@ -5,6 +5,7 @@ import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { readJsonBody } from "@/lib/api/request";
 import { requireProfileByTelegramId } from "@/lib/api/profile";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
+import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
 import type { PartnerAdWatchResponse } from "@/types/api";
 
 export const runtime = "nodejs";
@@ -34,8 +35,12 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const profile = await requireProfileByTelegramId(admin, user.id);
 
+    // Адмін (TELEGRAM_ADMIN_IDS, перевіряється тут же, а не в SQL — сам
+    // список ніколи не потрапляє в базу/клієнт) дивиться рекламу в
+    // "Партнери" без обмеження денним лімітом — усе інше нарахування
+    // лишається тим самим.
     const { data, error } = await admin
-      .rpc("record_partner_ad_watch", { p_user_id: profile.id })
+      .rpc("record_partner_ad_watch", { p_user_id: profile.id, p_bypass_limit: isTelegramAdmin(user.id) })
       .single();
 
     if (error) throw rpcErrorToApiError(error);

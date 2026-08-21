@@ -542,12 +542,15 @@ function PartnerAdsCard({ initData }: { initData: string }) {
   const [error, setError] = useState<string | null>(null);
 
   if (state.status !== "ready") return null;
-  const { profile } = state.data;
+  const { profile, is_admin: isAdmin } = state.data;
 
   const today = new Date().toISOString().slice(0, 10);
   const watchedToday =
     profile.partner_ads_reset_date === today ? profile.partner_ads_watched_today : 0;
-  const limitReached = watchedToday >= PARTNER_AD_DAILY_LIMIT;
+  // Адмін дивиться без ліміту (бекенд теж не блокує — p_bypass_limit у
+  // record_partner_ad_watch) — лічильник тут лише для відображення "X/20",
+  // саму кнопку для адміна ніколи не вимикаємо.
+  const limitReached = !isAdmin && watchedToday >= PARTNER_AD_DAILY_LIMIT;
 
   const watch = async () => {
     if (isWatching || limitReached) return;

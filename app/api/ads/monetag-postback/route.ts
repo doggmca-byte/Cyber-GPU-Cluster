@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
+import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,11 +76,28 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: true, status: "rejected" });
     }
 
+    // Адмін дивиться без обмеження денним лімітом — звіряємо telegram_id
+    // ВЛАСНОГО профілю (attempt.user_id), а не reported_telegram_id з
+    // query-параметра постбеку: той самопідтверджений Monetag-ом рядок не
+    // варто використовувати для авторизаційних рішень.
+    const { data: attemptProfile, error: attemptProfileError } = await admin
+      .from("profiles")
+      .select("telegram_id")
+      .eq("id", attempt.user_id)
+      .maybeSingle();
+    if (attemptProfileError) {
+      throw new ApiError(500, `failed to load profile: ${attemptProfileError.message}`);
+    }
+    const bypassLimit = attemptProfile ? isTelegramAdmin(attemptProfile.telegram_id) : false;
+
     // purpose наразі завжди 'partner_ad_watch' (єдине значення, дозволене
     // CHECK-обмеженням ad_verification_attempts.purpose) — record_partner_ad_watch
     // сам застосовує денний ліміт (20/день), той самий, що й для
-    // GigaPub-довірчого шляху.
-    const { error: rpcError } = await admin.rpc("record_partner_ad_watch", { p_user_id: attempt.user_id });
+    // GigaPub-довірчого шляху (крім адміна — bypassLimit вище).
+    const { error: rpcError } = await admin.rpc("record_partner_ad_watch", {
+      p_user_id: attempt.user_id,
+      p_bypass_limit: bypassLimit,
+    });
 
     if (rpcError) {
       // Ліміт на добу вичерпаний — не критична помилка нашого боку, просто
