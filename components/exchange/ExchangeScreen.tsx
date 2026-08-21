@@ -119,6 +119,11 @@ function HashToTonCard({
         onChange={(e) => setAmount(e.target.value)}
         className="mt-2 w-full rounded-2xl border border-white/5 bg-[#0b0e14] px-3 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-neon-cyan/40"
       />
+      {amount !== "" && Number.isFinite(hashAmount) && hashAmount > 0 && !hasMinAmount && (
+        <p className="mt-1.5 text-[11px] text-red-400">
+          {t.exchange.hashToTon.minAmountError(minHashLabel)}
+        </p>
+      )}
       {hasMinAmount && !isMultipleOfStep && (
         <p className="mt-1.5 text-[11px] text-red-400">
           {t.exchange.hashToTon.stepError(formatNumber(language, HASH_EXCHANGE_STEP))}
@@ -248,6 +253,11 @@ function ConvertBackCard({
         onChange={(e) => setAmount(e.target.value)}
         className="mt-2.5 w-full rounded-2xl border border-white/5 bg-[#0b0e14] px-3 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-neon-purple/40"
       />
+      {amount !== "" && Number.isFinite(tonAmount) && tonAmount > 0 && !isValidAmount && (
+        <p className="mt-1.5 text-[11px] text-red-400">
+          {t.exchange.convertBack.minAmountError(minConvertLabel)}
+        </p>
+      )}
 
       <button
         type="button"
