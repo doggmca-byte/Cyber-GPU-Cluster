@@ -193,11 +193,41 @@ function TasksScreenReady({ initData }: { initData: string }) {
     void loadTasks();
   }, [loadTasks]);
 
-  const openTaskLink = (task: TaskItem) => {
-    const url =
-      task.action_type === "telegram_channel"
-        ? `https://t.me/${task.target_value.replace(/^@/, "")}`
-        : task.target_value;
+  const openTaskLink = async (task: TaskItem) => {
+    let url: string;
+
+    if (task.action_type === "partner_postback") {
+      // На відміну від telegram_channel/external_link, тут не можна відкрити
+      // task.target_value напряму — спершу /api/partners/click генерує
+      // click_id (щоб пізніше зіставити з postback від партнера) і повертає
+      // готовий URL з підставленим значенням.
+      setErrorByTask((prev) => ({ ...prev, [task.id]: "" }));
+      try {
+        const res = await fetch("/api/partners/click", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ initData, task_id: task.id }),
+        });
+
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(body?.error ?? `partner click failed with status ${res.status}`);
+        }
+
+        ({ url } = (await res.json()) as { click_id: string; url: string });
+      } catch (err) {
+        setErrorByTask((prev) => ({
+          ...prev,
+          [task.id]: err instanceof Error ? err.message : t.common.unknownError,
+        }));
+        return;
+      }
+    } else {
+      url =
+        task.action_type === "telegram_channel"
+          ? `https://t.me/${task.target_value.replace(/^@/, "")}`
+          : task.target_value;
+    }
 
     const webApp = window.Telegram?.WebApp;
     if (task.action_type === "telegram_channel" && webApp?.openTelegramLink) {
@@ -360,7 +390,7 @@ function TasksScreenReady({ initData }: { initData: string }) {
               busyAction={busy?.taskId === task.id ? busy.action : null}
               disabled={busy !== null}
               error={errorByTask[task.id]}
-              onOpenLink={() => openTaskLink(task)}
+              onOpenLink={() => void openTaskLink(task)}
               onVerify={() => verify(task)}
               onClaim={() => claim(task)}
             />
@@ -493,7 +523,10 @@ function TaskRow({
   const { t, language } = useTranslation();
   const Icon = getTaskIcon(task);
   const copy = getTaskCopy(t, task.title_key);
-  const isLinkTask = task.action_type === "telegram_channel" || task.action_type === "external_link";
+  const isLinkTask =
+    task.action_type === "telegram_channel" ||
+    task.action_type === "external_link" ||
+    task.action_type === "partner_postback";
 
   return (
     <div className="glass-card p-3">
@@ -614,6 +647,23 @@ function TaskActionButton({
         className="flex w-full items-center justify-center gap-2 rounded-2xl bg-neon-cyan py-2 text-[11px] font-semibold text-background transition active:scale-[0.98] disabled:opacity-50"
       >
         {t.tasks.action.start}
+      </button>
+    );
+  }
+
+  if (task.action_type === "partner_postback") {
+    // Тут немає /api/tasks/verify — статус може виставити лише реальний
+    // postback від партнера (POST /api/partners/postback). GET /api/tasks
+    // сам підхопить 'completed' щойно він прийде — досить, щоб юзер
+    // повернувся на цей екран пізніше (наступний фетч тут же покаже кнопку
+    // "Забрати").
+    return (
+      <button
+        type="button"
+        disabled
+        className="flex w-full items-center justify-center rounded-2xl bg-white/[0.03] py-2 text-[11px] font-semibold text-slate-600"
+      >
+        {t.tasks.action.awaitingPartner}
       </button>
     );
   }

@@ -255,6 +255,7 @@ const kk: TranslationDictionary = {
       claiming: "Алынуда...",
       claimed: "✓ Алынды",
       notCompletedYet: "Әлі расталмады — әрекетті орындағаннан кейін қайта көріңіз.",
+      awaitingPartner: "Серіктестен растауды күтудеміз...",
     },
     items: {
       own_gpus_5: {

@@ -256,6 +256,7 @@ const es: TranslationDictionary = {
       claiming: "Reclamando...",
       claimed: "✓ Reclamado",
       notCompletedYet: "Aún no confirmado — inténtalo de nuevo después de completar la acción.",
+      awaitingPartner: "Esperando confirmación del socio...",
     },
     items: {
       own_gpus_5: {

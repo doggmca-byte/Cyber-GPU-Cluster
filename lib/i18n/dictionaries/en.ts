@@ -258,6 +258,7 @@ const en = {
       claiming: "Claiming...",
       claimed: "✓ Claimed",
       notCompletedYet: "Not confirmed yet — try again after completing the action.",
+      awaitingPartner: "Awaiting partner confirmation...",
     },
     items: {
       own_gpus_5: {

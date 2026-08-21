@@ -255,6 +255,7 @@ const id: TranslationDictionary = {
       claiming: "Mengklaim...",
       claimed: "✓ Diklaim",
       notCompletedYet: "Belum dikonfirmasi — coba lagi setelah menyelesaikan aksinya.",
+      awaitingPartner: "Menunggu konfirmasi dari mitra...",
     },
     items: {
       own_gpus_5: {

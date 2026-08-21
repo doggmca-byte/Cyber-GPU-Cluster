@@ -254,6 +254,7 @@ const ar: TranslationDictionary = {
       claiming: "جارٍ الاستلام...",
       claimed: "✓ تم الاستلام",
       notCompletedYet: "لم يتم التأكيد بعد — حاول مرة أخرى بعد إكمال الإجراء.",
+      awaitingPartner: "في انتظار تأكيد الشريك...",
     },
     items: {
       own_gpus_5: {

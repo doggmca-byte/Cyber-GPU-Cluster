@@ -255,6 +255,7 @@ const uk: TranslationDictionary = {
       claiming: "Забираємо...",
       claimed: "✓ Отримано",
       notCompletedYet: "Ще не підтверджено — спробуй ще раз після виконання дії.",
+      awaitingPartner: "Очікуємо підтвердження від партнера...",
     },
     items: {
       own_gpus_5: {

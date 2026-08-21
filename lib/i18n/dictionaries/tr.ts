@@ -255,6 +255,7 @@ const tr: TranslationDictionary = {
       claiming: "Alınıyor...",
       claimed: "✓ Alındı",
       notCompletedYet: "Henüz onaylanmadı — işlemi tamamladıktan sonra tekrar dene.",
+      awaitingPartner: "Ortak onayı bekleniyor...",
     },
     items: {
       own_gpus_5: {

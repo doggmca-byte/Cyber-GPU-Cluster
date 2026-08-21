@@ -41,6 +41,97 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_integrations: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          inbound_secret: string
+          is_active: boolean
+          outbound_postback_url: string | null
+          outbound_secret: string | null
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id?: string
+          inbound_secret: string
+          is_active?: boolean
+          outbound_postback_url?: string | null
+          outbound_secret?: string | null
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          inbound_secret?: string
+          is_active?: boolean
+          outbound_postback_url?: string | null
+          outbound_secret?: string | null
+          slug?: string
+        }
+        Relationships: []
+      }
+      partner_task_clicks: {
+        Row: {
+          click_id: string
+          confirmed_at: string | null
+          created_at: string
+          direction: string
+          id: string
+          partner_id: string
+          status: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          click_id: string
+          confirmed_at?: string | null
+          created_at?: string
+          direction: string
+          id?: string
+          partner_id: string
+          status?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          click_id?: string
+          confirmed_at?: string | null
+          created_at?: string
+          direction?: string
+          id?: string
+          partner_id?: string
+          status?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_task_clicks_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_task_clicks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "task_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_task_clicks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           ads_quota_reset_date: string
@@ -180,6 +271,7 @@ export type Database = {
           icon: string | null
           id: string
           is_active: boolean
+          partner_id: string | null
           reward_amount: number
           reward_type: string
           sort_order: number
@@ -193,6 +285,7 @@ export type Database = {
           icon?: string | null
           id?: string
           is_active?: boolean
+          partner_id?: string | null
           reward_amount: number
           reward_type: string
           sort_order?: number
@@ -206,13 +299,22 @@ export type Database = {
           icon?: string | null
           id?: string
           is_active?: boolean
+          partner_id?: string | null
           reward_amount?: number
           reward_type?: string
           sort_order?: number
           target_value?: string
           title_key?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "task_templates_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transactions: {
         Row: {
