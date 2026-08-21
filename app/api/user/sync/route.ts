@@ -103,7 +103,7 @@ async function createProfileWithOptionalReferral(
       first_name: user.first_name ?? null,
       // Сирий Telegram language_code ("en-US", "uk" тощо) — нормалізація
       // (мовна частина до дефіса, фолбек на DEFAULT_LANGUAGE) відбувається
-      // при фактичній відправці сповіщення (lib/telegram/pickNotificationLanguage.ts),
+      // при фактичній відправці сповіщення (lib/i18n/resolveLanguage.ts),
       // не тут — тримаємо оригінал на випадок майбутнього використання.
       telegram_language_code: user.language_code ?? null,
       referrer_id: referrerProfileId,
