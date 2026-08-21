@@ -294,6 +294,10 @@ const id: TranslationDictionary = {
         title: "Cek penawaran mitra",
         description: "Buka halaman penawaran mitra.",
       },
+      cookie_wars_game_enter: {
+        title: "Cookie Wars",
+        description: "Buka aplikasi Cookie Wars.",
+      },
       first_deposit: {
         title: "Lakukan deposit pertamamu",
         description: "Isi ulang Game Balance dengan TON asli setidaknya sekali.",

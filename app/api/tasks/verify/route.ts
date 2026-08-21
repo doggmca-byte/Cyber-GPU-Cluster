@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyInitData, getTelegramBotToken } from "@/lib/telegram/verifyInitData";
 import { isChannelMember } from "@/lib/telegram/getChatMember";
+import { checkPartnerApiTask, parsePartnerApiCheckConfig } from "@/lib/partners/checkExternalTask";
 import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { readJsonBody } from "@/lib/api/request";
 import { requireProfileByTelegramId } from "@/lib/api/profile";
@@ -16,13 +17,16 @@ interface VerifyRequestBody {
 }
 
 /**
- * Обслуговує лише два action_type, для яких неможливо валідувати умову
- * прямими SQL-запитами (claim_task_reward сам вважає їх виконаними, лише коли
+ * Обслуговує три action_type, для яких неможливо валідувати умову прямими
+ * SQL-запитами (claim_task_reward сам вважає їх виконаними, лише коли
  * user_tasks.status уже 'completed'):
  *   - telegram_channel: реальна перевірка через Bot API getChatMember.
  *   - external_link: неможливо технічно підтвердити перехід з Mini App —
  *     фіксуємо факт натискання "Перевірити" ПІСЛЯ того, як юзер відкрив
  *     посилання (client відкриває його на кроці "Виконати" ще до виклику).
+ *   - partner_api_check: реальна перевірка через pull-check API партнера
+ *     (lib/partners/checkExternalTask.ts) — той самий принцип, що
+ *     telegram_channel, лише зовнішній HTTP-виклик замість Bot API.
  * Інші action_type (*_count) сюди не звертаються — їхній статус GET /api/tasks
  * обчислює наживо, без окремого кроку підтвердження.
  */
@@ -46,7 +50,11 @@ export async function POST(request: Request) {
     if (taskError) throw new ApiError(500, `failed to load task: ${taskError.message}`);
     if (!task) throw new ApiError(404, "task not found");
 
-    if (task.action_type !== "telegram_channel" && task.action_type !== "external_link") {
+    if (
+      task.action_type !== "telegram_channel" &&
+      task.action_type !== "external_link" &&
+      task.action_type !== "partner_api_check"
+    ) {
       throw new ApiError(400, "this task type does not support manual verification");
     }
 
@@ -72,10 +80,21 @@ export async function POST(request: Request) {
       return NextResponse.json(response);
     }
 
-    const completed =
-      task.action_type === "telegram_channel"
-        ? await isChannelMember(task.target_value, user.id)
-        : true;
+    let completed: boolean;
+    if (task.action_type === "telegram_channel") {
+      completed = await isChannelMember(task.target_value, user.id);
+    } else if (task.action_type === "partner_api_check") {
+      try {
+        completed = await checkPartnerApiTask(parsePartnerApiCheckConfig(task.target_value), user.id);
+      } catch (err) {
+        throw new ApiError(
+          500,
+          `partner_api_check misconfigured: ${err instanceof Error ? err.message : "unknown error"}`,
+        );
+      }
+    } else {
+      completed = true; // external_link
+    }
 
     if (completed && existing?.status !== "completed") {
       if (existing) {

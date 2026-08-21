@@ -295,6 +295,10 @@ const es: TranslationDictionary = {
         title: "Revisa una oferta de socio",
         description: "Abre la página de la oferta del socio.",
       },
+      cookie_wars_game_enter: {
+        title: "Cookie Wars",
+        description: "Abre la aplicación Cookie Wars.",
+      },
       first_deposit: {
         title: "Haz tu primer depósito",
         description: "Recarga tu Game Balance con TON real al menos una vez.",

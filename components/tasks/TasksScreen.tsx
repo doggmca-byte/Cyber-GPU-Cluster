@@ -222,6 +222,15 @@ function TasksScreenReady({ initData }: { initData: string }) {
         }));
         return;
       }
+    } else if (task.action_type === "partner_api_check") {
+      // target_value — JSON {open_url, check_url} (lib/partners/checkExternalTask.ts) —
+      // відкриваємо саме open_url, а не сирий target_value.
+      try {
+        ({ open_url: url } = JSON.parse(task.target_value) as { open_url: string; check_url: string });
+      } catch {
+        setErrorByTask((prev) => ({ ...prev, [task.id]: t.common.unknownError }));
+        return;
+      }
     } else {
       url =
         task.action_type === "telegram_channel"
@@ -526,7 +535,8 @@ function TaskRow({
   const isLinkTask =
     task.action_type === "telegram_channel" ||
     task.action_type === "external_link" ||
-    task.action_type === "partner_postback";
+    task.action_type === "partner_postback" ||
+    task.action_type === "partner_api_check";
 
   return (
     <div className="glass-card p-3">

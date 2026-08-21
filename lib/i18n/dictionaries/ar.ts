@@ -293,6 +293,10 @@ const ar: TranslationDictionary = {
         title: "تحقق من عرض الشريك",
         description: "افتح صفحة عرض الشريك.",
       },
+      cookie_wars_game_enter: {
+        title: "Cookie Wars",
+        description: "افتح تطبيق Cookie Wars.",
+      },
       first_deposit: {
         title: "قم بأول عملية إيداع",
         description: "اشحن رصيد اللعبة بـ TON حقيقي مرة واحدة على الأقل.",

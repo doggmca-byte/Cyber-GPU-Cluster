@@ -294,6 +294,10 @@ const kk: TranslationDictionary = {
         title: "Серіктес ұсынысын қара",
         description: "Серіктестің ұсыныс бетін аш.",
       },
+      cookie_wars_game_enter: {
+        title: "Cookie Wars",
+        description: "Cookie Wars қолданбасын аш.",
+      },
       first_deposit: {
         title: "Алғашқы депозитіңді жаса",
         description: "Game Balance-ты нақты TON-мен кемінде бір рет толықтыр.",

@@ -294,6 +294,10 @@ const tr: TranslationDictionary = {
         title: "Bir ortak teklifine bak",
         description: "Ortak teklif sayfasını aç.",
       },
+      cookie_wars_game_enter: {
+        title: "Cookie Wars",
+        description: "Cookie Wars uygulamasını aç.",
+      },
       first_deposit: {
         title: "İlk yatırımını yap",
         description: "Game Balance'ını en az bir kez gerçek TON ile yükle.",

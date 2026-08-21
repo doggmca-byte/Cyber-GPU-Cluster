@@ -139,7 +139,8 @@ export type TaskActionType =
   | "deposit_total_ton"
   | "harvest_total_hash"
   | "own_gpu_level"
-  | "partner_postback";
+  | "partner_postback"
+  | "partner_api_check";
 export type TaskStatus = "pending" | "completed" | "claimed";
 
 export interface TaskItem {

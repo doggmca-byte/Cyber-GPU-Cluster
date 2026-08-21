@@ -297,6 +297,10 @@ const en = {
         title: "Check a partner offer",
         description: "Open the partner offer page.",
       },
+      cookie_wars_game_enter: {
+        title: "Cookie Wars",
+        description: "Open the Cookie Wars app.",
+      },
       first_deposit: {
         title: "Make your first deposit",
         description: "Top up your Game Balance with real TON at least once.",

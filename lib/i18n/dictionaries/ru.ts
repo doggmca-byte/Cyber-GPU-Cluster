@@ -294,6 +294,10 @@ const ru: TranslationDictionary = {
         title: "Посмотри предложение партнёра",
         description: "Открой страницу предложения партнёра.",
       },
+      cookie_wars_game_enter: {
+        title: "Cookie Wars",
+        description: "Открой приложение Cookie Wars.",
+      },
       first_deposit: {
         title: "Сделай первый депозит",
         description: "Пополни Game Balance реальным TON хотя бы один раз.",
