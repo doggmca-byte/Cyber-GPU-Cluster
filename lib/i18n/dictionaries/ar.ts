@@ -168,6 +168,7 @@ const ar: TranslationDictionary = {
       customAmountLabel: (min) => `أو أدخل مبلغك الخاص (الحد الأدنى ${min} TON)`,
       customAmountPlaceholder: "مثال: 0.5",
       minAmountError: (min) => `الحد الأدنى للإيداع هو ${min} TON`,
+      minDepositNote: (min) => `الحد الأدنى الموصى به للإيداع هو ${min} TON (المبالغ الأقل تُضاف أيضًا تقنيًا، لكن رسوم الشبكة تجعلها غير عملية).`,
       disclaimer: "تُضاف الأموال فقط بعد تأكيد المعاملة على شبكة TON.",
       timeoutError: "لم يتم تأكيد المعاملة في الوقت المحدد. جرّب زر «تحقق من الدفع» بعد قليل.",
       addressLabel: "عنوان محفظة المشروع",

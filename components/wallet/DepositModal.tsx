@@ -215,7 +215,11 @@ export function DepositModal({
         </div>
       ) : (
         <>
-          <div className="flex flex-col gap-2.5">
+          <p className="text-[11px] text-slate-500">
+            {t.wallet.deposit.minDepositNote(formatNumber(language, MIN_DEPOSIT_TON))}
+          </p>
+
+          <div className="mt-2.5 flex flex-col gap-2.5">
             <CopyableField value={TREASURY_ADDRESS} label={t.wallet.deposit.addressLabel} />
             <CopyableField value={memo} label={t.wallet.deposit.memoLabel} />
           </div>

@@ -171,6 +171,7 @@ const en = {
       customAmountLabel: (min: string) => `Or enter your own amount (min ${min} TON)`,
       customAmountPlaceholder: "e.g. 0.5",
       minAmountError: (min: string) => `Minimum deposit is ${min} TON`,
+      minDepositNote: (min: string) => `Recommended minimum deposit: ${min} TON (smaller amounts are technically credited too, but network fees make them impractical).`,
       disclaimer: "Funds are credited only after the transaction is confirmed on the TON network.",
       timeoutError: "The transaction wasn't confirmed in time. Try the \"Check payment\" button in a bit.",
       addressLabel: "Project wallet address",

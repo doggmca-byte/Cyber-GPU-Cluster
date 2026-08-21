@@ -168,6 +168,7 @@ const kk: TranslationDictionary = {
       customAmountLabel: (min) => `Немесе өз соманы енгіз (ең аз ${min} TON)`,
       customAmountPlaceholder: "мыс. 0.5",
       minAmountError: (min) => `Толықтырудың ең аз сомасы — ${min} TON`,
+      minDepositNote: (min) => `Ұсынылатын ең аз депозит сомасы — ${min} TON (азырақ сома да техникалық есептеледі, бірақ желі комиссиясы оны тиімсіз етеді).`,
       disclaimer: "Қаражат тек TON желісінде транзакция расталғаннан кейін есептеледі.",
       timeoutError: "Транзакция уақытында расталмады. «Төлемді тексеру» түймесін сәл кейінірек көр.",
       addressLabel: "Жоба әмиянының мекенжайы",

@@ -168,6 +168,7 @@ const id: TranslationDictionary = {
       customAmountLabel: (min) => `Atau masukkan jumlah sendiri (min ${min} TON)`,
       customAmountPlaceholder: "mis. 0.5",
       minAmountError: (min) => `Setoran minimum adalah ${min} TON`,
+      minDepositNote: (min) => `Setoran minimum yang disarankan: ${min} TON (jumlah lebih kecil secara teknis tetap dikreditkan, tapi biaya jaringan membuatnya kurang praktis).`,
       disclaimer: "Dana baru dikreditkan setelah transaksi dikonfirmasi di jaringan TON.",
       timeoutError: "Transaksi tidak terkonfirmasi tepat waktu. Coba tombol \"Periksa pembayaran\" sebentar lagi.",
       addressLabel: "Alamat dompet proyek",
