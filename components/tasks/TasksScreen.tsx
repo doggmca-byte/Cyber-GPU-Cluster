@@ -444,28 +444,34 @@ async function pollMonetagAttemptStatus(initData: string, ymid: string): Promise
   for (let attempt = 0; attempt < MONETAG_POLL_ATTEMPTS; attempt++) {
     await new Promise((resolve) => setTimeout(resolve, MONETAG_POLL_DELAY_MS));
 
-    const res = await fetch("/api/ads/monetag/attempt-status", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ initData, ymid }),
-    });
-    if (!res.ok) continue; // тимчасовий збій опитування — просто спробуємо ще раз наступного тику
+    try {
+      const res = await fetch("/api/ads/monetag/attempt-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData, ymid }),
+      });
+      if (!res.ok) continue; // тимчасовий збій опитування — просто спробуємо ще раз наступного тику
 
-    const data = (await res.json()) as {
-      status: string;
-      withdrawable_balance?: number;
-      partner_ads_watched_today?: number;
-    };
-
-    if (data.status === "confirmed") {
-      return {
-        kind: "confirmed",
-        partnerAdsWatchedToday: data.partner_ads_watched_today ?? 0,
-        withdrawableBalance: data.withdrawable_balance ?? 0,
+      const data = (await res.json()) as {
+        status: string;
+        withdrawable_balance?: number;
+        partner_ads_watched_today?: number;
       };
+
+      if (data.status === "confirmed") {
+        return {
+          kind: "confirmed",
+          partnerAdsWatchedToday: data.partner_ads_watched_today ?? 0,
+          withdrawableBalance: data.withdrawable_balance ?? 0,
+        };
+      }
+      if (data.status === "rejected") return { kind: "rejected" };
+      // 'pending' — тікаємо далі
+    } catch {
+      // мережевий збій самого запиту (не лише !res.ok) — так само не фатально,
+      // просто пробуємо ще раз наступного тику, а не обриваємо весь потік
+      // загальною помилкою в watch().
     }
-    if (data.status === "rejected") return { kind: "rejected" };
-    // 'pending' — тікаємо далі
   }
 
   return { kind: "timeout" };
