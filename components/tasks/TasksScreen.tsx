@@ -252,7 +252,23 @@ function TasksScreenReady({ initData }: { initData: string }) {
     }
 
     const webApp = window.Telegram?.WebApp;
-    if (task.action_type === "telegram_channel" && webApp?.openTelegramLink) {
+    // Раніше сюди потрапляв ЛИШЕ telegram_channel — але partner_api_check/
+    // partner_postback теж майже завжди відкривають t.me-посилання (боти
+    // партнерів, часто з startapp-параметром для запуску їхнього Mini App).
+    // openLink() призначений для ЗОВНІШНІХ сайтів і відкриває їх у
+    // системному/зовнішньому браузері — для внутрішніх t.me-посилань це
+    // ненадійно (Telegram сам документує, що такі лінки мають йти через
+    // openTelegramLink, інакше перехід у сам бот/чат може просто не
+    // відбутись). Перевіряємо host, а не action_type — надійніше для
+    // будь-якого майбутнього partner_postback URL, що теж виявиться t.me.
+    let isTelegramInternalLink = false;
+    try {
+      isTelegramInternalLink = new URL(url).hostname.replace(/^www\./, "") === "t.me";
+    } catch {
+      // некоректний URL — лишаємо isTelegramInternalLink false, підемо в openLink/window.open нижче
+    }
+
+    if (isTelegramInternalLink && webApp?.openTelegramLink) {
       webApp.openTelegramLink(url);
     } else if (webApp?.openLink) {
       webApp.openLink(url);
