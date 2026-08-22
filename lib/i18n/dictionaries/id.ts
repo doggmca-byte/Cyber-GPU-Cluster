@@ -316,6 +316,10 @@ const id: TranslationDictionary = {
         title: "COIN KERO | BOT",
         description: "Mulai menambang di COIN KERO.",
       },
+      theiterra_enter: {
+        title: "TheiTerra",
+        description: "Buka TheiTerra dan buat profilmu.",
+      },
       first_deposit: {
         title: "Lakukan deposit pertamamu",
         description: "Isi ulang Game Balance dengan TON asli setidaknya sekali.",

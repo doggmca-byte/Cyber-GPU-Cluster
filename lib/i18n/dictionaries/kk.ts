@@ -316,6 +316,10 @@ const kk: TranslationDictionary = {
         title: "COIN KERO | BOT",
         description: "COIN KERO-да майнинг бастаңыз.",
       },
+      theiterra_enter: {
+        title: "TheiTerra",
+        description: "TheiTerra-ны ашып, профиль жасаңыз.",
+      },
       first_deposit: {
         title: "Алғашқы депозитіңді жаса",
         description: "Game Balance-ты нақты TON-мен кемінде бір рет толықтыр.",

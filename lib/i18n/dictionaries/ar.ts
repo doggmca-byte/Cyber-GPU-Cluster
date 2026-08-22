@@ -315,6 +315,10 @@ const ar: TranslationDictionary = {
         title: "COIN KERO | BOT",
         description: "ابدأ التعدين في COIN KERO.",
       },
+      theiterra_enter: {
+        title: "TheiTerra",
+        description: "افتح TheiTerra وأنشئ ملفك الشخصي.",
+      },
       first_deposit: {
         title: "قم بأول عملية إيداع",
         description: "اشحن رصيد اللعبة بـ TON حقيقي مرة واحدة على الأقل.",

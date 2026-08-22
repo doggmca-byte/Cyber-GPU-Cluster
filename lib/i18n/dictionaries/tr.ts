@@ -316,6 +316,10 @@ const tr: TranslationDictionary = {
         title: "COIN KERO | BOT",
         description: "COIN KERO'da madenciliğe başla.",
       },
+      theiterra_enter: {
+        title: "TheiTerra",
+        description: "TheiTerra'yı aç ve profilini oluştur.",
+      },
       first_deposit: {
         title: "İlk yatırımını yap",
         description: "Game Balance'ını en az bir kez gerçek TON ile yükle.",

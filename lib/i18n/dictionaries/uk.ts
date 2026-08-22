@@ -316,6 +316,10 @@ const uk: TranslationDictionary = {
         title: "COIN KERO | BOT",
         description: "Почни майнити в COIN KERO.",
       },
+      theiterra_enter: {
+        title: "TheiTerra",
+        description: "Відкрий TheiTerra і створи профіль.",
+      },
       first_deposit: {
         title: "Зроби свій перший депозит",
         description: "Поповни Game Balance реальним TON хоча б один раз.",
