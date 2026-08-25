@@ -484,6 +484,7 @@ export type Database = {
       }
       user_tasks: {
         Row: {
+          channel_penalty_applied: boolean
           claimed_at: string | null
           created_at: string
           id: string
@@ -493,6 +494,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          channel_penalty_applied?: boolean
           claimed_at?: string | null
           created_at?: string
           id?: string
@@ -502,6 +504,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          channel_penalty_applied?: boolean
           claimed_at?: string | null
           created_at?: string
           id?: string
@@ -541,6 +544,13 @@ export type Database = {
         Returns: {
           game_balance: number
           withdrawable_balance: number
+        }[]
+      }
+      apply_channel_unsubscribe_penalty: {
+        Args: { p_task_id: string; p_user_id: string }
+        Returns: {
+          game_balance: number
+          penalty_amount: number
         }[]
       }
       approve_withdrawal: {

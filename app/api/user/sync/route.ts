@@ -5,6 +5,7 @@ import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { readJsonBody } from "@/lib/api/request";
 import { findProfileByTelegramId } from "@/lib/api/profile";
 import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
+import { checkChannelMembershipStatus } from "@/lib/telegram/getChatMember";
 import type { SyncResponse } from "@/types/api";
 import type { Database } from "@/types/database.types";
 
@@ -36,6 +37,7 @@ export async function POST(request: Request) {
       profile = await createProfileWithOptionalReferral(admin, user, startParam);
     } else {
       profile = await syncDisplayFields(admin, profile, user);
+      profile = await enforceChannelUnsubscribePenalties(admin, profile, user.id);
     }
 
     const [{ data: userGpus, error: gpusError }, { data: gpuTemplates, error: templatesError }] =
@@ -167,4 +169,65 @@ async function syncDisplayFields(
   }
 
   return updated;
+}
+
+/**
+ * Штраф за відписку від Telegram-каналу/чату протягом 24 годин після
+ * клейму нагороди за підписку (2× нагороди — apply_channel_unsubscribe_penalty,
+ * 20260825090000_telegram_channel_unsubscribe_penalty.sql). Немає окремого
+ * cron під це (ліміт 2 крон-джоби на Vercel Hobby вже вичерпано —
+ * vercel.json), тож перевірка йде тут, на КОЖНОМУ /api/user/sync — тобто
+ * практично при кожному відкритті застосунку, частіше й надійніше за
+ * гіпотетичний щоденний крон.
+ *
+ * checkChannelMembershipStatus (а не isChannelMember) — навмисно: "не
+ * вдалось перевірити" (мережевий збій/неоднозначна відповідь Telegram) НЕ
+ * повинно каратись як "відписався", лише явний "not_member".
+ */
+async function enforceChannelUnsubscribePenalties(
+  admin: ReturnType<typeof createAdminClient>,
+  profile: Profile,
+  telegramUserId: number,
+): Promise<Profile> {
+  const { data: candidates, error: candidatesError } = await admin
+    .from("user_tasks")
+    .select("task_id, task_templates!inner(target_value, action_type)")
+    .eq("user_id", profile.id)
+    .eq("status", "claimed")
+    .eq("channel_penalty_applied", false)
+    .eq("task_templates.action_type", "telegram_channel")
+    .gte("claimed_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+
+  if (candidatesError) {
+    console.error("[api/user/sync] failed to load channel-penalty candidates:", candidatesError);
+    return profile;
+  }
+  if (!candidates || candidates.length === 0) return profile;
+
+  let current = profile;
+
+  for (const candidate of candidates) {
+    const chatId = (candidate as unknown as { task_templates: { target_value: string } }).task_templates
+      .target_value;
+    const membership = await checkChannelMembershipStatus(chatId, telegramUserId);
+    if (membership !== "not_member") continue; // "member" — усе гаразд; "unknown" — не караємо за сумнів
+
+    const { data: penaltyResult, error: penaltyError } = await admin
+      .rpc("apply_channel_unsubscribe_penalty", { p_user_id: profile.id, p_task_id: candidate.task_id })
+      .single();
+
+    if (penaltyError) {
+      // P0001 (уже застосовано/минуло 24г — гонка з паралельним sync) — не помилка, просто пропускаємо.
+      if (penaltyError.code !== "P0001") {
+        console.error("[api/user/sync] failed to apply channel-unsubscribe penalty:", penaltyError);
+      }
+      continue;
+    }
+
+    if (penaltyResult) {
+      current = { ...current, game_balance: penaltyResult.game_balance };
+    }
+  }
+
+  return current;
 }

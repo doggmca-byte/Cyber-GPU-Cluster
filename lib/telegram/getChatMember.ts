@@ -42,3 +42,32 @@ export async function isChannelMember(chatId: string, telegramUserId: number): P
     return false;
   }
 }
+
+/**
+ * Той самий getChatMember, але триcтатусний — потрібен для штрафу за
+ * відписку (apply_channel_unsubscribe_penalty): isChannelMember вище
+ * навмисно fail-closed ("не вдалось перевірити" -> не підписаний), бо це
+ * правильно для НАГОРОДИ (не нагороджувати за сумнів). Для ШТРАФУ логіка
+ * має бути протилежна — мережевий збій чи неоднозначна відповідь Telegram
+ * НЕ повинні трактуватись як "відписався", інакше тимчасовий збій Bot API
+ * міг би оштрафувати чесного підписника. Тому тут — окремий "unknown"
+ * статус, і штраф застосовується лише на явному "not_member".
+ */
+export async function checkChannelMembershipStatus(
+  chatId: string,
+  telegramUserId: number,
+): Promise<"member" | "not_member" | "unknown"> {
+  const token = getTelegramBotToken();
+  const url = new URL(`https://api.telegram.org/bot${token}/getChatMember`);
+  url.searchParams.set("chat_id", chatId);
+  url.searchParams.set("user_id", String(telegramUserId));
+
+  try {
+    const res = await fetch(url.toString(), { cache: "no-store" });
+    const body = (await res.json()) as TelegramApiResponse<ChatMemberResult>;
+    if (!body.ok || !body.result) return "unknown";
+    return ACTIVE_MEMBER_STATUSES.has(body.result.status) ? "member" : "not_member";
+  } catch {
+    return "unknown";
+  }
+}
