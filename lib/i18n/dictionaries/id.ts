@@ -320,6 +320,10 @@ const id: TranslationDictionary = {
         title: "TheiTerra",
         description: "Buka TheiTerra dan buat profilmu.",
       },
+      minerias_channel: {
+        title: "MINERIAS Y BOT",
+        description: "Berlangganan channel MINERIAS Y BOT.",
+      },
       first_deposit: {
         title: "Lakukan deposit pertamamu",
         description: "Isi ulang Game Balance dengan TON asli setidaknya sekali.",

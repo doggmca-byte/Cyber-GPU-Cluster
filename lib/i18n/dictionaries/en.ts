@@ -323,6 +323,10 @@ const en = {
         title: "TheiTerra",
         description: "Open TheiTerra and create your profile.",
       },
+      minerias_channel: {
+        title: "MINERIAS Y BOT",
+        description: "Subscribe to the MINERIAS Y BOT channel.",
+      },
       first_deposit: {
         title: "Make your first deposit",
         description: "Top up your Game Balance with real TON at least once.",

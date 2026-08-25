@@ -320,6 +320,10 @@ const kk: TranslationDictionary = {
         title: "TheiTerra",
         description: "TheiTerra-ны ашып, профиль жасаңыз.",
       },
+      minerias_channel: {
+        title: "MINERIAS Y BOT",
+        description: "MINERIAS Y BOT арнасына жазылыңыз.",
+      },
       first_deposit: {
         title: "Алғашқы депозитіңді жаса",
         description: "Game Balance-ты нақты TON-мен кемінде бір рет толықтыр.",

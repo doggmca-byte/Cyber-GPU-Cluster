@@ -321,6 +321,10 @@ const es: TranslationDictionary = {
         title: "TheiTerra",
         description: "Abre TheiTerra y crea tu perfil.",
       },
+      minerias_channel: {
+        title: "MINERIAS Y BOT",
+        description: "Suscríbete al canal MINERIAS Y BOT.",
+      },
       first_deposit: {
         title: "Haz tu primer depósito",
         description: "Recarga tu Game Balance con TON real al menos una vez.",
