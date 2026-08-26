@@ -324,6 +324,10 @@ const uk: TranslationDictionary = {
         title: "MINERIAS Y BOT",
         description: "Підпишись на канал MINERIAS Y BOT.",
       },
+      crypto_hunters_channel: {
+        title: "Crypto Hunters",
+        description: "Підпишись на канал Crypto Hunters.",
+      },
       first_deposit: {
         title: "Зроби свій перший депозит",
         description: "Поповни Game Balance реальним TON хоча б один раз.",

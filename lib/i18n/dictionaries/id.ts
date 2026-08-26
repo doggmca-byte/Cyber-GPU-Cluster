@@ -324,6 +324,10 @@ const id: TranslationDictionary = {
         title: "MINERIAS Y BOT",
         description: "Berlangganan channel MINERIAS Y BOT.",
       },
+      crypto_hunters_channel: {
+        title: "Crypto Hunters",
+        description: "Berlangganan channel Crypto Hunters.",
+      },
       first_deposit: {
         title: "Lakukan deposit pertamamu",
         description: "Isi ulang Game Balance dengan TON asli setidaknya sekali.",

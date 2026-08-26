@@ -324,6 +324,10 @@ const kk: TranslationDictionary = {
         title: "MINERIAS Y BOT",
         description: "MINERIAS Y BOT арнасына жазылыңыз.",
       },
+      crypto_hunters_channel: {
+        title: "Crypto Hunters",
+        description: "Crypto Hunters арнасына жазылыңыз.",
+      },
       first_deposit: {
         title: "Алғашқы депозитіңді жаса",
         description: "Game Balance-ты нақты TON-мен кемінде бір рет толықтыр.",

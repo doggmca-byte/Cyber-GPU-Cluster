@@ -323,6 +323,10 @@ const ar: TranslationDictionary = {
         title: "MINERIAS Y BOT",
         description: "اشترك في قناة MINERIAS Y BOT.",
       },
+      crypto_hunters_channel: {
+        title: "Crypto Hunters",
+        description: "اشترك في قناة Crypto Hunters.",
+      },
       first_deposit: {
         title: "قم بأول عملية إيداع",
         description: "اشحن رصيد اللعبة بـ TON حقيقي مرة واحدة على الأقل.",

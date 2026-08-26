@@ -324,6 +324,10 @@ const tr: TranslationDictionary = {
         title: "MINERIAS Y BOT",
         description: "MINERIAS Y BOT kanalına abone ol.",
       },
+      crypto_hunters_channel: {
+        title: "Crypto Hunters",
+        description: "Crypto Hunters kanalına abone ol.",
+      },
       first_deposit: {
         title: "İlk yatırımını yap",
         description: "Game Balance'ını en az bir kez gerçek TON ile yükle.",

@@ -327,6 +327,10 @@ const en = {
         title: "MINERIAS Y BOT",
         description: "Subscribe to the MINERIAS Y BOT channel.",
       },
+      crypto_hunters_channel: {
+        title: "Crypto Hunters",
+        description: "Subscribe to the Crypto Hunters channel.",
+      },
       first_deposit: {
         title: "Make your first deposit",
         description: "Top up your Game Balance with real TON at least once.",
