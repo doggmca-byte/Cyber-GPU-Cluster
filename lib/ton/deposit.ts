@@ -90,6 +90,47 @@ export interface FetchTreasuryTransactionsOptions {
  * помилкового припущення про точну арифметику — один зайвий round-trip до
  * toncenter перед зупинкою, не пропущені й не задубльовані депозити.
  */
+// toncenter (навіть з платним TONCENTER_API_KEY — перевірено live 26.08.2026,
+// реальний "toncenter request failed with status 500" у продакшн-логах
+// /api/cron/deposits) час від часу віддає транзієнтну 5xx-відповідь. До
+// цього фіксу ОДИН такий збій на БУДЬ-ЯКІЙ сторінці валив увесь виклик через
+// throw — навіть якщо попередні сторінки вже встигли покрити свіже вікно
+// депозитів, весь результат викидався, і реальний депозит (з коректним
+// memo, ще не зарахований) міг лишитись непоміченим до наступного
+// щоденного crontick. Тепер: до PAGE_FETCH_MAX_ATTEMPTS спроб на КОЖНУ
+// сторінку з короткою паузою між ними, а якщо й після цього не вдалось —
+// не throw, а м'яка зупинка пагінації з поверненням УСЬОГО вже зібраного
+// (лише console.error, щоб збій не загубився мовчки). Найгірший наслідок
+// такого компромісу — трохи старіші транзакції можуть залишитись
+// непоміченими до наступного виклику (наступний crontick чи ручна кнопка
+// "Перевірити оплату"), а не втрата ВЖЕ знайдених у цьому виклику.
+const PAGE_FETCH_MAX_ATTEMPTS = 3;
+const PAGE_FETCH_RETRY_DELAY_MS = 1000;
+
+async function fetchTransactionsPage(url: string): Promise<ToncenterTransaction[] | null> {
+  for (let attempt = 1; attempt <= PAGE_FETCH_MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`toncenter request failed with status ${res.status}`);
+
+      const body = (await res.json()) as ToncenterGetTransactionsResponse;
+      if (!body.ok || !Array.isArray(body.result)) {
+        throw new Error("toncenter returned an unexpected response shape");
+      }
+      return body.result;
+    } catch (err) {
+      const isLastAttempt = attempt === PAGE_FETCH_MAX_ATTEMPTS;
+      console.error(
+        `[fetchTreasuryTransactions] page fetch attempt ${attempt}/${PAGE_FETCH_MAX_ATTEMPTS} failed${isLastAttempt ? ", giving up on this page" : ", retrying"}:`,
+        err,
+      );
+      if (isLastAttempt) return null;
+      await new Promise((resolve) => setTimeout(resolve, PAGE_FETCH_RETRY_DELAY_MS * attempt));
+    }
+  }
+  return null;
+}
+
 export async function fetchTreasuryTransactions(
   treasuryAddress: string,
   options: FetchTreasuryTransactionsOptions = {},
@@ -111,19 +152,12 @@ export async function fetchTreasuryTransactions(
       url.searchParams.set("hash", cursor.hash);
     }
 
-    const res = await fetch(url.toString(), { cache: "no-store" });
-    if (!res.ok) {
-      throw new Error(`toncenter request failed with status ${res.status}`);
-    }
-
-    const body = (await res.json()) as ToncenterGetTransactionsResponse;
-    if (!body.ok || !Array.isArray(body.result)) {
-      throw new Error("toncenter returned an unexpected response shape");
-    }
+    const pageBody = await fetchTransactionsPage(url.toString());
+    if (!pageBody) break; // вичерпали ретраї на цій сторінці — повертаємо все, що вже зібрали, а не кидаємо все
 
     // З другої сторінки й далі перший рядок — це той самий tx, яким
     // закінчилась попередня сторінка (курсор включно, див. коментар вище).
-    const pageResult = cursor ? body.result.slice(1) : body.result;
+    const pageResult = cursor ? pageBody.slice(1) : pageBody;
     if (pageResult.length === 0) break; // ця сторінка не додала нічого нового — кінець історії
 
     let oldestUtimeOnPage = Infinity;
