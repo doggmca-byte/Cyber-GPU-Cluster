@@ -328,6 +328,10 @@ const kk: TranslationDictionary = {
         title: "Crypto Hunters",
         description: "Crypto Hunters арнасына жазылыңыз.",
       },
+      zoomverse_join: {
+        title: "ZoomVerse",
+        description: "Zoom-ға қосылып, $ZOOM тап!",
+      },
       first_deposit: {
         title: "Алғашқы депозитіңді жаса",
         description: "Game Balance-ты нақты TON-мен кемінде бір рет толықтыр.",

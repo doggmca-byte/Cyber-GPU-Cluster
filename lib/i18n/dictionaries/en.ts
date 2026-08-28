@@ -331,6 +331,10 @@ const en = {
         title: "Crypto Hunters",
         description: "Subscribe to the Crypto Hunters channel.",
       },
+      zoomverse_join: {
+        title: "ZoomVerse",
+        description: "Join Zoom and earn $ZOOM!",
+      },
       first_deposit: {
         title: "Make your first deposit",
         description: "Top up your Game Balance with real TON at least once.",

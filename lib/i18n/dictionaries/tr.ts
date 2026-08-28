@@ -328,6 +328,10 @@ const tr: TranslationDictionary = {
         title: "Crypto Hunters",
         description: "Crypto Hunters kanalına abone ol.",
       },
+      zoomverse_join: {
+        title: "ZoomVerse",
+        description: "Zoom'a katıl ve $ZOOM kazan!",
+      },
       first_deposit: {
         title: "İlk yatırımını yap",
         description: "Game Balance'ını en az bir kez gerçek TON ile yükle.",

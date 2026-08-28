@@ -328,6 +328,10 @@ const id: TranslationDictionary = {
         title: "Crypto Hunters",
         description: "Berlangganan channel Crypto Hunters.",
       },
+      zoomverse_join: {
+        title: "ZoomVerse",
+        description: "Gabung Zoom dan hasilkan $ZOOM!",
+      },
       first_deposit: {
         title: "Lakukan deposit pertamamu",
         description: "Isi ulang Game Balance dengan TON asli setidaknya sekali.",
