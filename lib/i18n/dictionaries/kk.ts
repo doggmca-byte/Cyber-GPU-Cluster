@@ -332,6 +332,10 @@ const kk: TranslationDictionary = {
         title: "ZoomVerse",
         description: "Zoom-ға қосылып, $ZOOM тап!",
       },
+      atf_token_join: {
+        title: "ATF Token",
+        description: "ATF Token-ды ашып, airdrop алыңыз.",
+      },
       first_deposit: {
         title: "Алғашқы депозитіңді жаса",
         description: "Game Balance-ты нақты TON-мен кемінде бір рет толықтыр.",

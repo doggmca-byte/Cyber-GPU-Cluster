@@ -331,6 +331,10 @@ const ar: TranslationDictionary = {
         title: "ZoomVerse",
         description: "انضم إلى Zoom واربح $ZOOM!",
       },
+      atf_token_join: {
+        title: "ATF Token",
+        description: "افتح ATF Token واحصل على الإيردروب.",
+      },
       first_deposit: {
         title: "قم بأول عملية إيداع",
         description: "اشحن رصيد اللعبة بـ TON حقيقي مرة واحدة على الأقل.",

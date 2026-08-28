@@ -335,6 +335,10 @@ const en = {
         title: "ZoomVerse",
         description: "Join Zoom and earn $ZOOM!",
       },
+      atf_token_join: {
+        title: "ATF Token",
+        description: "Open ATF Token and claim your airdrop.",
+      },
       first_deposit: {
         title: "Make your first deposit",
         description: "Top up your Game Balance with real TON at least once.",

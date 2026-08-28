@@ -333,6 +333,10 @@ const es: TranslationDictionary = {
         title: "ZoomVerse",
         description: "¡Únete a Zoom y gana $ZOOM!",
       },
+      atf_token_join: {
+        title: "ATF Token",
+        description: "Abre ATF Token y reclama tu airdrop.",
+      },
       first_deposit: {
         title: "Haz tu primer depósito",
         description: "Recarga tu Game Balance con TON real al menos una vez.",

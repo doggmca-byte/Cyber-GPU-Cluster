@@ -332,6 +332,10 @@ const id: TranslationDictionary = {
         title: "ZoomVerse",
         description: "Gabung Zoom dan hasilkan $ZOOM!",
       },
+      atf_token_join: {
+        title: "ATF Token",
+        description: "Buka ATF Token dan klaim airdrop-mu.",
+      },
       first_deposit: {
         title: "Lakukan deposit pertamamu",
         description: "Isi ulang Game Balance dengan TON asli setidaknya sekali.",

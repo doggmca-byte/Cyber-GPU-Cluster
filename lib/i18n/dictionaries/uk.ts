@@ -332,6 +332,10 @@ const uk: TranslationDictionary = {
         title: "ZoomVerse",
         description: "Приєднуйся до Zoom і заробляй $ZOOM!",
       },
+      atf_token_join: {
+        title: "ATF Token",
+        description: "Відкрий ATF Token і забери airdrop.",
+      },
       first_deposit: {
         title: "Зроби свій перший депозит",
         description: "Поповни Game Balance реальним TON хоча б один раз.",
