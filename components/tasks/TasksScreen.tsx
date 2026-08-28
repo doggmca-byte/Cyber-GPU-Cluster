@@ -24,6 +24,7 @@ import { showRewardedAdRotating, showRewardedAdRotatingWithProvider } from "@/li
 import { startVerifiedAttempt, pollVerifiedAttempt, type VerifiedPollResult } from "@/lib/ads/verifiedAdWatch";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { SupportButton } from "@/components/layout/SupportButton";
+import { SpecialTasks } from "@/components/SpecialTasks";
 import type {
   TaskCategory,
   TaskItem,
@@ -416,6 +417,7 @@ function TasksScreenReady({ initData }: { initData: string }) {
 
       <div className="flex flex-col gap-2">
         {activeCategory === "partners" && <PartnerAdsCard initData={initData} />}
+        {activeCategory === "special" && <SpecialTasks initData={initData} />}
 
         {categoryTasks.length === 0 ? (
           activeCategory !== "partners" && (

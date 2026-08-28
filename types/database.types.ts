@@ -334,6 +334,30 @@ export type Database = {
           },
         ]
       }
+      retention_task_stage_config: {
+        Row: {
+          duration_seconds: number
+          reward_amount: number
+          reward_type: string
+          stage: number
+          task_type: string
+        }
+        Insert: {
+          duration_seconds: number
+          reward_amount: number
+          reward_type?: string
+          stage: number
+          task_type: string
+        }
+        Update: {
+          duration_seconds?: number
+          reward_amount?: number
+          reward_type?: string
+          stage?: number
+          task_type?: string
+        }
+        Relationships: []
+      }
       task_templates: {
         Row: {
           action_type: string
@@ -475,6 +499,53 @@ export type Database = {
           },
           {
             foreignKeyName: "user_gpus_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_retention_tasks: {
+        Row: {
+          created_at: string
+          current_stage: number
+          id: string
+          is_active: boolean
+          last_verified_at: string | null
+          stage_started_at: string | null
+          task_type: string
+          total_reward_claimed: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_stage?: number
+          id?: string
+          is_active?: boolean
+          last_verified_at?: string | null
+          stage_started_at?: string | null
+          task_type: string
+          total_reward_claimed?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_stage?: number
+          id?: string
+          is_active?: boolean
+          last_verified_at?: string | null
+          stage_started_at?: string | null
+          task_type?: string
+          total_reward_claimed?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_retention_tasks_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -712,6 +783,40 @@ export type Database = {
           new_game_balance: number
           revival_cost: number
           revival_count: number
+        }[]
+      }
+      start_retention_task_stage: {
+        Args: {
+          p_condition_met: boolean
+          p_task_type: string
+          p_user_id: string
+        }
+        Returns: {
+          current_stage: number
+          is_active: boolean
+          stage_duration_seconds: number
+          stage_started_at: string
+          task_type: string
+        }[]
+      }
+      verify_retention_task_stage: {
+        Args: {
+          p_condition_met: boolean
+          p_task_type: string
+          p_user_id: string
+        }
+        Returns: {
+          current_stage: number
+          game_balance: number
+          is_active: boolean
+          is_fully_completed: boolean
+          reward_credited: number
+          reward_type: string
+          stage_started_at: string
+          success: boolean
+          task_type: string
+          withdrawable_balance: number
+          withdrawal_quota: number
         }[]
       }
     }

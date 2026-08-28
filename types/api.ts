@@ -204,3 +204,68 @@ export interface DailyBonusClaimResponse {
   last_daily_bonus_at: string;
   server_time: string;
 }
+
+// ---------------------------------------------------------------------------
+// Особливі завдання із таймером утримання (Special Retention Tasks)
+// ---------------------------------------------------------------------------
+
+export type RetentionTaskType = "NAME_TAG" | "BIO_LINK";
+
+/** Чому саме умова (тег/лінк) не виконана — для правильного повідомлення в UI. */
+export type RetentionFailureReason = "tag_missing" | "bio_hidden_or_missing" | "check_failed";
+
+export interface RetentionStageConfig {
+  task_type: RetentionTaskType;
+  stage: number;
+  duration_seconds: number;
+  reward_amount: number;
+  reward_type: TaskRewardType;
+}
+
+export interface RetentionTaskStatus {
+  task_type: RetentionTaskType;
+  /** 1..6 — поточний/очікуваний етап; 7 — увесь ланцюжок пройдено. */
+  current_stage: number;
+  is_active: boolean;
+  stage_started_at: string | null;
+  /** 0, якщо не активний АБО таймер уже сплив (можна тиснути "Перевірити"). */
+  seconds_remaining: number;
+  can_verify: boolean;
+  is_fully_completed: boolean;
+  total_reward_claimed: number;
+  /** Тег для імені (NAME_TAG) або власний реферальний лінк (BIO_LINK) — для поля копіювання. */
+  target_text: string;
+}
+
+export interface RetentionTasksResponse {
+  tasks: RetentionTaskStatus[];
+  stages: RetentionStageConfig[];
+  server_time: string;
+}
+
+export interface RetentionTaskStartResponse {
+  started: boolean;
+  failure_reason?: RetentionFailureReason;
+  task_type: RetentionTaskType;
+  current_stage?: number;
+  is_active?: boolean;
+  stage_started_at?: string;
+  stage_duration_seconds?: number;
+  server_time: string;
+}
+
+export interface RetentionTaskVerifyResponse {
+  success: boolean;
+  failure_reason?: RetentionFailureReason;
+  task_type: RetentionTaskType;
+  current_stage: number;
+  is_active: boolean;
+  stage_started_at: string | null;
+  is_fully_completed: boolean;
+  reward_credited: number;
+  reward_type: TaskRewardType;
+  game_balance: number;
+  withdrawable_balance: number;
+  withdrawal_quota: number;
+  server_time: string;
+}
