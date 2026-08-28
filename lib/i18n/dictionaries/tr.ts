@@ -75,6 +75,9 @@ const tr: TranslationDictionary = {
     reviveButton: (cost) => `Canlandır · ${cost} TON`,
     reviving: "Canlandırılıyor...",
     reviveMaxReached: "Kaynak kalıcı olarak tükendi",
+    unitsLabel: "Birimler",
+    resourceLabel: "Kaynak",
+    liveLabel: "Çevrimiçi",
   },
   market: {
     gameBalance: "Oyun bakiyesi",

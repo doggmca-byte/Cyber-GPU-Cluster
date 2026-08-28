@@ -78,6 +78,9 @@ const en = {
     reviveButton: (cost: string) => `Revive · ${cost} TON`,
     reviving: "Reviving...",
     reviveMaxReached: "Resource permanently depleted",
+    unitsLabel: "Units",
+    resourceLabel: "Resource",
+    liveLabel: "Live",
   },
   market: {
     gameBalance: "Game balance",

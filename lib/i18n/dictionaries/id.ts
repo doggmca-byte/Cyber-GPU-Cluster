@@ -75,6 +75,9 @@ const id: TranslationDictionary = {
     reviveButton: (cost) => `Bangkitkan · ${cost} TON`,
     reviving: "Membangkitkan...",
     reviveMaxReached: "Sumber daya habis permanen",
+    unitsLabel: "Unit",
+    resourceLabel: "Sumber Daya",
+    liveLabel: "Aktif",
   },
   market: {
     gameBalance: "Saldo game",

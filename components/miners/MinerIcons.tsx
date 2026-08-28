@@ -38,6 +38,18 @@ function colorForRarity(rarity: string | null | undefined): string {
   return RARITY_COLOR_HEX[rarity] ?? DEFAULT_COLOR;
 }
 
+/**
+ * Публічний доступ до тієї ж самої шкали, якою фарбується сама іконка —
+ * навмисно ЄДИНЕ джерело правди. Використовується там, де довкола іконки
+ * малюється власний glow/бейдж (напр. components/farm/FarmScreen.tsx
+ * ServerRow) — щоб підложка й іконка завжди світились одним кольором,
+ * а не двома різними, неузгодженими rarity-шкалами (як RARITY_COLOR у
+ * MarketScreen/FarmScreen, що зіставляє rarity з Tailwind-класами і
+ * розходиться з цією шкалою для rare/elite/epic/legendary/ancient/divine/
+ * transcendent).
+ */
+export const getRarityColorHex = colorForRarity;
+
 // --- Форми (level → glyph), 48x48 viewBox --------------------------------
 
 /** LV.1 Raspberry Neural Core — плата мікрокомп'ютера з GPIO та нейро-чипом. */

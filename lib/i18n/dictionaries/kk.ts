@@ -75,6 +75,9 @@ const kk: TranslationDictionary = {
     reviveButton: (cost) => `Тірілту · ${cost} TON`,
     reviving: "Тірілтуде...",
     reviveMaxReached: "Ресурс түбегейлі таусылды",
+    unitsLabel: "Бірліктер",
+    resourceLabel: "Ресурс",
+    liveLabel: "Желіде",
   },
   market: {
     gameBalance: "Ойын балансы",

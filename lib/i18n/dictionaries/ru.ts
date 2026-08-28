@@ -75,6 +75,9 @@ const ru: TranslationDictionary = {
     reviveButton: (cost) => `Оживить · ${cost} TON`,
     reviving: "Оживляем...",
     reviveMaxReached: "Ресурс окончательно исчерпан",
+    unitsLabel: "Юниты",
+    resourceLabel: "Ресурс",
+    liveLabel: "В сети",
   },
   market: {
     gameBalance: "Игровой баланс",

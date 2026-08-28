@@ -75,6 +75,9 @@ const uk: TranslationDictionary = {
     reviveButton: (cost) => `Оживити · ${cost} TON`,
     reviving: "Оживляємо...",
     reviveMaxReached: "Ресурс остаточно вичерпано",
+    unitsLabel: "Юніти",
+    resourceLabel: "Ресурс",
+    liveLabel: "У мережі",
   },
   market: {
     gameBalance: "Ігровий баланс",

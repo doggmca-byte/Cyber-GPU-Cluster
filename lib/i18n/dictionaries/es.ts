@@ -76,6 +76,9 @@ const es: TranslationDictionary = {
     reviveButton: (cost) => `Reanimar · ${cost} TON`,
     reviving: "Reanimando...",
     reviveMaxReached: "Recurso agotado permanentemente",
+    unitsLabel: "Unidades",
+    resourceLabel: "Recurso",
+    liveLabel: "En línea",
   },
   market: {
     gameBalance: "Saldo de juego",

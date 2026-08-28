@@ -75,6 +75,9 @@ const ar: TranslationDictionary = {
     reviveButton: (cost) => `إحياء · ${cost} TON`,
     reviving: "جارٍ الإحياء...",
     reviveMaxReached: "نفد المورد نهائيًا",
+    unitsLabel: "الوحدات",
+    resourceLabel: "المورد",
+    liveLabel: "متصل",
   },
   market: {
     gameBalance: "رصيد اللعبة",
