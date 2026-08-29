@@ -24,7 +24,15 @@ const tr: TranslationDictionary = {
   notifications: {
     productionPaused: (hashBalance) =>
       `⛏️ GPU Cluster'ın madenciliği durdurdu — 12 saatten fazladır HASH toplanmadı.\n\nGüncel bakiye: ${hashBalance} HASH. Kazanmaya devam etmek için uygulamayı aç ve "HASH Topla"ya dokun.`,
+    specialTasksAnnouncement:
+      "🎁 Yeni Özel Görevler yayında! Adına etiketimizi veya Bio'na referans linkini ekle ve 6 aşama boyunca koru (15 dk → 30 gün) — görev başına 0.232 TON'a kadar kazan. Uygulamayı aç → Görevler → ⭐ Özel'e dokun ve başla.",
     openAppButton: "Cyber GPU Cluster'ı Aç",
+    welcomeTitle: "⚡ Küme operatörünü bekliyor!",
+    welcomeBody:
+      "GPU Cluster'ını başlat, $HASH kaz, çiftlik gücünü yükselt ve TON olarak çek.\n\nReferanslarla ekibini kur — ne kadar çok arkadaş, o kadar çok bonus.\n\nHemen gir ve madenciliğe başla — döngü çoktan başladı!",
+    welcomeLaunchButton: "🚀 Oyunu Başlat",
+    welcomeCommunityButton: "📢 Topluluğa Katıl",
+    welcomeChatButton: "💬 Sohbete Katıl",
   },
   intro: {
     title: "Cyber GPU Cluster",

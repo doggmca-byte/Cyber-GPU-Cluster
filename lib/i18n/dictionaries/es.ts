@@ -24,7 +24,15 @@ const es: TranslationDictionary = {
   notifications: {
     productionPaused: (hashBalance) =>
       `⛏️ Tu GPU Cluster ha dejado de minar — no se ha recolectado HASH en más de 12 horas.\n\nSaldo actual: ${hashBalance} HASH. Abre la app y toca «Recolectar HASH» para seguir ganando.`,
+    specialTasksAnnouncement:
+      "🎁 ¡Ya están las nuevas Tareas Especiales! Añade nuestra etiqueta a tu nombre o tu enlace de referido a la Bio y mantenlo durante 6 etapas (15 min → 30 días) — gana hasta 0.232 TON por tarea. Abre la app → Tareas → ⭐ Especiales para empezar.",
     openAppButton: "Abrir Cyber GPU Cluster",
+    welcomeTitle: "⚡ ¡El Clúster espera a su operador!",
+    welcomeBody:
+      "Lanza tu GPU Cluster, mina $HASH, potencia tu granja y retira en TON.\n\nArma tu equipo con referidos — más amigos, más bonos.\n\nEntra y empieza a minar — ¡el ciclo ya comenzó!",
+    welcomeLaunchButton: "🚀 Iniciar el juego",
+    welcomeCommunityButton: "📢 Unirse a la comunidad",
+    welcomeChatButton: "💬 Unirse al chat",
   },
   intro: {
     title: "Cyber GPU Cluster",

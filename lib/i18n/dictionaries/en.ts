@@ -27,7 +27,15 @@ const en = {
   notifications: {
     productionPaused: (hashBalance: string) =>
       `⛏️ Your GPU Cluster has stopped mining — no HASH collected in over 12 hours.\n\nCurrent balance: ${hashBalance} HASH. Open the app and tap "Collect HASH" to keep earning.`,
+    specialTasksAnnouncement:
+      '🎁 New Special Tasks are live! Add our tag to your name or your referral link to your bio and hold it through 6 stages (15 min → 30 days) — earn up to 0.232 TON per task. Open the app → Tasks → ⭐ Special to start.',
     openAppButton: "Open Cyber GPU Cluster",
+    welcomeTitle: "⚡ The Cluster is waiting for its operator!",
+    welcomeBody:
+      "Launch your GPU Cluster, mine $HASH, power up your farm, and cash out in TON.\n\nBuild your crew with referrals — more friends, more bonuses.\n\nJump in and start mining — the cycle has already begun!",
+    welcomeLaunchButton: "🚀 Launch the game",
+    welcomeCommunityButton: "📢 Join the community",
+    welcomeChatButton: "💬 Join the chat",
   },
   intro: {
     title: "Cyber GPU Cluster",

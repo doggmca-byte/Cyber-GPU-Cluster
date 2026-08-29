@@ -24,7 +24,15 @@ const id: TranslationDictionary = {
   notifications: {
     productionPaused: (hashBalance) =>
       `⛏️ GPU Cluster kamu berhenti menambang — belum ada HASH yang dikumpulkan lebih dari 12 jam.\n\nSaldo saat ini: ${hashBalance} HASH. Buka aplikasi dan ketuk "Kumpulkan HASH" untuk terus menghasilkan.`,
+    specialTasksAnnouncement:
+      '🎁 Tugas Spesial baru sudah hadir! Tambahkan tag kami ke namamu atau tautan referalmu ke Bio dan pertahankan selama 6 tahap (15 mnt → 30 hari) — dapatkan hingga 0.232 TON per tugas. Buka aplikasi → Tugas → ⭐ Spesial untuk memulai.',
     openAppButton: "Buka Cyber GPU Cluster",
+    welcomeTitle: "⚡ Cluster menanti operatornya!",
+    welcomeBody:
+      "Luncurkan GPU Cluster-mu, tambang $HASH, tingkatkan kekuatan farm, dan tarik dalam TON.\n\nBangun timmu lewat referral — makin banyak teman, makin banyak bonus.\n\nMasuk dan mulai menambang — siklusnya sudah dimulai!",
+    welcomeLaunchButton: "🚀 Mulai Game",
+    welcomeCommunityButton: "📢 Gabung Komunitas",
+    welcomeChatButton: "💬 Gabung Chat",
   },
   intro: {
     title: "Cyber GPU Cluster",
