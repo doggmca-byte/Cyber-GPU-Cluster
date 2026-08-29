@@ -87,6 +87,12 @@ const ru: TranslationDictionary = {
     resourceLabel: "Ресурс",
     liveLabel: "В сети",
   },
+  writeAccess: {
+    title: "Разреши боту писать тебе!",
+    description: "Чтобы не пропустить важные обновления (новые задания, бонусы, статус вывода) — разреши Cyber GPU Cluster присылать тебе сообщения.",
+    allowButton: "Разрешить",
+    laterButton: "Не сейчас",
+  },
   market: {
     gameBalance: "Игровой баланс",
     owned: (amount, max) => `Куплено ${amount}/${max}`,

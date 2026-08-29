@@ -87,6 +87,12 @@ const ar: TranslationDictionary = {
     resourceLabel: "المورد",
     liveLabel: "متصل",
   },
+  writeAccess: {
+    title: "اسمح للبوت بمراسلتك!",
+    description: "لا تفوّت التحديثات المهمة (مهام جديدة، مكافآت، حالة السحب) — اسمح لـ Cyber GPU Cluster بإرسال رسائل لك.",
+    allowButton: "السماح",
+    laterButton: "ليس الآن",
+  },
   market: {
     gameBalance: "رصيد اللعبة",
     owned: (amount, max) => `المملوك ${amount}/${max}`,

@@ -87,6 +87,12 @@ const id: TranslationDictionary = {
     resourceLabel: "Sumber Daya",
     liveLabel: "Aktif",
   },
+  writeAccess: {
+    title: "Izinkan bot mengirim pesan!",
+    description: "Jangan lewatkan update penting (tugas baru, bonus, status penarikan) — izinkan Cyber GPU Cluster mengirimimu pesan.",
+    allowButton: "Izinkan",
+    laterButton: "Nanti saja",
+  },
   market: {
     gameBalance: "Saldo game",
     owned: (amount, max) => `Dimiliki ${amount}/${max}`,

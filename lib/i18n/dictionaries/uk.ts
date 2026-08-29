@@ -87,6 +87,12 @@ const uk: TranslationDictionary = {
     resourceLabel: "Ресурс",
     liveLabel: "У мережі",
   },
+  writeAccess: {
+    title: "Дозволь боту писати тобі!",
+    description: "Щоб не пропустити важливі оновлення (нові завдання, бонуси, статус виводу) — дозволь Cyber GPU Cluster надсилати тобі повідомлення.",
+    allowButton: "Дозволити",
+    laterButton: "Не зараз",
+  },
   market: {
     gameBalance: "Ігровий баланс",
     owned: (amount, max) => `Куплено ${amount}/${max}`,

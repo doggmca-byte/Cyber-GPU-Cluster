@@ -88,6 +88,12 @@ const es: TranslationDictionary = {
     resourceLabel: "Recurso",
     liveLabel: "En línea",
   },
+  writeAccess: {
+    title: "¡Permite que el bot te escriba!",
+    description: "No te pierdas novedades importantes (nuevas tareas, bonos, estado de retiro) — permite que Cyber GPU Cluster te envíe mensajes.",
+    allowButton: "Permitir",
+    laterButton: "Ahora no",
+  },
   market: {
     gameBalance: "Saldo de juego",
     owned: (amount, max) => `Adquiridas ${amount}/${max}`,

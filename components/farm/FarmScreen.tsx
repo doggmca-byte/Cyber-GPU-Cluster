@@ -13,6 +13,7 @@ import type { HarvestResponse, SyncResponse } from "@/types/api";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { TasksEntryButton } from "@/components/tasks/TasksEntryButton";
 import { DailyBonusModal } from "@/components/daily/DailyBonusModal";
+import { WriteAccessPrompt } from "@/components/farm/WriteAccessPrompt";
 import { MinerIcon, getRarityColorHex } from "@/components/miners/MinerIcons";
 import { MAX_UNCLAIMED_SECONDS, gpuLifecycleCapHash, gpuRevivalCost, GPU_REVIVAL_MAX_COUNT } from "@/lib/constants/economy";
 import type { ReviveGpuResponse } from "@/types/api";
@@ -133,6 +134,8 @@ function FarmScreenReady({ data, initData }: { data: SyncResponse; initData: str
       {isDailyBonusOpen && (
         <DailyBonusModal initData={initData} onClose={() => setIsDailyBonusOpen(false)} />
       )}
+
+      <WriteAccessPrompt />
 
       <TasksEntryButton initData={initData} />
 

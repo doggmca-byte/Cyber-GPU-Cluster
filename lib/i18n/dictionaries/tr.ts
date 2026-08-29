@@ -87,6 +87,12 @@ const tr: TranslationDictionary = {
     resourceLabel: "Kaynak",
     liveLabel: "Çevrimiçi",
   },
+  writeAccess: {
+    title: "Botun sana yazmasına izin ver!",
+    description: "Önemli güncellemeleri kaçırma (yeni görevler, bonuslar, çekim durumu) — Cyber GPU Cluster'ın sana mesaj göndermesine izin ver.",
+    allowButton: "İzin Ver",
+    laterButton: "Şimdi Değil",
+  },
   market: {
     gameBalance: "Oyun bakiyesi",
     owned: (amount, max) => `Sahip olunan ${amount}/${max}`,

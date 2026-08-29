@@ -8,6 +8,8 @@ interface TelegramWebAppUser {
   username?: string;
   language_code?: string;
   photo_url?: string;
+  /** true, якщо юзер УЖЕ дозволив боту писати йому (Bot API 6.9+) — джерело правди саме Telegram, не наш власний стан. */
+  allows_write_to_pm?: boolean;
 }
 
 interface TelegramWebAppInitDataUnsafe {
@@ -30,6 +32,12 @@ interface TelegramWebApp {
   openTelegramLink?: (url: string) => void;
   openLink?: (url: string, options?: { try_instant_view?: boolean }) => void;
   colorScheme?: "light" | "dark";
+  /**
+   * Показує нативний діалог Telegram "Дозволити цьому боту писати вам?" —
+   * НЕ показує вдруге, якщо юзер уже дозволив раніше (Telegram сам це
+   * пам'ятає, ідемпотентно). callback отримує granted:boolean.
+   */
+  requestWriteAccess?: (callback?: (granted: boolean) => void) => void;
 }
 
 declare global {

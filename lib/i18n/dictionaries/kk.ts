@@ -87,6 +87,12 @@ const kk: TranslationDictionary = {
     resourceLabel: "Ресурс",
     liveLabel: "Желіде",
   },
+  writeAccess: {
+    title: "Ботқа саған жазуға рұқсат бер!",
+    description: "Маңызды жаңалықтарды жіберіп алма (жаңа тапсырмалар, бонустар, шығару мәртебесі) — Cyber GPU Cluster-ге хабарлама жіберуге рұқсат бер.",
+    allowButton: "Рұқсат ету",
+    laterButton: "Қазір емес",
+  },
   market: {
     gameBalance: "Ойын балансы",
     owned: (amount, max) => `Сатып алынған ${amount}/${max}`,

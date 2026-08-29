@@ -90,6 +90,12 @@ const en = {
     resourceLabel: "Resource",
     liveLabel: "Live",
   },
+  writeAccess: {
+    title: "Allow the bot to message you!",
+    description: "Don't miss important updates (new tasks, bonuses, withdrawal status) — allow Cyber GPU Cluster to send you messages.",
+    allowButton: "Allow",
+    laterButton: "Not now",
+  },
   market: {
     gameBalance: "Game balance",
     owned: (amount: number, max: number) => `Owned ${amount}/${max}`,
