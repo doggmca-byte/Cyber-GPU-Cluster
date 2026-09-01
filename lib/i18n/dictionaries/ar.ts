@@ -352,6 +352,10 @@ const ar: TranslationDictionary = {
         title: "ATF Token",
         description: "افتح ATF Token واحصل على الإيردروب.",
       },
+      starnex_win_combinations: {
+        title: "StarNex",
+        description: "العب StarNex واربح مرتين (حقق فوزين اثنين).",
+      },
       first_deposit: {
         title: "قم بأول عملية إيداع",
         description: "اشحن رصيد اللعبة بـ TON حقيقي مرة واحدة على الأقل.",

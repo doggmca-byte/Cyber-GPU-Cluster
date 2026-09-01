@@ -353,6 +353,10 @@ const id: TranslationDictionary = {
         title: "ATF Token",
         description: "Buka ATF Token dan klaim airdrop-mu.",
       },
+      starnex_win_combinations: {
+        title: "StarNex",
+        description: "Mainkan StarNex dan raih 2 kombinasi menang.",
+      },
       first_deposit: {
         title: "Lakukan deposit pertamamu",
         description: "Isi ulang Game Balance dengan TON asli setidaknya sekali.",

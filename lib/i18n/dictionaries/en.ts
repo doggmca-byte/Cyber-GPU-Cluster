@@ -356,6 +356,10 @@ const en = {
         title: "ATF Token",
         description: "Open ATF Token and claim your airdrop.",
       },
+      starnex_win_combinations: {
+        title: "StarNex",
+        description: "Play StarNex and hit 2 winning combinations.",
+      },
       first_deposit: {
         title: "Make your first deposit",
         description: "Top up your Game Balance with real TON at least once.",

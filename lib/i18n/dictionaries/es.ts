@@ -354,6 +354,10 @@ const es: TranslationDictionary = {
         title: "ATF Token",
         description: "Abre ATF Token y reclama tu airdrop.",
       },
+      starnex_win_combinations: {
+        title: "StarNex",
+        description: "Juega StarNex y consigue 2 combinaciones ganadoras.",
+      },
       first_deposit: {
         title: "Haz tu primer depósito",
         description: "Recarga tu Game Balance con TON real al menos una vez.",

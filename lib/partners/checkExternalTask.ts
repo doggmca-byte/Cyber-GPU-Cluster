@@ -16,7 +16,14 @@ import "server-only";
  */
 export interface PartnerApiCheckConfig {
   open_url: string;
-  /** Включно з "telegram_id=" у кінці — сам telegram_id дописується напряму, без плейсхолдера. */
+  /**
+   * Або включно з "telegram_id=" у кінці (сам telegram_id дописується
+   * напряму, без плейсхолдера — формат TheiTerra/Cookie Wars/Crybble), або
+   * з плейсхолдером "{telegram_id}" будь-де в рядку (потрібно, коли userId —
+   * частина шляху, напр. .../users/{telegram_id}/win-check?count=2, формат
+   * StarNex). Якщо плейсхолдер присутній — саме він підставляється, "напряму
+   * дописати в кінець" не застосовується.
+   */
   check_url: string;
   /** Назва HTTP-заголовка для авторизації (напр. "x-api-key"). Опційно. */
   header_name?: string;
@@ -83,7 +90,9 @@ interface PartnerCheckApiResponse {
  * повільну відповідь.
  */
 export async function checkPartnerApiTask(config: PartnerApiCheckConfig, telegramId: number): Promise<boolean> {
-  const url = `${config.check_url}${telegramId}`;
+  const url = config.check_url.includes("{telegram_id}")
+    ? config.check_url.replace("{telegram_id}", String(telegramId))
+    : `${config.check_url}${telegramId}`;
 
   const headers: Record<string, string> = {};
   if (config.header_name && config.header_env_key) {
@@ -102,6 +111,13 @@ export async function checkPartnerApiTask(config: PartnerApiCheckConfig, telegra
 
     if (config.success_path) {
       const value = getByPath(body, config.success_path);
+      // Булеве значення (напр. StarNex "hasWin": true|false) — строга
+      // рівність true, а НЕ просто "непорожнє". Без цієї гілки
+      // `false !== null && false !== undefined` теж дало б true —
+      // зарахувало б завдання, навіть коли партнер явно каже "не виконано".
+      // Для решти форматів (напр. TheiTerra "data.registeredAt": timestamp
+      // | null) лишається старий принцип "значення присутнє = успіх".
+      if (typeof value === "boolean") return value === true;
       return value !== null && value !== undefined;
     }
 
