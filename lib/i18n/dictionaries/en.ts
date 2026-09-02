@@ -360,6 +360,10 @@ const en = {
         title: "StarNex",
         description: "Play StarNex and hit 2 winning combinations.",
       },
+      memefarm_open: {
+        title: "MEME FARM",
+        description: "Open MEME FARM and create your profile.",
+      },
       first_deposit: {
         title: "Make your first deposit",
         description: "Top up your Game Balance with real TON at least once.",

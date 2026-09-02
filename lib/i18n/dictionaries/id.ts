@@ -357,6 +357,10 @@ const id: TranslationDictionary = {
         title: "StarNex",
         description: "Mainkan StarNex dan raih 2 kombinasi menang.",
       },
+      memefarm_open: {
+        title: "MEME FARM",
+        description: "Buka MEME FARM dan buat profilmu.",
+      },
       first_deposit: {
         title: "Lakukan deposit pertamamu",
         description: "Isi ulang Game Balance dengan TON asli setidaknya sekali.",

@@ -357,6 +357,10 @@ const tr: TranslationDictionary = {
         title: "StarNex",
         description: "StarNex'i oyna ve 2 kazanan kombinasyon yakala.",
       },
+      memefarm_open: {
+        title: "MEME FARM",
+        description: "MEME FARM'ı aç ve profilini oluştur.",
+      },
       first_deposit: {
         title: "İlk yatırımını yap",
         description: "Game Balance'ını en az bir kez gerçek TON ile yükle.",

@@ -356,6 +356,10 @@ const ar: TranslationDictionary = {
         title: "StarNex",
         description: "العب StarNex واربح مرتين (حقق فوزين اثنين).",
       },
+      memefarm_open: {
+        title: "MEME FARM",
+        description: "افتح MEME FARM وأنشئ ملفك الشخصي.",
+      },
       first_deposit: {
         title: "قم بأول عملية إيداع",
         description: "اشحن رصيد اللعبة بـ TON حقيقي مرة واحدة على الأقل.",

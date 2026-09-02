@@ -357,6 +357,10 @@ const kk: TranslationDictionary = {
         title: "StarNex",
         description: "StarNex ойнап, 2 ұтыс комбинациясын ұтып ал.",
       },
+      memefarm_open: {
+        title: "MEME FARM",
+        description: "MEME FARM-ды ашып, профиліңді жаса.",
+      },
       first_deposit: {
         title: "Алғашқы депозитіңді жаса",
         description: "Game Balance-ты нақты TON-мен кемінде бір рет толықтыр.",

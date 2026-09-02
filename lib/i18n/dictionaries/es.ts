@@ -358,6 +358,10 @@ const es: TranslationDictionary = {
         title: "StarNex",
         description: "Juega StarNex y consigue 2 combinaciones ganadoras.",
       },
+      memefarm_open: {
+        title: "MEME FARM",
+        description: "Abre MEME FARM y crea tu perfil.",
+      },
       first_deposit: {
         title: "Haz tu primer depósito",
         description: "Recarga tu Game Balance con TON real al menos una vez.",
