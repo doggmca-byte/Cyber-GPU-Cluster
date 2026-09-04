@@ -8,10 +8,17 @@
  * реальний reward-евент. Тут — лише клієнтський показ; фактичне нарахування
  * відбувається виключно в постбек-роуті, як і в Monetag-флоу.
  *
- * blockId — з дашборду AdsGram (ad-блок типу "Reward" для платформи
- * "Cyber GPU Cluster"), заданий через NEXT_PUBLIC_ADSGRAM_BLOCK_ID. Якщо
- * змінна не задана, showAdsgramRewardedAd() одразу повертає false — ротація
- * (lib/ads/rewardedAd.ts) просто пропускає AdsGram і йде далі, безпечно.
+ * Кілька блоків (не один): один AdsGram-блок може вичерпати інвентар
+ * (особливо після підняття денного ліміту переглядів 20 -> 30,
+ * 20260904090000_raise_partner_ad_daily_limit_to_30.sql) — тому підтримуємо
+ * СПИСОК blockId (NEXT_PUBLIC_ADSGRAM_BLOCK_IDS, через кому), а не лише один
+ * (NEXT_PUBLIC_ADSGRAM_BLOCK_ID — стара змінна лишається як fallback, якщо
+ * список не заданий, для зворотної сумісності з уже налаштованим env).
+ * Чергуємо блоки round-robin (той самий підхід, що й chergування провайдерів
+ * у rewardedAd.ts, окремий localStorage-ключ) і, якщо поточний блок не має
+ * реклами (show() -> done:false), пробуємо наступний блок у тому ж виклику —
+ * лише коли жоден блок не спрацював, повертаємо false далі в ротацію
+ * провайдерів.
  */
 declare global {
   interface Window {
@@ -32,34 +39,64 @@ interface AdsgramController {
   show(): Promise<AdsgramShowResult>;
 }
 
-const ADSGRAM_BLOCK_ID = process.env.NEXT_PUBLIC_ADSGRAM_BLOCK_ID ?? "";
+const BLOCK_ROTATION_STORAGE_KEY = "cgc_adsgram_block_rotation";
+
+function parseBlockIds(): string[] {
+  const listRaw = process.env.NEXT_PUBLIC_ADSGRAM_BLOCK_IDS ?? "";
+  const list = listRaw
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
+  if (list.length > 0) return list;
+
+  const single = process.env.NEXT_PUBLIC_ADSGRAM_BLOCK_ID ?? "";
+  return single ? [single] : [];
+}
+
+const ADSGRAM_BLOCK_IDS = parseBlockIds();
 
 // init() потрібно викликати лише раз на blockId (документація AdsGram:
 // повторний init з тим самим blockId повертає той самий AdController) —
-// кешуємо, а не створюємо новий контролер на кожен показ.
-let cachedController: AdsgramController | null = null;
+// кешуємо по кожному blockId окремо, а не створюємо новий контролер на
+// кожен показ.
+const controllerCache = new Map<string, AdsgramController>();
 
-function getController(): AdsgramController | null {
-  if (typeof window === "undefined" || !ADSGRAM_BLOCK_ID || typeof window.Adsgram?.init !== "function") {
-    return null;
+function getController(blockId: string): AdsgramController | null {
+  if (typeof window === "undefined" || typeof window.Adsgram?.init !== "function") return null;
+
+  let controller = controllerCache.get(blockId);
+  if (!controller) {
+    controller = window.Adsgram.init({ blockId });
+    controllerCache.set(blockId, controller);
   }
-
-  if (!cachedController) {
-    cachedController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
-  }
-
-  return cachedController;
+  return controller;
 }
 
-/**
- * Показує AdsGram rewarded-рекламу. Резолвиться в true лише якщо юзер
- * реально додивився до кінця (result.done === true) — це НЕ те саме, що
- * підтвердження нарахування (те приходить окремо, асинхронно, через
- * postback). Повертає false, якщо SDK/blockId не готові, показ закрито
- * достроково, чи сталась помилка.
- */
-export async function showAdsgramRewardedAd(): Promise<boolean> {
-  const controller = getController();
+/** Той самий алгоритм ротації, що й rotatedProviderOrder у rewardedAd.ts. */
+function rotatedBlockIds(): string[] {
+  if (ADSGRAM_BLOCK_IDS.length <= 1) return ADSGRAM_BLOCK_IDS;
+  if (typeof window === "undefined") return ADSGRAM_BLOCK_IDS;
+
+  let index = 0;
+  try {
+    index = Number(window.localStorage.getItem(BLOCK_ROTATION_STORAGE_KEY)) || 0;
+  } catch {
+    // localStorage може бути недоступний (приватний режим, заборонено в
+    // WebView) — просто не чергуємо між сесіями, це не критично.
+  }
+
+  try {
+    window.localStorage.setItem(BLOCK_ROTATION_STORAGE_KEY, String(index + 1));
+  } catch {
+    // ignore
+  }
+
+  const start = index % ADSGRAM_BLOCK_IDS.length;
+  return [...ADSGRAM_BLOCK_IDS.slice(start), ...ADSGRAM_BLOCK_IDS.slice(0, start)];
+}
+
+async function showOneBlock(blockId: string): Promise<boolean> {
+  const controller = getController(blockId);
   if (!controller) return false;
 
   try {
@@ -68,4 +105,19 @@ export async function showAdsgramRewardedAd(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Показує AdsGram rewarded-рекламу, перебираючи всі налаштовані блоки (у
+ * ротаційному порядку), доки якийсь не покаже успішно. Резолвиться в true
+ * лише якщо юзер реально додивився до кінця (result.done === true) — це НЕ
+ * те саме, що підтвердження нарахування (те приходить окремо, асинхронно,
+ * через postback). Повертає false, якщо жодного blockId не налаштовано,
+ * SDK ще не готовий, чи жоден блок не має інвентарю/показ закрито достроково.
+ */
+export async function showAdsgramRewardedAd(): Promise<boolean> {
+  for (const blockId of rotatedBlockIds()) {
+    if (await showOneBlock(blockId)) return true;
+  }
+  return false;
 }
