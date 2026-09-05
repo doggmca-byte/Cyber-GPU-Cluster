@@ -430,6 +430,11 @@ const uk: TranslationDictionary = {
       notCounted: "Перегляд не зараховано — спробуй ще раз.",
       stillProcessing: "Ще обробляється — перевір баланс трохи пізніше.",
     },
+    tadsAd: {
+      title: "Спонсорський банер",
+      description: "Натисни на банер нижче й отримай TON.",
+      noAdsAvailable: "Зараз немає доступних спонсорських банерів.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

@@ -69,6 +69,15 @@ export default function RootLayout({
           клієнтську довіру.
         */}
         <Script src="https://sad.adsgram.ai/js/sad.min.js" strategy="afterInteractive" />
+        {/*
+          TADS SDK — реєструє window.tads, який дергає lib/ads/tads.ts
+          (mountTadsAd). Четвертий провайдер, але АРХІТЕКТУРНО окремий від
+          Monetag/GigaPub/AdsGram вище: не rewarded-відео в ротації
+          (lib/ads/rewardedAd.ts), а Static/TGB-банер у постійному <div>
+          (components/tasks/TasksScreen.tsx, TadsBannerCard), нагорода на
+          клік із S2S-підтвердженням через /api/ads/tads-postback.
+        */}
+        <Script src="https://w.tads.me/widget.js" strategy="afterInteractive" />
         {children}
       </body>
     </html>

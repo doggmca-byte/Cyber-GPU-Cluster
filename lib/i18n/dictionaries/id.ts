@@ -430,6 +430,11 @@ const id: TranslationDictionary = {
       notCounted: "Tontonan tidak dihitung — coba lagi.",
       stillProcessing: "Masih diproses — cek saldomu sebentar lagi.",
     },
+    tadsAd: {
+      title: "Banner bersponsor",
+      description: "Ketuk banner di bawah dan dapatkan TON.",
+      noAdsAvailable: "Belum ada banner bersponsor yang tersedia saat ini.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

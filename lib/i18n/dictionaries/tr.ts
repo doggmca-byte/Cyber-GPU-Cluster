@@ -430,6 +430,11 @@ const tr: TranslationDictionary = {
       notCounted: "İzleme sayılmadı — tekrar dene.",
       stillProcessing: "Hâlâ işleniyor — bakiyeni biraz sonra kontrol et.",
     },
+    tadsAd: {
+      title: "Sponsorlu banner",
+      description: "Aşağıdaki bannera dokun ve TON kazan.",
+      noAdsAvailable: "Şu anda kullanılabilir sponsorlu banner yok.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

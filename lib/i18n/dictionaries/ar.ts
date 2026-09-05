@@ -429,6 +429,11 @@ const ar: TranslationDictionary = {
       notCounted: "لم تُحتسب المشاهدة — حاول مرة أخرى.",
       stillProcessing: "لا تزال قيد المعالجة — تحقق من رصيدك بعد قليل.",
     },
+    tadsAd: {
+      title: "بانر ممول",
+      description: "اضغط على البانر أدناه واربح TON.",
+      noAdsAvailable: "لا توجد بانرات ممولة متاحة حاليًا.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

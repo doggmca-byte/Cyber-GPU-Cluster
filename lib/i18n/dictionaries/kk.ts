@@ -430,6 +430,11 @@ const kk: TranslationDictionary = {
       notCounted: "Көрсетілім есептелмеді — қайта көр.",
       stillProcessing: "Әлі өңделуде — балансты сәл кейін тексер.",
     },
+    tadsAd: {
+      title: "Демеушілік баннер",
+      description: "Төмендегі баннерге бас та TON ал.",
+      noAdsAvailable: "Қазір қолжетімді демеушілік баннер жоқ.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

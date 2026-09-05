@@ -431,6 +431,11 @@ const es: TranslationDictionary = {
       notCounted: "La vista no se contabilizó — inténtalo de nuevo.",
       stillProcessing: "Aún se está procesando — revisa tu saldo en un momento.",
     },
+    tadsAd: {
+      title: "Banner patrocinado",
+      description: "Toca el banner de abajo y gana TON.",
+      noAdsAvailable: "No hay banners patrocinados disponibles ahora mismo.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

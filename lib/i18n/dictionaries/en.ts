@@ -433,6 +433,11 @@ const en = {
       notCounted: "View wasn't counted — try again.",
       stillProcessing: "Still processing — check your balance again shortly.",
     },
+    tadsAd: {
+      title: "Sponsored banner",
+      description: "Tap the banner below and earn TON.",
+      noAdsAvailable: "No sponsored banners available right now.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

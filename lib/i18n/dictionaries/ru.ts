@@ -430,6 +430,11 @@ const ru: TranslationDictionary = {
       notCounted: "Просмотр не засчитан — попробуй ещё раз.",
       stillProcessing: "Ещё обрабатывается — проверь баланс чуть позже.",
     },
+    tadsAd: {
+      title: "Спонсорский баннер",
+      description: "Нажми на баннер ниже и получи TON.",
+      noAdsAvailable: "Сейчас нет доступных спонсорских баннеров.",
+    },
   },
   dailyBonus: {
     modalTitle: "Daily Bonus",

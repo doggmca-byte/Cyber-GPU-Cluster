@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Cpu,
@@ -22,6 +22,7 @@ import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import { showRewardedAdRotating, showRewardedAdRotatingWithProvider } from "@/lib/ads/rewardedAd";
 import { startVerifiedAttempt, pollVerifiedAttempt, type VerifiedPollResult } from "@/lib/ads/verifiedAdWatch";
+import { mountTadsAd, tadsContainerId, TADS_WIDGET_ID } from "@/lib/ads/tads";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { SupportButton } from "@/components/layout/SupportButton";
 import { SpecialTasks } from "@/components/SpecialTasks";
@@ -417,7 +418,12 @@ function TasksScreenReady({ initData }: { initData: string }) {
       </div>
 
       <div className="flex flex-col gap-2">
-        {activeCategory === "partners" && <PartnerAdsCard initData={initData} />}
+        {activeCategory === "partners" && (
+          <>
+            <PartnerAdsCard initData={initData} />
+            <TadsBannerCard initData={initData} />
+          </>
+        )}
         {activeCategory === "special" && <SpecialTasks initData={initData} />}
 
         {categoryTasks.length === 0 ? (
@@ -451,26 +457,28 @@ function TasksScreenReady({ initData }: { initData: string }) {
 // (record_partner_ad_watch), тож живе окремою карткою над списком завдань
 // вкладки "Партнери", а не в task_templates/user_tasks (там термінальний
 // claimed один раз назавжди).
-const ADSGRAM_POLL_ATTEMPTS = 8;
-const ADSGRAM_POLL_DELAY_MS = 2000;
+const PARTNER_AD_POLL_ATTEMPTS = 8;
+const PARTNER_AD_POLL_DELAY_MS = 2000;
 
-// AdsGram, на відміну від Monetag, не видає нам токен спроби наперед —
-// їхній Reward URL postback (app/api/ads/adsgram-postback) кореляує
-// виключно по telegramId, без ідентифікатора конкретного показу. Тож
-// підтвердження тут — це не пошук статусу конкретної спроби, а порівняння
-// лічильника partner_ads_watched_today "до" й "після": як тільки бекенд
-// реально нарахував через постбек, лічильник зростає. Той самий принцип, що
-// й у поллінгу Monetag (lib/ads/verifiedAdWatch.ts) — просто інший спосіб
-// виявити подію без токена. Працює ЛИШЕ для partner_ad_watch — AdsGram Reward
-// URL жорстко прив'язаний саме до цієї purpose (не може передати нам, яку
-// саме дію показ мав підтвердити), тож для daily_bonus_watch/withdraw_ad_watch
-// AdsGram-показ лишається на клієнтській довірі (як і GigaPub).
-async function pollAdsgramConfirmation(
+// AdsGram і TADS, на відміну від Monetag, не видають нам токен спроби
+// наперед — їхні S2S-постбеки (app/api/ads/adsgram-postback,
+// app/api/ads/tads-postback) кореляють виключно по telegramId, без
+// ідентифікатора конкретного показу/кліку. Тож підтвердження тут — це не
+// пошук статусу конкретної спроби, а порівняння лічильника
+// partner_ads_watched_today "до" й "після": як тільки бекенд реально
+// нарахував через постбек (від будь-кого з двох), лічильник зростає. Той
+// самий принцип, що й у поллінгу Monetag (lib/ads/verifiedAdWatch.ts) —
+// просто інший спосіб виявити подію без токена. Працює ЛИШЕ для
+// partner_ad_watch — обидва постбеки жорстко прив'язані саме до цієї purpose
+// (не можуть передати нам, яку саме дію показ мав підтвердити), тож для
+// daily_bonus_watch/withdraw_ad_watch AdsGram/TADS-показ лишається на
+// клієнтській довірі (як і GigaPub).
+async function pollPartnerAdWatchConfirmation(
   initData: string,
   baselineWatchedToday: number,
 ): Promise<VerifiedPollResult> {
-  for (let attempt = 0; attempt < ADSGRAM_POLL_ATTEMPTS; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, ADSGRAM_POLL_DELAY_MS));
+  for (let attempt = 0; attempt < PARTNER_AD_POLL_ATTEMPTS; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, PARTNER_AD_POLL_DELAY_MS));
 
     try {
       const res = await fetch("/api/user/sync", {
@@ -595,7 +603,7 @@ function PartnerAdsCard({ initData }: { initData: string }) {
       // partner_ads_watched_today "до" й "після" виклику показу.
       const outcome: VerifiedPollResult =
         shown.provider === "adsgram"
-          ? await pollAdsgramConfirmation(initData, profile.partner_ads_watched_today)
+          ? await pollPartnerAdWatchConfirmation(initData, profile.partner_ads_watched_today)
           : await pollVerifiedAttempt(initData, ymid);
 
       if (outcome.kind === "confirmed") {
@@ -656,6 +664,153 @@ function PartnerAdsCard({ initData }: { initData: string }) {
                 ? t.tasks.partnerAds.loading
                 : t.tasks.partnerAds.button}
         </button>
+      </div>
+
+      {error && <p className="mt-2 text-center text-[11px] text-red-400">{error}</p>}
+    </div>
+  );
+}
+
+/**
+ * Четвертий "провайдер" реклами — TADS (lib/ads/tads.ts), АРХІТЕКТУРНО інший
+ * за PartnerAdsCard вище: не модалка "натисни й дивись", а постійний
+ * банер-контейнер, куди SDK сам вмонтовує рекламу; нагорода — на клік
+ * (onClickReward), підтверджений S2S-вебхуком (app/api/ads/tads-postback),
+ * той самий record_partner_ad_watch і той самий денний ліміт/лічильник, що
+ * й у PartnerAdsCard (одна спільна квота на всі джерела реклами).
+ *
+ * Якщо NEXT_PUBLIC_TADS_WIDGET_ID не задано — mountTadsAd() поверне false,
+ * картка одразу йде в стан "no_ads" (по суті прихована для юзера — не
+ * рендеримо порожній контейнер-заглушку).
+ */
+function TadsBannerCard({ initData }: { initData: string }) {
+  const { t, language } = useTranslation();
+  const { state, patchProfile } = useUserData();
+  const [status, setStatus] = useState<"loading" | "ready" | "confirming" | "no_ads">("loading");
+  const [error, setError] = useState<string | null>(null);
+
+  // Усі хуки нижче МАЮТЬ викликатись безумовно на кожному рендері (Rules of
+  // Hooks) — тому жодного "if (...) return null" до цього місця: похідні
+  // значення з state.status==="ready" рахуємо через null-фолбек, а не через
+  // ранній вихід, інакше кількість викликаних хуків різнилась би між
+  // рендерами "ще не готово" / "готово" і React впав би з помилкою.
+  const readyProfile = state.status === "ready" ? state.data.profile : null;
+  const readyIsAdmin = state.status === "ready" ? state.data.is_admin : false;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const watchedToday =
+    readyProfile && readyProfile.partner_ads_reset_date === today ? readyProfile.partner_ads_watched_today : 0;
+  const limitReached = readyProfile ? !readyIsAdmin && watchedToday >= PARTNER_AD_DAILY_LIMIT : false;
+
+  // Завжди свіже значення лічильника для onClickReward нижче (замикання
+  // створюється ОДИН раз при монтуванні реклами, watchedToday на той момент
+  // міг застаріти, якщо юзер тим часом подивився рекламу з ІНШОГО джерела
+  // на цій же вкладці) — читаємо через ref у момент кліку, а не з
+  // застарілого значення в замиканні.
+  const latestWatchedTodayRef = useRef(watchedToday);
+  latestWatchedTodayRef.current = watchedToday;
+
+  const mountedRef = useRef(true);
+  useEffect(() => () => {
+    mountedRef.current = false;
+  }, []);
+
+  // TADS SDK монтується РІВНО ОДИН раз (не при кожній зміні профілю — інакше
+  // showRewardedAdRotating-подібне повторне init() на той самий контейнер
+  // при щонайменшій зміні profile.* деінде в застосунку) — гард через ref,
+  // не через залежності ефекту.
+  const hasMountedAdRef = useRef(false);
+
+  useEffect(() => {
+    if (!readyProfile || hasMountedAdRef.current) return;
+
+    if (limitReached) {
+      setStatus("no_ads");
+      return;
+    }
+
+    hasMountedAdRef.current = true;
+
+    const onClickReward = () => {
+      if (!mountedRef.current) return;
+      setError(null);
+      setStatus("confirming");
+
+      void pollPartnerAdWatchConfirmation(initData, latestWatchedTodayRef.current).then((outcome) => {
+        if (!mountedRef.current) return;
+
+        if (outcome.kind === "confirmed") {
+          patchProfile({
+            partner_ads_watched_today: outcome.profile.partner_ads_watched_today,
+            partner_ads_reset_date: outcome.profile.partner_ads_reset_date,
+            withdrawable_balance: outcome.profile.withdrawable_balance,
+          });
+          setStatus("ready");
+        } else if (outcome.kind === "rejected") {
+          setError(t.tasks.partnerAds.notCounted);
+          setStatus("ready");
+        } else {
+          setError(t.tasks.partnerAds.stillProcessing);
+          setStatus("ready");
+        }
+      });
+    };
+
+    const onAdsNotFound = () => {
+      if (mountedRef.current) setStatus("no_ads");
+    };
+
+    const mounted = mountTadsAd({ onClickReward, onAdsNotFound });
+    setStatus(mounted ? "ready" : "no_ads");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readyProfile, limitReached]);
+
+  if (state.status !== "ready" || status === "no_ads") return null;
+
+  return (
+    <div className="glass-card p-3.5">
+      <div className="flex items-start gap-2.5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neon-purple/10 text-neon-purple">
+          <Handshake size={16} />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold text-white">{t.tasks.tadsAd.title}</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">{t.tasks.tadsAd.description}</p>
+
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold text-neon-green">
+              {t.tasks.reward.ton(formatNumber(language, PARTNER_AD_REWARD_TON, { maximumFractionDigits: 3 }))}
+            </span>
+            <span className="text-[10px] font-medium text-slate-500">
+              {t.tasks.partnerAds.progress(watchedToday, PARTNER_AD_DAILY_LIMIT)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/*
+        Контейнер нижче — окремий, НАЗАВЖДИ порожній з боку React (жодних
+        дочірніх елементів у JSX!) — TADS SDK монтує рекламу туди напряму
+        через DOM API. Якби спінери "loading"/"confirming" були дочірніми
+        ЦЬОГО ж вузла, React стирав би вставлений SDK-розмітку на кожному
+        ре-рендері (зміна status/error). Тому оверлей — сусідній елемент,
+        абсолютно спозиційований поверх, а не всередині.
+      */}
+      <div className="relative mt-2.5 min-h-[50px]">
+        <div id={TADS_WIDGET_ID ? tadsContainerId(TADS_WIDGET_ID) : undefined} />
+        {status === "loading" && (
+          <div className="absolute inset-0 flex items-center justify-center gap-2 bg-background-card py-3 text-[11px] text-slate-500">
+            <Loader2 size={13} className="animate-spin" />
+            {t.tasks.partnerAds.loading}
+          </div>
+        )}
+        {status === "confirming" && (
+          <div className="absolute inset-0 flex items-center justify-center gap-2 bg-background-card py-3 text-[11px] text-neon-gold">
+            <Loader2 size={13} className="animate-spin" />
+            {t.tasks.partnerAds.confirming}
+          </div>
+        )}
       </div>
 
       {error && <p className="mt-2 text-center text-[11px] text-red-400">{error}</p>}
