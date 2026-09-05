@@ -40,7 +40,7 @@ export function LanguageSelector() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1.5 rounded-lg border border-[#1E293B] bg-[#161F33] px-2.5 py-1 text-xs font-semibold text-white transition-transform active:scale-95"
+        className="flex shrink-0 items-center gap-1.5 rounded-lg border border-[#1E293B] bg-[#161F33] px-2.5 py-1 text-xs font-semibold text-white transition-transform active:scale-95"
       >
         <span>{activeMeta.flag}</span>
         <span className="uppercase">{language}</span>

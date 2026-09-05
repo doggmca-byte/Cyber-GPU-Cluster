@@ -27,25 +27,37 @@ export function Header() {
   const isAdmin = state.status === "ready" && state.data.is_admin;
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between gap-2 border-b border-white/5 bg-background/95 px-4 py-2.5">
+    // px-3 (а не px-4) + min-w-0/truncate нижче — шапка мусить влазити в
+    // будь-яку ширину webview: Telegram Desktop дає ~400px, а сумарна
+    // "природна" ширина рядка (селектор мови + два бейджі балансу + іконки
+    // адміна/підтримки) сягала 413px, через що ВСЯ сторінка ставала
+    // горизонтально прокручуваною і "з'їжджала" вбік (репорт зі скріншотом).
+    <header className="sticky top-0 z-40 flex items-center justify-between gap-2 border-b border-white/5 bg-background/95 px-3 py-2.5 sm:px-4">
       {/* Самодостатній компонент — сам володіє isOpen, закритий за замовчуванням. */}
       <LanguageSelector />
 
-      <div className="flex items-center gap-1.5">
-        <div className="glass-card flex items-center gap-1.5 border-neon-green/30 px-2.5 py-1.5 shadow-neon-green">
-          <Hexagon size={13} className="text-neon-green" fill="currentColor" fillOpacity={0.2} />
-          <span className="text-xs font-semibold tabular-nums text-white">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <div className="glass-card flex min-w-0 items-center gap-1.5 border-neon-green/30 px-2.5 py-1.5 shadow-neon-green">
+          <Hexagon size={13} className="shrink-0 text-neon-green" fill="currentColor" fillOpacity={0.2} />
+          <span className="truncate text-xs font-semibold tabular-nums text-white">
             {formatNumber(language, hashBalance, { maximumFractionDigits: 2 })}
           </span>
-          <span className="text-[10px] font-medium uppercase text-slate-500">{t.common.hash}</span>
+          {/* Підпис валюти зникає першим на вузьких екранах — саме число
+              важливіше за нього, а іконка поруч і так однозначно каже, який
+              це баланс. */}
+          <span className="hidden shrink-0 text-[10px] font-medium uppercase text-slate-500 min-[420px]:inline">
+            {t.common.hash}
+          </span>
         </div>
 
-        <div className="glass-card flex items-center gap-1.5 border-neon-purple/30 py-1.5 pl-2.5 pr-1 shadow-neon-purple">
-          <Gem size={13} className="text-neon-purple" />
-          <span className="text-xs font-semibold tabular-nums text-white">
+        <div className="glass-card flex min-w-0 items-center gap-1.5 border-neon-purple/30 py-1.5 pl-2.5 pr-1 shadow-neon-purple">
+          <Gem size={13} className="shrink-0 text-neon-purple" />
+          <span className="truncate text-xs font-semibold tabular-nums text-white">
             {formatNumber(language, tonBalance, { maximumFractionDigits: 2 })}
           </span>
-          <span className="text-[10px] font-medium uppercase text-slate-500">{t.common.ton}</span>
+          <span className="hidden shrink-0 text-[10px] font-medium uppercase text-slate-500 min-[420px]:inline">
+            {t.common.ton}
+          </span>
           {/* Ярлик до вже наявного поповнення (DepositModal на /wallet) —
               не нова механіка, лише швидший вхід до існуючого флоу. */}
           <Link
@@ -68,7 +80,7 @@ export function Header() {
           <Link
             href="/admin"
             aria-label="Admin"
-            className="rounded-full border border-white/5 bg-background-card p-1.5 text-slate-500 transition hover:text-neon-purple"
+            className="shrink-0 rounded-full border border-white/5 bg-background-card p-1.5 text-slate-500 transition hover:text-neon-purple"
           >
             <ShieldCheck size={13} />
           </Link>

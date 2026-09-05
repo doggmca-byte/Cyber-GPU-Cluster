@@ -132,8 +132,8 @@ function TasksTopBar() {
       className="sticky top-0 z-40 -mx-4 -mt-4 flex items-center justify-between border-b border-white/5 bg-background/95 px-4 py-2.5"
       style={{ paddingTop: "calc(0.625rem + env(safe-area-inset-top))" }}
     >
-      <h1 className="text-sm font-semibold text-white">{t.tasks.title}</h1>
-      <div className="flex items-center gap-1.5">
+      <h1 className="min-w-0 truncate text-sm font-semibold text-white">{t.tasks.title}</h1>
+      <div className="flex shrink-0 items-center gap-1.5">
         <SupportButton />
         <Link
           href="/"

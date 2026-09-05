@@ -55,7 +55,7 @@ export function SupportButton() {
       type="button"
       onClick={handleClick}
       aria-label={t.support.label}
-      className="rounded-full border border-white/5 bg-background-card p-1.5 text-slate-500 transition hover:text-neon-cyan"
+      className="shrink-0 rounded-full border border-white/5 bg-background-card p-1.5 text-slate-500 transition hover:text-neon-cyan"
     >
       <Headphones size={13} />
     </button>
