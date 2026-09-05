@@ -429,6 +429,7 @@ const tr: TranslationDictionary = {
       confirming: "İzlemen onaylanıyor...",
       notCounted: "İzleme sayılmadı — tekrar dene.",
       stillProcessing: "Hâlâ işleniyor — bakiyeni biraz sonra kontrol et.",
+      tadsTurnHint: "Sıra sponsorlu bannerda — izlemek için aşağıdaki bannera dokun.",
     },
     tadsAd: {
       title: "Sponsorlu banner",

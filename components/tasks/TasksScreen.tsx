@@ -20,7 +20,10 @@ import {
 import { useUserData, type UserDataState } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
-import { showRewardedAdRotating, showRewardedAdRotatingWithProvider } from "@/lib/ads/rewardedAd";
+import { showRewardedAd } from "@/lib/ads/monetag";
+import { showGigaRewardedAd } from "@/lib/ads/gigapub";
+import { showAdsgramRewardedAd } from "@/lib/ads/adsgram";
+import { nextPartnerAdSlot } from "@/lib/ads/partnerAdRotation";
 import { startVerifiedAttempt, pollVerifiedAttempt, type VerifiedPollResult } from "@/lib/ads/verifiedAdWatch";
 import { mountTadsAd, tadsContainerId, TADS_WIDGET_ID } from "@/lib/ads/tads";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
@@ -508,6 +511,7 @@ function PartnerAdsCard({ initData }: { initData: string }) {
   const [isWatching, setIsWatching] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
 
   if (state.status !== "ready") return null;
   const { profile, is_admin: isAdmin } = state.data;
@@ -520,104 +524,114 @@ function PartnerAdsCard({ initData }: { initData: string }) {
   // саму кнопку для адміна ніколи не вимикаємо.
   const limitReached = !isAdmin && watchedToday >= PARTNER_AD_DAILY_LIMIT;
 
+  // Клієнто-довірчий шлях (GigaPub, і фолбек для Monetag, якщо не вдалось
+  // завести токен верифікації) — просто інкрементує лічильник на бекенді
+  // без S2S-підтвердження.
+  const creditClientTrust = async () => {
+    const res = await fetch("/api/ads/partner-watch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData }),
+    });
+
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(body?.error ?? `partner ad watch failed with status ${res.status}`);
+    }
+
+    const result = (await res.json()) as PartnerAdWatchResponse;
+    patchProfile({
+      partner_ads_watched_today: result.partner_ads_watched_today,
+      partner_ads_reset_date: today,
+      withdrawable_balance: result.withdrawable_balance,
+    });
+  };
+
+  const applyVerifiedOutcome = (outcome: VerifiedPollResult) => {
+    if (outcome.kind === "confirmed") {
+      patchProfile({
+        partner_ads_watched_today: outcome.profile.partner_ads_watched_today,
+        partner_ads_reset_date: outcome.profile.partner_ads_reset_date,
+        withdrawable_balance: outcome.profile.withdrawable_balance,
+      });
+    } else if (outcome.kind === "rejected") {
+      setError(t.tasks.partnerAds.notCounted);
+    } else {
+      // timeout — НЕ помилка: postback міг просто затриматись довше опитування.
+      setError(t.tasks.partnerAds.stillProcessing);
+    }
+  };
+
   const watch = async () => {
     if (isWatching || limitReached) return;
+
+    // Строга ротація 1.GigaPub 2.Monetag 3.AdsGram 4.TADS (lib/ads/partnerAdRotation.ts)
+    // — рівно ОДИН майданчик на клік, без фолбеку на іншого в межах цього ж
+    // кліку (навмисно, за проханням користувача: показ усіх підряд в одному
+    // кліку "напрягатиме людей").
+    const slot = nextPartnerAdSlot();
+
+    if (slot === "tads") {
+      // TADS-банер уже постійно змонтований нижче (TadsBannerCard) і чекає
+      // на РЕАЛЬНИЙ клік користувача по самій рекламній творчій одиниці —
+      // симулювати показ/клік із цієї кнопки не можна. Просто підказуємо
+      // (окремий стан від error — це не помилка, тож не червоним).
+      setError(null);
+      setHint(t.tasks.partnerAds.tadsTurnHint);
+      return;
+    }
 
     setIsWatching(true);
     setIsConfirming(false);
     setError(null);
+    setHint(null);
 
     try {
-      // Ротація (lib/ads/rewardedAd.ts) сама вирішує, чий зараз показ —
-      // GigaPub, Monetag чи AdsGram. Заводимо ymid ДО показу (потрібен лише
-      // для Monetag-верифікації) — якщо цей запит сам не вдався, не блокуємо
-      // юзера повністю, а падаємо назад на старий повністю клієнто-довірчий
-      // шлях (showRewardedAdRotating) для всіх провайдерів.
-      const ymid = await startVerifiedAttempt(initData, "partner_ad_watch");
-
-      if (!ymid) {
-        const adWatched = await showRewardedAdRotating();
+      if (slot === "gigapub") {
+        // GigaPub не має S2S postback — лишається на клієнтській довірі.
+        const adWatched = await showGigaRewardedAd();
         if (!adWatched) {
           setError(t.tasks.partnerAds.adNotCompleted);
           return;
         }
-
-        const res = await fetch("/api/ads/partner-watch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData }),
-        });
-
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(body?.error ?? `partner ad watch failed with status ${res.status}`);
-        }
-
-        const result = (await res.json()) as PartnerAdWatchResponse;
-        patchProfile({
-          partner_ads_watched_today: result.partner_ads_watched_today,
-          partner_ads_reset_date: today,
-          withdrawable_balance: result.withdrawable_balance,
-        });
+        await creditClientTrust();
         return;
       }
 
-      const shown = await showRewardedAdRotatingWithProvider(ymid);
-      if (!shown.watched) {
+      if (slot === "monetag") {
+        // Заводимо токен спроби ДО показу — потрібен для S2S-верифікації.
+        // Якщо сам запит не вдався, не блокуємо юзера повністю, а падаємо
+        // назад на клієнто-довірчий шлях лише для цього конкретного показу.
+        const ymid = await startVerifiedAttempt(initData, "partner_ad_watch");
+        const shown = await showRewardedAd(ymid ?? undefined);
+        if (!shown) {
+          setError(t.tasks.partnerAds.adNotCompleted);
+          return;
+        }
+
+        if (!ymid) {
+          await creditClientTrust();
+          return;
+        }
+
+        setIsConfirming(true);
+        const outcome = await pollVerifiedAttempt(initData, ymid);
+        applyVerifiedOutcome(outcome);
+        return;
+      }
+
+      // slot === "adsgram": немає токена спроби наперед — підтвердження через
+      // порівняння лічильника partner_ads_watched_today "до" й "після" показу.
+      const baselineWatchedToday = profile.partner_ads_watched_today;
+      const adWatched = await showAdsgramRewardedAd();
+      if (!adWatched) {
         setError(t.tasks.partnerAds.adNotCompleted);
         return;
       }
 
-      if (shown.provider === "gigapub") {
-        // GigaPub не має S2S postback — лишається на клієнтській довірі
-        // (ymid, заведений вище для можливого Monetag-показу, просто
-        // лишається невикористаним pending-рядком — нешкідливо, без
-        // реального postback від Monetag ніколи не підтвердиться).
-        const res = await fetch("/api/ads/partner-watch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData }),
-        });
-
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(body?.error ?? `partner ad watch failed with status ${res.status}`);
-        }
-
-        const result = (await res.json()) as PartnerAdWatchResponse;
-        patchProfile({
-          partner_ads_watched_today: result.partner_ads_watched_today,
-          partner_ads_reset_date: today,
-          withdrawable_balance: result.withdrawable_balance,
-        });
-        return;
-      }
-
       setIsConfirming(true);
-
-      // provider === "monetag" | "adsgram": НІЧОГО не нараховуємо тут —
-      // чекаємо на реальний postback (app/api/ads/monetag-postback чи
-      // app/api/ads/adsgram-postback відповідно), опитуючи короткими
-      // інтервалами. Monetag дає нам токен спроби (ymid) — опитуємо його
-      // напряму; AdsGram токена не дає, тож порівнюємо лічильник
-      // partner_ads_watched_today "до" й "після" виклику показу.
-      const outcome: VerifiedPollResult =
-        shown.provider === "adsgram"
-          ? await pollPartnerAdWatchConfirmation(initData, profile.partner_ads_watched_today)
-          : await pollVerifiedAttempt(initData, ymid);
-
-      if (outcome.kind === "confirmed") {
-        patchProfile({
-          partner_ads_watched_today: outcome.profile.partner_ads_watched_today,
-          partner_ads_reset_date: outcome.profile.partner_ads_reset_date,
-          withdrawable_balance: outcome.profile.withdrawable_balance,
-        });
-      } else if (outcome.kind === "rejected") {
-        setError(t.tasks.partnerAds.notCounted);
-      } else {
-        // timeout — НЕ помилка: postback міг просто затриматись довше опитування.
-        setError(t.tasks.partnerAds.stillProcessing);
-      }
+      const outcome = await pollPartnerAdWatchConfirmation(initData, baselineWatchedToday);
+      applyVerifiedOutcome(outcome);
     } catch (err) {
       setError(err instanceof Error ? err.message : t.common.unknownError);
     } finally {
@@ -667,6 +681,7 @@ function PartnerAdsCard({ initData }: { initData: string }) {
       </div>
 
       {error && <p className="mt-2 text-center text-[11px] text-red-400">{error}</p>}
+      {!error && hint && <p className="mt-2 text-center text-[11px] text-neon-gold">{hint}</p>}
     </div>
   );
 }

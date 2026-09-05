@@ -430,6 +430,7 @@ const es: TranslationDictionary = {
       confirming: "Confirmando tu visualización...",
       notCounted: "La vista no se contabilizó — inténtalo de nuevo.",
       stillProcessing: "Aún se está procesando — revisa tu saldo en un momento.",
+      tadsTurnHint: "Le toca al banner patrocinado — tócalo abajo para verlo.",
     },
     tadsAd: {
       title: "Banner patrocinado",

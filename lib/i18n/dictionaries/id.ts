@@ -429,6 +429,7 @@ const id: TranslationDictionary = {
       confirming: "Mengonfirmasi tontonanmu...",
       notCounted: "Tontonan tidak dihitung — coba lagi.",
       stillProcessing: "Masih diproses — cek saldomu sebentar lagi.",
+      tadsTurnHint: "Sekarang giliran banner bersponsor — ketuk banner di bawah untuk menontonnya.",
     },
     tadsAd: {
       title: "Banner bersponsor",

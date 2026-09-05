@@ -432,6 +432,7 @@ const en = {
       confirming: "Confirming your view...",
       notCounted: "View wasn't counted — try again.",
       stillProcessing: "Still processing — check your balance again shortly.",
+      tadsTurnHint: "It's the sponsored banner's turn — tap the banner below to watch it.",
     },
     tadsAd: {
       title: "Sponsored banner",

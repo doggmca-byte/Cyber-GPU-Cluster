@@ -428,6 +428,7 @@ const ar: TranslationDictionary = {
       confirming: "جارٍ تأكيد المشاهدة...",
       notCounted: "لم تُحتسب المشاهدة — حاول مرة أخرى.",
       stillProcessing: "لا تزال قيد المعالجة — تحقق من رصيدك بعد قليل.",
+      tadsTurnHint: "حان دور البانر الممول — اضغط على البانر أدناه لمشاهدته.",
     },
     tadsAd: {
       title: "بانر ممول",
