@@ -157,8 +157,6 @@ const en = {
     claimSuccess: (amount: string) => `Credited ${amount} TON`,
     rulesTitle: "How referral rewards work",
     ruleRevshare: (percent: string) => `${percent}% of every deposit your friend makes, forever`,
-    ruleFirstHarvest: (bonus: string, threshold: string) =>
-      `${bonus} TON one-time bonus once your friend mines ${threshold} HASH`,
     ruleExchangeCommission: (bonus: string, step: string) =>
       `${bonus} TON referral commission for every ${step} HASH your friend exchanges/sells on the exchange`,
     yourLink: "Your referral link",
@@ -218,8 +216,6 @@ const en = {
       minTierHint: (min: string) => `Minimum for this withdrawal: ${min} TON`,
       maxTierHint: (max: string) => `Maximum per request right now: ${max} TON`,
       oneRequestPerDay: "Only 1 withdrawal request per day is allowed (resets at 00:00 UTC).",
-      ambassadorMilestoneLocked: (active: number, required: number) =>
-        `Ambassador perk: your first withdrawal unlocks once ${required} of your invited friends complete their first collection cycle (currently ${active}/${required}). Falling short on your first attempt revokes ambassador status.`,
       submit: "Withdraw",
       submitting: "Submitting request...",
       success: (amount: string, addressShort: string) =>

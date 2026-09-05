@@ -8,8 +8,6 @@ import { formatNumber } from "@/lib/i18n/formatNumber";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import {
   REFERRAL_DEPOSIT_REVSHARE_RATE,
-  REFERRAL_FIRST_HARVEST_BONUS_TON,
-  REFERRAL_FIRST_HARVEST_THRESHOLD_HASH,
   REFERRAL_EXCHANGE_COMMISSION_TON,
   REFERRAL_EXCHANGE_COMMISSION_STEP_HASH,
 } from "@/lib/constants/economy";
@@ -191,13 +189,6 @@ function FriendsScreenReady({ data, initData }: { data: SyncResponse; initData: 
             •{" "}
             {t.friends.ruleRevshare(
               formatNumber(language, REFERRAL_DEPOSIT_REVSHARE_RATE * 100, { maximumFractionDigits: 0 }),
-            )}
-          </li>
-          <li>
-            •{" "}
-            {t.friends.ruleFirstHarvest(
-              formatNumber(language, REFERRAL_FIRST_HARVEST_BONUS_TON, { maximumFractionDigits: 2 }),
-              formatNumber(language, REFERRAL_FIRST_HARVEST_THRESHOLD_HASH),
             )}
           </li>
           <li>

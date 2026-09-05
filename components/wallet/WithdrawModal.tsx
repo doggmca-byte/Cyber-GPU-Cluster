@@ -9,7 +9,6 @@ import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import {
-  AMBASSADOR_MIN_ACTIVE_REFERRALS,
   MIN_ADS_BEFORE_WITHDRAW,
   WITHDRAW_FEE_BPS,
   WITHDRAW_MIN_TON,
@@ -46,39 +45,6 @@ export function WithdrawModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [activeFriendsCount, setActiveFriendsCount] = useState<number | null>(null);
-
-  // Ambassador-онбординговий gate (check_ambassador_withdrawal_gate) блокує
-  // лише САМУ ПЕРШУ спробу виводу — тому й прев'ю рахуємо, лише поки вона
-  // ще не сталась (withdrawal_request_count === 0). Сервер — джерело правди
-  // й перевіряє це незалежно від цього прев'ю; тут лише щоб не давати
-  // амбасадору здогадатись про відмову вже ПІСЛЯ невдалої спроби (яка й сама
-  // по собі знімає статус).
-  const needsAmbassadorMilestone = profile.is_ambassador && profile.withdrawal_request_count === 0;
-
-  useEffect(() => {
-    if (!needsAmbassadorMilestone) return;
-
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch("/api/friends/stats", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData }),
-        });
-        if (!res.ok || cancelled) return;
-        const data = (await res.json()) as { active_friends_count: number };
-        if (!cancelled) setActiveFriendsCount(data.active_friends_count);
-      } catch {
-        // мовчазний фейл — прев'ю просто не покажеться, сервер все одно перевірить насправді
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [needsAmbassadorMilestone, initData]);
 
   // автопідстановка з підключеного TON Connect гаманця, лише поки користувач
   // сам нічого не ввів — далі поле лишається вільно редагованим
@@ -98,10 +64,6 @@ export function WithdrawModal({
   // до AMBASSADOR_WITHDRAW_CAP_TON для is_ambassador
   // (20260905120000_ambassador_withdrawal_restrictions.sql).
   const maxForThisRequest = withdrawMaxForProfile(profile.lifetime_deposited_ton, profile.is_ambassador);
-
-  const ambassadorMilestoneMet =
-    !needsAmbassadorMilestone ||
-    (activeFriendsCount !== null && activeFriendsCount >= AMBASSADOR_MIN_ACTIVE_REFERRALS);
 
   const todayUtc = new Date().toISOString().slice(0, 10);
   const alreadyRequestedToday = profile.last_withdrawal_request_date === todayUtc;
@@ -123,8 +85,7 @@ export function WithdrawModal({
     minOk &&
     maxOk &&
     !alreadyRequestedToday &&
-    addressOk &&
-    ambassadorMilestoneMet;
+    addressOk;
 
   const fee = hasValidNumber ? withdrawFee(requested) : 0;
   const net = hasValidNumber ? requested - fee : 0;
@@ -231,12 +192,6 @@ export function WithdrawModal({
       {alreadyRequestedToday && (
         <p className="mt-2.5 rounded-2xl bg-neon-gold/10 p-2 text-[11px] font-semibold text-neon-gold">
           {t.wallet.withdraw.oneRequestPerDay}
-        </p>
-      )}
-
-      {needsAmbassadorMilestone && !ambassadorMilestoneMet && (
-        <p className="mt-2.5 rounded-2xl bg-neon-gold/10 p-2 text-[11px] font-semibold text-neon-gold">
-          {t.wallet.withdraw.ambassadorMilestoneLocked(activeFriendsCount ?? 0, AMBASSADOR_MIN_ACTIVE_REFERRALS)}
         </p>
       )}
 

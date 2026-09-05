@@ -52,25 +52,13 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const profile = await requireProfileByTelegramId(admin, user.id);
 
-    // Ambassador-онбординговий gate (20260905120000_ambassador_withdrawal_restrictions.sql)
-    // — ОКРЕМИЙ top-level RPC-виклик, ДО request_withdrawal. Навмисно окремо:
-    // усередині ОДНІЄЇ функції UPDATE is_ambassador=false + подальший
-    // RAISE EXCEPTION відкотилися б РАЗОМ (Postgres відкочує весь виклик
-    // функції разом із винятком) — тобто revoke ніколи б не персистився.
-    // Тут же цей виклик комітиться сам по собі незалежно від того, чи взагалі
-    // дійде до request_withdrawal.
-    const { data: gate, error: gateError } = await admin
-      .rpc("check_ambassador_withdrawal_gate", { p_user_id: profile.id })
-      .single();
-
-    if (gateError) throw rpcErrorToApiError(gateError);
-    if (gate && !gate.passed) {
-      throw new ApiError(
-        400,
-        `ambassador withdrawal locked: onboard at least ${gate.required_referrals} active referrals before your first withdrawal (currently ${gate.active_referrals}) — ambassador status revoked`,
-      );
-    }
-
+    // Амбасадорський онбординговий мінімум (30 активних рефералів) і підозра
+    // на накрутку рефералів НЕ блокують саму заявку і НЕ знімають
+    // is_ambassador автоматично — за продуктовим рішенням це лише сигнал для
+    // РУЧНОЇ перевірки адміном (Адмінка → "Статистика амбасадорів",
+    // admin_ambassador_stats(), 20260905140000_...). Єдине, що й далі реально
+    // застосовується на РІВНІ БД для is_ambassador — кап 2 TON/заявка
+    // (усередині request_withdrawal, 20260905120000_ambassador_withdrawal_restrictions.sql).
     const { data, error } = await admin
       .rpc("request_withdrawal", {
         p_user_id: profile.id,

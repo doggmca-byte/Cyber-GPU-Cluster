@@ -73,6 +73,12 @@ export interface AdminAmbassadorStatItem {
   // фальш-спрацювань на 2-3 рефералах, і коли частка неактивних >= 50%.
   inactive_referred_count: number;
   suspected_farming: boolean;
+  // Скільки рефералів реально пройшли перший цикл збору
+  // (referrals.has_reached_threshold) і чи набрано онбордингових 30+ —
+  // ЛИШЕ інформаційно: жодна заявка на вивід більше не блокується цим
+  // автоматично, рішення ухвалює адмін вручну (перевірка вручну).
+  active_referred_count: number;
+  milestone_met: boolean;
 }
 
 export interface AdminAmbassadorStatsResponse {

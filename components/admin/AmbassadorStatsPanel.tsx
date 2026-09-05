@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, RefreshCw, TrendingUp } from "lucide-react";
+import { AlertTriangle, RefreshCw, ShieldAlert, TrendingUp } from "lucide-react";
+import { AMBASSADOR_MIN_ACTIVE_REFERRALS } from "@/lib/constants/economy";
 import type { AdminAmbassadorStatItem, AdminAmbassadorStatsResponse } from "@/types/admin";
 
 /**
@@ -99,8 +100,22 @@ export function AmbassadorStatsPanel({ onSessionExpired }: { onSessionExpired: (
               </div>
             </div>
 
+            <p className="mt-2 text-[11px] text-white/40">
+              Активних рефералів (пройшли перший цикл збору): {item.active_referred_count}/
+              {AMBASSADOR_MIN_ACTIVE_REFERRALS}
+            </p>
+
+            {!item.milestone_met && (
+              <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-neon-gold/10 px-2.5 py-1.5 text-[11px] font-semibold text-neon-gold">
+                <ShieldAlert size={12} />
+                Онбордингових {AMBASSADOR_MIN_ACTIVE_REFERRALS} активних рефералів ще не набрано (
+                {item.active_referred_count}/{AMBASSADOR_MIN_ACTIVE_REFERRALS}) — перевір вручну перед
+                виводом амбасадора.
+              </p>
+            )}
+
             {item.suspected_farming && (
-              <p className="mt-2.5 flex items-center gap-1.5 rounded-lg bg-red-400/10 px-2.5 py-1.5 text-[11px] font-semibold text-red-400">
+              <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-red-400/10 px-2.5 py-1.5 text-[11px] font-semibold text-red-400">
                 <AlertTriangle size={12} />
                 Підозра на накрутку: {item.inactive_referred_count}/{item.referred_count} запрошених не
                 має жодної GPU і не виконало жодного завдання — рекомендується ручна перевірка.

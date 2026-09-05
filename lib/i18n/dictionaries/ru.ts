@@ -154,8 +154,6 @@ const ru: TranslationDictionary = {
     claimSuccess: (amount) => `Зачислено ${amount} TON`,
     rulesTitle: "Как начисляется реферальное вознаграждение",
     ruleRevshare: (percent) => `${percent}% с каждого депозита друга — навсегда`,
-    ruleFirstHarvest: (bonus, threshold) =>
-      `Разовый бонус ${bonus} TON, когда друг добудет ${threshold} HASH`,
     ruleExchangeCommission: (bonus, step) =>
       `${bonus} TON реферальной комиссии за каждые ${step} HASH, которые друг обменивает/продаёт на бирже`,
     yourLink: "Твоя реферальная ссылка",
@@ -215,8 +213,6 @@ const ru: TranslationDictionary = {
       minTierHint: (min) => `Минимум для этого вывода: ${min} TON`,
       maxTierHint: (max) => `Максимум за заявку сейчас: ${max} TON`,
       oneRequestPerDay: "Разрешена только 1 заявка в сутки (сброс в 00:00 UTC).",
-      ambassadorMilestoneLocked: (active: number, required: number) =>
-        `Условие амбассадора: первый вывод разблокируется, когда ${required} приглашённых друзей пройдут свой первый цикл сбора (сейчас ${active}/${required}). Если на первой попытке минимум не набран — статус амбассадора снимается.`,
       submit: "Вывести",
       submitting: "Отправляем заявку...",
       success: (amount, addressShort) =>

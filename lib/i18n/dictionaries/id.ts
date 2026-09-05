@@ -154,8 +154,6 @@ const id: TranslationDictionary = {
     claimSuccess: (amount) => `${amount} TON telah dikreditkan`,
     rulesTitle: "Cara kerja bonus referral",
     ruleRevshare: (percent) => `${percent}% dari setiap deposit temanmu — selamanya`,
-    ruleFirstHarvest: (bonus, threshold) =>
-      `Bonus sekali sebesar ${bonus} TON saat temanmu menambang ${threshold} HASH`,
     ruleExchangeCommission: (bonus, step) =>
       `${bonus} TON komisi referral untuk setiap ${step} HASH yang ditukar/dijual temanmu di exchange`,
     yourLink: "Link referral kamu",
@@ -215,8 +213,6 @@ const id: TranslationDictionary = {
       minTierHint: (min) => `Minimum untuk penarikan ini: ${min} TON`,
       maxTierHint: (max) => `Maksimum per permintaan saat ini: ${max} TON`,
       oneRequestPerDay: "Hanya 1 permintaan penarikan per hari (reset pukul 00:00 UTC).",
-      ambassadorMilestoneLocked: (active: number, required: number) =>
-        `Syarat ambassador: penarikan pertamamu terbuka setelah ${required} teman undanganmu menyelesaikan siklus panen pertama mereka (sekarang ${active}/${required}). Jika belum tercapai pada percobaan pertama, status ambassador akan dicabut.`,
       submit: "Tarik",
       submitting: "Mengirim permintaan...",
       success: (amount, addressShort) =>

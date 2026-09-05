@@ -154,8 +154,6 @@ const ar: TranslationDictionary = {
     claimSuccess: (amount) => `تم إضافة ${amount} TON`,
     rulesTitle: "كيف تُحتسب مكافآت الإحالة",
     ruleRevshare: (percent) => `${percent}% من كل إيداع يقوم به صديقك — إلى الأبد`,
-    ruleFirstHarvest: (bonus, threshold) =>
-      `مكافأة لمرة واحدة ${bonus} TON عندما يعدّن صديقك ${threshold} HASH`,
     ruleExchangeCommission: (bonus, step) =>
       `${bonus} TON عمولة إحالة عن كل ${step} HASH يبادلها/يبيعها صديقك في البورصة`,
     yourLink: "رابط الإحالة الخاص بك",
@@ -215,8 +213,6 @@ const ar: TranslationDictionary = {
       minTierHint: (min) => `الحد الأدنى لهذا السحب: ${min} TON`,
       maxTierHint: (max) => `الحد الأقصى لكل طلب حاليًا: ${max} TON`,
       oneRequestPerDay: "يُسمح بطلب سحب واحد فقط يوميًا (إعادة التعيين في 00:00 UTC).",
-      ambassadorMilestoneLocked: (active: number, required: number) =>
-        `شرط السفير: يُفتح سحبك الأول بعد أن يكمل ${required} من الأصدقاء المدعوين دورة جمعهم الأولى (حاليًا ${active}/${required}). إذا لم يتحقق الحد الأدنى في المحاولة الأولى، يُلغى وضع السفير.`,
       submit: "سحب",
       submitting: "جارٍ إرسال الطلب...",
       success: (amount, addressShort) =>

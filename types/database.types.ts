@@ -606,6 +606,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_ambassador_stats: {
+        Args: never
+        Returns: {
+          active_referred_count: number
+          first_name: string
+          inactive_referred_count: number
+          milestone_met: boolean
+          referred_count: number
+          referred_with_deposit_count: number
+          suspected_farming: boolean
+          telegram_id: number
+          total_real_deposit_ton: number
+          username: string
+        }[]
+      }
       admin_grant_balance: {
         Args: {
           p_admin_telegram_id: string
@@ -647,15 +662,6 @@ export type Database = {
           hash_harvested: number
           new_game_balance: number
           new_gpu_amount: number
-        }[]
-      }
-      check_ambassador_withdrawal_gate: {
-        Args: { p_user_id: string }
-        Returns: {
-          active_referrals: number
-          passed: boolean
-          required_referrals: number
-          revoked: boolean
         }[]
       }
       claim_daily_bonus: {

@@ -14,13 +14,6 @@ interface StatsRequestBody {
 
 export interface ReferralStatsResponse {
   friends_count: number;
-  // Скільки з приведених рефералів реально пройшли свій перший цикл збору
-  // (referrals.has_reached_threshold = true) — той самий прапорець, що й
-  // ambassador-онбординговий gate (lib/constants/economy.ts
-  // AMBASSADOR_MIN_ACTIVE_REFERRALS, check_ambassador_withdrawal_gate) —
-  // тому WithdrawModal показує прогрес амбасадора саме за цим полем, без
-  // окремого запиту.
-  active_friends_count: number;
   total_earned: number;
   pending_reward: number;
   server_time: string;
@@ -46,7 +39,7 @@ export async function POST(request: Request) {
 
     const { data: referrals, error } = await admin
       .from("referrals")
-      .select("pending_reward, total_earned, has_reached_threshold")
+      .select("pending_reward, total_earned")
       .eq("referrer_id", profile.id);
 
     if (error) {
@@ -56,7 +49,6 @@ export async function POST(request: Request) {
     const rows = referrals ?? [];
     const response: ReferralStatsResponse = {
       friends_count: rows.length,
-      active_friends_count: rows.filter((r) => r.has_reached_threshold).length,
       total_earned: rows.reduce((sum, r) => sum + r.total_earned, 0),
       pending_reward: rows.reduce((sum, r) => sum + r.pending_reward, 0),
       server_time: new Date().toISOString(),

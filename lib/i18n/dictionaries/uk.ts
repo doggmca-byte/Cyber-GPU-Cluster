@@ -154,8 +154,6 @@ const uk: TranslationDictionary = {
     claimSuccess: (amount) => `Зараховано ${amount} TON`,
     rulesTitle: "Як нараховується реферальна винагорода",
     ruleRevshare: (percent) => `${percent}% з кожного депозиту друга — назавжди`,
-    ruleFirstHarvest: (bonus, threshold) =>
-      `Одноразовий бонус ${bonus} TON, коли друг видобуде ${threshold} HASH`,
     ruleExchangeCommission: (bonus, step) =>
       `${bonus} TON реферальної комісії за кожні ${step} HASH, які друг обмінює/продає на біржі`,
     yourLink: "Твоє реферальне посилання",
@@ -215,8 +213,6 @@ const uk: TranslationDictionary = {
       minTierHint: (min) => `Мінімум для цього виводу: ${min} TON`,
       maxTierHint: (max) => `Максимум за заявку зараз: ${max} TON`,
       oneRequestPerDay: "Дозволена лише 1 заявка на добу (скидання о 00:00 UTC).",
-      ambassadorMilestoneLocked: (active: number, required: number) =>
-        `Умова амбасадора: перший вивід розблокується, коли ${required} запрошених друзів пройдуть свій перший цикл збору (зараз ${active}/${required}). Якщо на першій спробі мінімум не набрано — статус амбасадора знімається.`,
       submit: "Вивести",
       submitting: "Надсилаємо заявку...",
       success: (amount, addressShort) =>

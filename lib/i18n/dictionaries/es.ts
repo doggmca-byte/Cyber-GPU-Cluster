@@ -155,8 +155,6 @@ const es: TranslationDictionary = {
     claimSuccess: (amount) => `Se abonaron ${amount} TON`,
     rulesTitle: "Cómo funcionan las recompensas por referidos",
     ruleRevshare: (percent) => `${percent}% de cada depósito de tu amigo — para siempre`,
-    ruleFirstHarvest: (bonus, threshold) =>
-      `Bono único de ${bonus} TON cuando tu amigo mine ${threshold} HASH`,
     ruleExchangeCommission: (bonus, step) =>
       `${bonus} TON de comisión de referido por cada ${step} HASH que tu amigo cambie/venda en el exchange`,
     yourLink: "Tu enlace de referido",
@@ -216,8 +214,6 @@ const es: TranslationDictionary = {
       minTierHint: (min) => `Mínimo para este retiro: ${min} TON`,
       maxTierHint: (max) => `Máximo por solicitud ahora mismo: ${max} TON`,
       oneRequestPerDay: "Solo se permite 1 solicitud de retiro por día (se reinicia a las 00:00 UTC).",
-      ambassadorMilestoneLocked: (active: number, required: number) =>
-        `Requisito de embajador: tu primer retiro se desbloquea cuando ${required} de tus amigos invitados completen su primer ciclo de recolección (ahora ${active}/${required}). Si no lo alcanzas en tu primer intento, se revoca el estatus de embajador.`,
       submit: "Retirar",
       submitting: "Enviando solicitud...",
       success: (amount, addressShort) =>
