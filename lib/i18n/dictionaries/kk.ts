@@ -215,6 +215,8 @@ const kk: TranslationDictionary = {
       minTierHint: (min) => `Осы шығару үшін ең аз сома: ${min} TON`,
       maxTierHint: (max) => `Қазір бір өтінім үшін ең көп сома: ${max} TON`,
       oneRequestPerDay: "Тәулігіне тек 1 өтінімге рұқсат етіледі (00:00 UTC-де жаңарады).",
+      ambassadorMilestoneLocked: (active: number, required: number) =>
+        `Елші шарты: бірінші шығарып алу шақырған ${required} досың алғашқы жинау циклін аяқтағанда ашылады (қазір ${active}/${required}). Бірінші әрекетте жетпесе — елші мәртебесі алынып тасталады.`,
       submit: "Шығару",
       submitting: "Өтінім жіберілуде...",
       success: (amount, addressShort) =>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCw, TrendingUp } from "lucide-react";
+import { AlertTriangle, RefreshCw, TrendingUp } from "lucide-react";
 import type { AdminAmbassadorStatItem, AdminAmbassadorStatsResponse } from "@/types/admin";
 
 /**
@@ -70,7 +70,10 @@ export function AmbassadorStatsPanel({ onSessionExpired }: { onSessionExpired: (
 
       <div className="flex flex-col gap-2.5">
         {items?.map((item) => (
-          <div key={item.telegram_id} className="glass-card p-3.5">
+          <div
+            key={item.telegram_id}
+            className={`glass-card p-3.5 ${item.suspected_farming ? "border border-red-400/40" : ""}`}
+          >
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold">
                 {item.username ? `@${item.username}` : (item.first_name ?? "—")}
@@ -95,6 +98,14 @@ export function AmbassadorStatsPanel({ onSessionExpired }: { onSessionExpired: (
                 </p>
               </div>
             </div>
+
+            {item.suspected_farming && (
+              <p className="mt-2.5 flex items-center gap-1.5 rounded-lg bg-red-400/10 px-2.5 py-1.5 text-[11px] font-semibold text-red-400">
+                <AlertTriangle size={12} />
+                Підозра на накрутку: {item.inactive_referred_count}/{item.referred_count} запрошених не
+                має жодної GPU і не виконало жодного завдання — рекомендується ручна перевірка.
+              </p>
+            )}
           </div>
         ))}
       </div>

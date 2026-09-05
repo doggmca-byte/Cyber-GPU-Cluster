@@ -39,6 +39,25 @@ export function withdrawMaxForDeposits(lifetimeDepositedTon: number): number {
   return tier ? tier.maxTon : WITHDRAW_MAX_TIERS[WITHDRAW_MAX_TIERS.length - 1].maxTon;
 }
 
+// Обмеження для profiles.is_ambassador (request_withdrawal +
+// check_ambassador_withdrawal_gate, 20260905120000_ambassador_withdrawal_restrictions.sql):
+//   1) не більше AMBASSADOR_WITHDRAW_CAP_TON за заявку, незалежно від тіра
+//      lifetime_deposited_ton (і так лише 1 заявка/добу дозволена всім) —
+//      тому це фактично й денний ліміт;
+//   2) перший-у-житті вивід заблоковано, доки амбасадор не привів мінімум
+//      AMBASSADOR_MIN_ACTIVE_REFERRALS АКТИВНИХ рефералів (той самий прапорець
+//      referrals.has_reached_threshold, що й REFERRAL_FIRST_HARVEST_THRESHOLD_HASH
+//      вище — реферал реально пройшов свій перший цикл збору); якщо ні —
+//      is_ambassador автоматично скидається в false (партнерство розірвано)
+//      РІВНО на цій першій спробі.
+export const AMBASSADOR_WITHDRAW_CAP_TON = 2;
+export const AMBASSADOR_MIN_ACTIVE_REFERRALS = 30;
+
+export function withdrawMaxForProfile(lifetimeDepositedTon: number, isAmbassador: boolean): number {
+  const tierMax = withdrawMaxForDeposits(lifetimeDepositedTon);
+  return isAmbassador ? Math.min(tierMax, AMBASSADOR_WITHDRAW_CAP_TON) : tierMax;
+}
+
 export function withdrawFee(amount: number): number {
   return calcFee(amount, WITHDRAW_FEE_BPS);
 }

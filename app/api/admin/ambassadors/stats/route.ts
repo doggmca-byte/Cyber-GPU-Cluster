@@ -52,21 +52,43 @@ export async function GET() {
     const refereeIds = [...new Set((referrals ?? []).map((r) => r.referee_id))];
 
     const depositSumByUser = new Map<string, number>();
-    if (refereeIds.length > 0) {
-      const { data: deposits, error: depositsError } = await admin
-        .from("transactions")
-        .select("user_id, amount")
-        .eq("type", "deposit")
-        .eq("status", "completed")
-        .in("user_id", refereeIds);
+    // "Живий" реферал рано чи пізно купує хоча б якусь GPU АБО виконує хоча б
+    // одне завдання — набір, у кого немає НІ того, НІ іншого, підозрілий на
+    // накрутку (див. AdminAmbassadorStatItem.suspected_farming нижче).
+    const hasGpuByUser = new Set<string>();
+    const hasCompletedTaskByUser = new Set<string>();
 
-      if (depositsError) {
-        throw new ApiError(500, `failed to load deposits: ${depositsError.message}`);
+    if (refereeIds.length > 0) {
+      const [depositsRes, gpusRes, tasksRes] = await Promise.all([
+        admin
+          .from("transactions")
+          .select("user_id, amount")
+          .eq("type", "deposit")
+          .eq("status", "completed")
+          .in("user_id", refereeIds),
+        admin.from("user_gpus").select("user_id, amount").gt("amount", 0).in("user_id", refereeIds),
+        admin
+          .from("user_tasks")
+          .select("user_id")
+          .in("status", ["completed", "claimed"])
+          .in("user_id", refereeIds),
+      ]);
+
+      if (depositsRes.error) {
+        throw new ApiError(500, `failed to load deposits: ${depositsRes.error.message}`);
+      }
+      if (gpusRes.error) {
+        throw new ApiError(500, `failed to load user_gpus: ${gpusRes.error.message}`);
+      }
+      if (tasksRes.error) {
+        throw new ApiError(500, `failed to load user_tasks: ${tasksRes.error.message}`);
       }
 
-      for (const tx of deposits ?? []) {
+      for (const tx of depositsRes.data ?? []) {
         depositSumByUser.set(tx.user_id, (depositSumByUser.get(tx.user_id) ?? 0) + tx.amount);
       }
+      for (const row of gpusRes.data ?? []) hasGpuByUser.add(row.user_id);
+      for (const row of tasksRes.data ?? []) hasCompletedTaskByUser.add(row.user_id);
     }
 
     const refereesByAmbassador = new Map<string, string[]>();
@@ -76,15 +98,29 @@ export async function GET() {
       refereesByAmbassador.set(r.referrer_id, list);
     }
 
+    // Мінімальна вибірка для евристики — на 2-3 запрошених "50% неактивних"
+    // нічого не означає, лише шум.
+    const MIN_SAMPLE_FOR_FARMING_CHECK = 10;
+    const INACTIVE_RATIO_THRESHOLD = 0.5;
+
     const items: AdminAmbassadorStatItem[] = (ambassadors ?? []).map((a) => {
       const referees = refereesByAmbassador.get(a.id) ?? [];
       let withDeposit = 0;
       let totalDeposit = 0;
+      let inactiveCount = 0;
       for (const refereeId of referees) {
         const sum = depositSumByUser.get(refereeId) ?? 0;
         if (sum > 0) withDeposit += 1;
         totalDeposit += sum;
+
+        if (!hasGpuByUser.has(refereeId) && !hasCompletedTaskByUser.has(refereeId)) {
+          inactiveCount += 1;
+        }
       }
+
+      const suspectedFarming =
+        referees.length >= MIN_SAMPLE_FOR_FARMING_CHECK &&
+        inactiveCount / referees.length >= INACTIVE_RATIO_THRESHOLD;
 
       return {
         telegram_id: a.telegram_id,
@@ -93,6 +129,8 @@ export async function GET() {
         referred_count: referees.length,
         referred_with_deposit_count: withDeposit,
         total_real_deposit_ton: totalDeposit,
+        inactive_referred_count: inactiveCount,
+        suspected_farming: suspectedFarming,
       };
     });
 

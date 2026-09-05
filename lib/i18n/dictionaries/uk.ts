@@ -215,6 +215,8 @@ const uk: TranslationDictionary = {
       minTierHint: (min) => `Мінімум для цього виводу: ${min} TON`,
       maxTierHint: (max) => `Максимум за заявку зараз: ${max} TON`,
       oneRequestPerDay: "Дозволена лише 1 заявка на добу (скидання о 00:00 UTC).",
+      ambassadorMilestoneLocked: (active: number, required: number) =>
+        `Умова амбасадора: перший вивід розблокується, коли ${required} запрошених друзів пройдуть свій перший цикл збору (зараз ${active}/${required}). Якщо на першій спробі мінімум не набрано — статус амбасадора знімається.`,
       submit: "Вивести",
       submitting: "Надсилаємо заявку...",
       success: (amount, addressShort) =>

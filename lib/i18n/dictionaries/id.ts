@@ -215,6 +215,8 @@ const id: TranslationDictionary = {
       minTierHint: (min) => `Minimum untuk penarikan ini: ${min} TON`,
       maxTierHint: (max) => `Maksimum per permintaan saat ini: ${max} TON`,
       oneRequestPerDay: "Hanya 1 permintaan penarikan per hari (reset pukul 00:00 UTC).",
+      ambassadorMilestoneLocked: (active: number, required: number) =>
+        `Syarat ambassador: penarikan pertamamu terbuka setelah ${required} teman undanganmu menyelesaikan siklus panen pertama mereka (sekarang ${active}/${required}). Jika belum tercapai pada percobaan pertama, status ambassador akan dicabut.`,
       submit: "Tarik",
       submitting: "Mengirim permintaan...",
       success: (amount, addressShort) =>

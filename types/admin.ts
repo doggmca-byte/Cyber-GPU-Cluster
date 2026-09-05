@@ -66,6 +66,13 @@ export interface AdminAmbassadorStatItem {
   referred_count: number;
   referred_with_deposit_count: number;
   total_real_deposit_ton: number;
+  // Евристика "накрутки" рефералів: скільки запрошених НЕ мають жодної GPU
+  // (навіть найдешевшої) І не виконали жодного завдання — реальний живий
+  // гравець рано чи пізно робить хоча б одне з двох. suspected_farming
+  // спрацьовує лише за достатньої вибірки (>=10 запрошених), щоб не давати
+  // фальш-спрацювань на 2-3 рефералах, і коли частка неактивних >= 50%.
+  inactive_referred_count: number;
+  suspected_farming: boolean;
 }
 
 export interface AdminAmbassadorStatsResponse {

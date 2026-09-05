@@ -215,6 +215,8 @@ const tr: TranslationDictionary = {
       minTierHint: (min) => `Bu çekim için minimum: ${min} TON`,
       maxTierHint: (max) => `Şu anki istek başına maksimum: ${max} TON`,
       oneRequestPerDay: "Günde yalnızca 1 çekim talebine izin verilir (00:00 UTC'de sıfırlanır).",
+      ambassadorMilestoneLocked: (active: number, required: number) =>
+        `Ambassador şartı: ilk çekimin, davet ettiğin ${required} arkadaşın ilk toplama döngüsünü tamamlamasıyla açılır (şu an ${active}/${required}). İlk denemede bu sayıya ulaşılmazsa ambassador statün iptal edilir.`,
       submit: "Çek",
       submitting: "Talep gönderiliyor...",
       success: (amount, addressShort) =>
