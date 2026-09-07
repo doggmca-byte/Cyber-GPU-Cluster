@@ -6,6 +6,7 @@ import { readJsonBody } from "@/lib/api/request";
 import { findProfileByTelegramId } from "@/lib/api/profile";
 import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
 import { checkChannelMembershipStatus } from "@/lib/telegram/getChatMember";
+import { calcTotalHashPerSecond } from "@/lib/farm/totalHashPerSecond";
 import type { SyncResponse } from "@/types/api";
 import type { Database } from "@/types/database.types";
 
@@ -51,15 +52,9 @@ export async function POST(request: Request) {
       throw new ApiError(500, `failed to load gpu_templates: ${templatesError.message}`);
     }
 
-    const templateByLevel = new Map((gpuTemplates ?? []).map((t) => [t.level, t]));
-    // Мертві (is_dead) картки не виробляють нічого, доки не оживлені —
-    // не рахуємо їх у сумарну швидкість (той самий принцип, що й
-    // harvest_user_hash: continue для is_dead рядків).
-    const totalHashPerSecond = (userGpus ?? []).reduce((sum, gpu) => {
-      if (gpu.is_dead) return sum;
-      const template = templateByLevel.get(gpu.gpu_level);
-      return sum + (template ? template.hash_per_second * gpu.amount : 0);
-    }, 0);
+    // Спільна формула з /api/farm/buy (lib/farm/totalHashPerSecond.ts) —
+    // обидва роути мусять давати однакове число для однакового стану БД.
+    const totalHashPerSecond = calcTotalHashPerSecond(userGpus ?? [], gpuTemplates ?? []);
 
     const response: SyncResponse = {
       profile,

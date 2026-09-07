@@ -330,7 +330,15 @@ function ActiveServersSection({
     return () => clearInterval(interval);
   }, []);
 
-  const ownedCount = userGpus.filter((gpu) => gpu.amount > 0).length;
+  // Рендеримо ЛИШЕ реально придбані рядки (amount > 0) і лише ті, для яких є
+  // шаблон. Мертві (is_dead) картки лишаються у списку навмисно — у них своя
+  // кнопка оживлення. Фільтр також страхує від рядків з amount = 0, які може
+  // повернути будь-який інший шлях: такий рядок раніше рендерився як
+  // "фантомний сервер" із +0 HASH/год.
+  const visibleGpus = userGpus.filter(
+    (gpu) => gpu.amount > 0 && templateByLevel.has(gpu.gpu_level),
+  );
+  const ownedCount = visibleGpus.length;
 
   return (
     <div className="flex flex-col gap-2">
@@ -349,16 +357,15 @@ function ActiveServersSection({
         </span>
       </div>
 
-      {userGpus.length === 0 ? (
+      {visibleGpus.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
           <Server size={20} className="text-slate-600" />
           <p className="text-xs text-slate-500">{t.farm.emptyGpuList}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {userGpus.map((gpu) => {
-            const template = templateByLevel.get(gpu.gpu_level);
-            if (!template) return null;
+          {visibleGpus.map((gpu) => {
+            const template = templateByLevel.get(gpu.gpu_level)!;
             return (
               <ServerRow
                 key={gpu.id}

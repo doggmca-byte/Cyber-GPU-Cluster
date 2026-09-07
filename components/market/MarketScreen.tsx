@@ -41,7 +41,7 @@ export function MarketScreen() {
 
 function MarketScreenReady({ data, initData }: { data: SyncResponse; initData: string }) {
   const { t, language } = useTranslation();
-  const { patchProfile, patchUserGpuAmount } = useUserData();
+  const { applyGpuPurchase } = useUserData();
   const { profile, user_gpus, gpu_templates } = data;
 
   const amountByLevel = new Map(user_gpus.map((g) => [g.gpu_level, g.amount]));
@@ -51,15 +51,17 @@ function MarketScreenReady({ data, initData }: { data: SyncResponse; initData: s
   const [errorByLevel, setErrorByLevel] = useState<Record<number, string>>({});
   const [cyclesTemplate, setCyclesTemplate] = useState<GpuTemplate | null>(null);
 
+  // ЖОДНОГО оптимістичного оновлення: ані картка, ані баланс не змінюються,
+  // доки бекенд не підтвердив транзакцію. Раніше картку додавали одразу після
+  // кліку, а на помилці (напр. недостатньо game_balance) відкочували
+  // дельтою -1 — рядок лишався в стані з amount = 0 і рендерився на Фермі як
+  // "фантомний сервер" із +0 HASH/год до наступного повного sync. Тепер
+  // єдине джерело правди — відповідь /api/farm/buy.
   const buy = async (template: GpuTemplate) => {
     if (buyingLevel !== null) return;
 
     setBuyingLevel(template.level);
     setErrorByLevel((prev) => ({ ...prev, [template.level]: "" }));
-
-    // оптимістичний UI: одразу списуємо вартість і додаємо картку
-    patchProfile({ game_balance: profile.game_balance - template.cost_ton });
-    patchUserGpuAmount(template.level, 1);
 
     try {
       const res = await fetch("/api/farm/buy", {
@@ -73,16 +75,11 @@ function MarketScreenReady({ data, initData }: { data: SyncResponse; initData: s
         throw new Error(body?.error ?? `buy failed with status ${res.status}`);
       }
 
-      const result = (await res.json()) as BuyGpuResponse;
-      // узгоджуємо з реальними серверними цифрами (harvest міг додати трохи HASH)
-      patchProfile({
-        game_balance: result.new_game_balance,
-        hash_balance: profile.hash_balance + result.hash_harvested,
-      });
+      // Успіх — і лише тут стан обладнання та баланси беруться з відповіді
+      // бекенду як є (масив user_gpus, потужність, game_balance, harvest).
+      applyGpuPurchase((await res.json()) as BuyGpuResponse);
     } catch (err) {
-      // відкат оптимістичного патча
-      patchProfile({ game_balance: profile.game_balance });
-      patchUserGpuAmount(template.level, -1);
+      // Помилка — стан не чіпаємо взагалі, лише показуємо причину на картці.
       setErrorByLevel((prev) => ({
         ...prev,
         [template.level]: err instanceof Error ? err.message : t.common.unknownError,

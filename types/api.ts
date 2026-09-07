@@ -27,6 +27,13 @@ export interface BuyGpuResponse {
   new_game_balance: number;
   new_gpu_amount: number;
   hash_harvested: number;
+  /**
+   * Фактичний стан обладнання ПІСЛЯ успішної транзакції — клієнт замінює свій
+   * масив цим, а не домальовує картку локально (див. коментар у
+   * app/api/farm/buy/route.ts про "фантомні сервери").
+   */
+  user_gpus: UserGpu[];
+  total_hash_per_second: number;
   server_time: string;
 }
 

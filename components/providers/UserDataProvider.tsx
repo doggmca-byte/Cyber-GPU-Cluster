@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { getWebAppInitData } from "@/lib/telegram/getWebAppInitData";
-import type { Profile, SyncResponse } from "@/types/api";
+import type { BuyGpuResponse, Profile, SyncResponse } from "@/types/api";
 
 export type UserDataState =
   | { status: "loading" }
@@ -25,7 +25,13 @@ interface UserDataContextValue {
   /** Оптимістичний локальний патч полів профілю (баланси/квота) без round-trip. */
   patchProfile: (patch: Partial<Profile>) => void;
   /** Оптимістична зміна кількості конкретного рівня GPU (+1 при купівлі тощо). */
-  patchUserGpuAmount: (level: number, amountDelta: number) => void;
+  /**
+   * Застосовує РЕЗУЛЬТАТ успішної покупки: масив обладнання, потужність і
+   * баланси беруться з відповіді бекенду як є. Жодних оптимістичних дельт —
+   * саме вони й давали "фантомні сервери" з +0 HASH/год, коли покупка
+   * падала через нестачу коштів (відкат лишав рядок з amount = 0).
+   */
+  applyGpuPurchase: (result: BuyGpuResponse) => void;
   /** Патч після успішного revive_gpu — оживлює рядок і списує game_balance разом. */
   patchGpuRevived: (level: number, newGameBalance: number, revivalCount: number) => void;
 }
@@ -105,46 +111,32 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const patchUserGpuAmount = useCallback((level: number, amountDelta: number) => {
+  const applyGpuPurchase = useCallback((result: BuyGpuResponse) => {
     setState((prev) => {
       if (prev.status !== "ready") return prev;
 
-      const now = new Date().toISOString();
-      const existing = prev.data.user_gpus.find((g) => g.gpu_level === level);
+      // hash_balance рахуємо від АКТУАЛЬНОГО значення в стані (prev), а не від
+      // того, яке компонент захопив у замикання на момент кліку: між кліком і
+      // відповіддю баланс міг змінити будь-який інший флоу (харвест, нагорода
+      // за завдання, реклама), і запис захопленого значення затер би його.
+      const profile = {
+        ...prev.data.profile,
+        game_balance: result.new_game_balance,
+        hash_balance: prev.data.profile.hash_balance + result.hash_harvested,
+      };
 
-      // buy_gpu на бекенді ЗАВЖДИ спершу харвестить УСІ наявні картки (щоб
-      // зафіксувати дохід до зміни amount) — тобто last_harvest_at усіх рядків
-      // на сервері вже скинуто на "зараз". Синхронізуємо це й тут локально,
-      // інакше useMiningEngine на Farm після повернення з Market порахує вже
-      // враховану сервером ділянку часу ЩЕ РАЗ як "незабрану".
-      const resetGpus = prev.data.user_gpus.map((g) => ({ ...g, last_harvest_at: now }));
-
-      const nextUserGpus = existing
-        ? resetGpus.map((g) =>
-            g.gpu_level === level ? { ...g, amount: g.amount + amountDelta } : g,
-          )
-        : [
-            ...resetGpus,
-            {
-              id: `optimistic-${level}-${Date.now()}`,
-              user_id: prev.data.profile.id,
-              gpu_level: level,
-              amount: amountDelta,
-              last_harvest_at: now,
-              lifetime_hash_generated: 0,
-              is_dead: false,
-              revival_count: 0,
-            },
-          ];
-
-      const template = prev.data.gpu_templates.find((t) => t.level === level);
-      const total_hash_per_second =
-        prev.data.total_hash_per_second +
-        (template ? template.hash_per_second * amountDelta : 0);
-
+      // user_gpus і потужність — рівно те, що повернув бекенд після успішної
+      // транзакції (buy_gpu спершу харвестить усі картки й скидає їм
+      // last_harvest_at, тож свіжі рядки з БД уже містять правильний час, і
+      // useMiningEngine не порахує вже враховану ділянку часу вдруге).
       return {
         ...prev,
-        data: { ...prev.data, user_gpus: nextUserGpus, total_hash_per_second },
+        data: {
+          ...prev.data,
+          profile,
+          user_gpus: result.user_gpus,
+          total_hash_per_second: result.total_hash_per_second,
+        },
       };
     });
   }, []);
@@ -172,8 +164,8 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<UserDataContextValue>(
-    () => ({ state, refresh: sync, patchProfile, patchUserGpuAmount, patchGpuRevived }),
-    [state, sync, patchProfile, patchUserGpuAmount, patchGpuRevived],
+    () => ({ state, refresh: sync, patchProfile, applyGpuPurchase, patchGpuRevived }),
+    [state, sync, patchProfile, applyGpuPurchase, patchGpuRevived],
   );
 
   return <UserDataContext.Provider value={value}>{children}</UserDataContext.Provider>;
