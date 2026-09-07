@@ -54,9 +54,55 @@ export function withdrawMaxForDeposits(lifetimeDepositedTon: number): number {
 export const AMBASSADOR_WITHDRAW_CAP_TON = 2;
 export const AMBASSADOR_MIN_ACTIVE_REFERRALS = 30;
 
-export function withdrawMaxForProfile(lifetimeDepositedTon: number, isAmbassador: boolean): number {
+export interface WithdrawPolicyInput {
+  lifetimeDepositedTon: number;
+  isAmbassador: boolean;
+  withdrawalRequestCount: number;
+}
+
+export interface WithdrawPolicy {
+  /** Максимум для ЦІЄЇ заявки, уже з урахуванням усіх обмежень. */
+  maxTon: number;
+  /**
+   * true — вивід повністю заблоковано, доки не буде депозиту від
+   * MIN_DEPOSIT_TON: єдиний бездепозитний вивід уже витрачено.
+   */
+  depositRequired: boolean;
+  /** true — це і є той самий єдиний бездепозитний вивід (рівно WITHDRAW_MIN_TON). */
+  isFreeWithdrawal: boolean;
+}
+
+/**
+ * Дзеркало серверного request_withdrawal
+ * (20260907090000_no_deposit_single_withdrawal.sql) — тримати синхронно:
+ *   - без депозиту (< MIN_DEPOSIT_TON) і без статусу амбасадора дозволено
+ *     РІВНО ОДИН вивід і рівно на WITHDRAW_MIN_TON;
+ *   - після нього будь-яка заявка відхиляється, доки не буде депозиту;
+ *   - на депозиторів (>= MIN_DEPOSIT_TON) і на амбасадорів це не діє.
+ * Сервер усе одно перевіряє це сам — тут лише прев'ю, щоб юзер бачив причину
+ * ДО сабміту, а не ловив сиру помилку бекенду.
+ */
+export function withdrawPolicy({
+  lifetimeDepositedTon,
+  isAmbassador,
+  withdrawalRequestCount,
+}: WithdrawPolicyInput): WithdrawPolicy {
   const tierMax = withdrawMaxForDeposits(lifetimeDepositedTon);
-  return isAmbassador ? Math.min(tierMax, AMBASSADOR_WITHDRAW_CAP_TON) : tierMax;
+  const needsDeposit = !isAmbassador && lifetimeDepositedTon < MIN_DEPOSIT_TON;
+
+  if (needsDeposit) {
+    return {
+      maxTon: Math.min(tierMax, WITHDRAW_MIN_TON),
+      depositRequired: withdrawalRequestCount >= 1,
+      isFreeWithdrawal: withdrawalRequestCount === 0,
+    };
+  }
+
+  return {
+    maxTon: isAmbassador ? Math.min(tierMax, AMBASSADOR_WITHDRAW_CAP_TON) : tierMax,
+    depositRequired: false,
+    isFreeWithdrawal: false,
+  };
 }
 
 export function withdrawFee(amount: number): number {

@@ -216,6 +216,10 @@ const en = {
       minTierHint: (min: string) => `Minimum for this withdrawal: ${min} TON`,
       maxTierHint: (max: string) => `Maximum per request right now: ${max} TON`,
       oneRequestPerDay: "Only 1 withdrawal request per day is allowed (resets at 00:00 UTC).",
+      depositRequired: (minDeposit: string) =>
+        `You have already used your one free withdrawal without a deposit. To withdraw again, top up at least ${minDeposit} TON.`,
+      freeWithdrawalHint: (amount: string, minDeposit: string) =>
+        `Your first withdrawal without a deposit is exactly ${amount} TON. After that, withdrawals require a top-up of at least ${minDeposit} TON.`,
       submit: "Withdraw",
       submitting: "Submitting request...",
       success: (amount: string, addressShort: string) =>

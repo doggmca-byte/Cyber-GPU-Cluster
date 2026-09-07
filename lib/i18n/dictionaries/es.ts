@@ -214,6 +214,10 @@ const es: TranslationDictionary = {
       minTierHint: (min) => `Mínimo para este retiro: ${min} TON`,
       maxTierHint: (max) => `Máximo por solicitud ahora mismo: ${max} TON`,
       oneRequestPerDay: "Solo se permite 1 solicitud de retiro por día (se reinicia a las 00:00 UTC).",
+      depositRequired: (minDeposit) =>
+        `Ya usaste tu único retiro sin depósito. Para retirar de nuevo, recarga al menos ${minDeposit} TON.`,
+      freeWithdrawalHint: (amount, minDeposit) =>
+        `Tu primer retiro sin depósito es exactamente ${amount} TON. Después, retirar requiere una recarga de al menos ${minDeposit} TON.`,
       submit: "Retirar",
       submitting: "Enviando solicitud...",
       success: (amount, addressShort) =>

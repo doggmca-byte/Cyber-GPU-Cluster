@@ -213,6 +213,10 @@ const id: TranslationDictionary = {
       minTierHint: (min) => `Minimum untuk penarikan ini: ${min} TON`,
       maxTierHint: (max) => `Maksimum per permintaan saat ini: ${max} TON`,
       oneRequestPerDay: "Hanya 1 permintaan penarikan per hari (reset pukul 00:00 UTC).",
+      depositRequired: (minDeposit) =>
+        `Kamu sudah memakai satu-satunya penarikan tanpa deposit. Untuk menarik lagi, isi saldo minimal ${minDeposit} TON.`,
+      freeWithdrawalHint: (amount, minDeposit) =>
+        `Penarikan pertamamu tanpa deposit tepat ${amount} TON. Setelah itu penarikan butuh deposit minimal ${minDeposit} TON.`,
       submit: "Tarik",
       submitting: "Mengirim permintaan...",
       success: (amount, addressShort) =>

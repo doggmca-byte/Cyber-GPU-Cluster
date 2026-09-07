@@ -213,6 +213,10 @@ const tr: TranslationDictionary = {
       minTierHint: (min) => `Bu çekim için minimum: ${min} TON`,
       maxTierHint: (max) => `Şu anki istek başına maksimum: ${max} TON`,
       oneRequestPerDay: "Günde yalnızca 1 çekim talebine izin verilir (00:00 UTC'de sıfırlanır).",
+      depositRequired: (minDeposit) =>
+        `Depozitosuz tek çekim hakkını zaten kullandın. Tekrar çekmek için en az ${minDeposit} TON yükle.`,
+      freeWithdrawalHint: (amount, minDeposit) =>
+        `Depozitosuz ilk çekimin tam olarak ${amount} TON. Sonrasında çekim için en az ${minDeposit} TON yükleme gerekir.`,
       submit: "Çek",
       submitting: "Talep gönderiliyor...",
       success: (amount, addressShort) =>

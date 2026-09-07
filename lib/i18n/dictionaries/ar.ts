@@ -213,6 +213,10 @@ const ar: TranslationDictionary = {
       minTierHint: (min) => `الحد الأدنى لهذا السحب: ${min} TON`,
       maxTierHint: (max) => `الحد الأقصى لكل طلب حاليًا: ${max} TON`,
       oneRequestPerDay: "يُسمح بطلب سحب واحد فقط يوميًا (إعادة التعيين في 00:00 UTC).",
+      depositRequired: (minDeposit) =>
+        `لقد استخدمت سحبك الوحيد بدون إيداع. للسحب مرة أخرى، اشحن ${minDeposit} TON على الأقل.`,
+      freeWithdrawalHint: (amount, minDeposit) =>
+        `أول سحب بدون إيداع هو ${amount} TON بالضبط. بعد ذلك يتطلب السحب شحنًا بحد أدنى ${minDeposit} TON.`,
       submit: "سحب",
       submitting: "جارٍ إرسال الطلب...",
       success: (amount, addressShort) =>

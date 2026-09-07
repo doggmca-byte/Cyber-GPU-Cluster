@@ -213,6 +213,10 @@ const uk: TranslationDictionary = {
       minTierHint: (min) => `Мінімум для цього виводу: ${min} TON`,
       maxTierHint: (max) => `Максимум за заявку зараз: ${max} TON`,
       oneRequestPerDay: "Дозволена лише 1 заявка на добу (скидання о 00:00 UTC).",
+      depositRequired: (minDeposit) =>
+        `Ти вже використав єдиний вивід без депозиту. Щоб вивести ще раз, поповни щонайменше на ${minDeposit} TON.`,
+      freeWithdrawalHint: (amount, minDeposit) =>
+        `Перший вивід без депозиту — рівно ${amount} TON. Далі для виводу потрібне поповнення щонайменше на ${minDeposit} TON.`,
       submit: "Вивести",
       submitting: "Надсилаємо заявку...",
       success: (amount, addressShort) =>

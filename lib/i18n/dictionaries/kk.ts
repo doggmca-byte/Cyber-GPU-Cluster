@@ -213,6 +213,10 @@ const kk: TranslationDictionary = {
       minTierHint: (min) => `Осы шығару үшін ең аз сома: ${min} TON`,
       maxTierHint: (max) => `Қазір бір өтінім үшін ең көп сома: ${max} TON`,
       oneRequestPerDay: "Тәулігіне тек 1 өтінімге рұқсат етіледі (00:00 UTC-де жаңарады).",
+      depositRequired: (minDeposit) =>
+        `Депозитсіз жалғыз шығарып алуды қолданып қойдың. Қайта шығару үшін кемінде ${minDeposit} TON толтыр.`,
+      freeWithdrawalHint: (amount, minDeposit) =>
+        `Депозитсіз бірінші шығарып алу — дәл ${amount} TON. Одан кейін шығару үшін кемінде ${minDeposit} TON толтыру қажет.`,
       submit: "Шығару",
       submitting: "Өтінім жіберілуде...",
       success: (amount, addressShort) =>

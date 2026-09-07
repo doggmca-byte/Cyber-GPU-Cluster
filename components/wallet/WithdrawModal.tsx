@@ -10,9 +10,10 @@ import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import {
   MIN_ADS_BEFORE_WITHDRAW,
+  MIN_DEPOSIT_TON,
   WITHDRAW_FEE_BPS,
   WITHDRAW_MIN_TON,
-  withdrawMaxForProfile,
+  withdrawPolicy,
   withdrawFee,
 } from "@/lib/constants/economy";
 import type { Profile, WithdrawResponse } from "@/types/api";
@@ -58,12 +59,17 @@ export function WithdrawModal({
   const hasValidNumber = Number.isFinite(requested) && requested > 0;
   const addressOk = address.trim().length > 0 && isValidTonAddress(address);
 
-  // Мінімум фіксований (0.1 TON, завжди); максимум тіньований за lifetime-
-  // депозитами — та сама логіка, що й у request_withdrawal RPC
-  // (20260819120000_flatten_withdrawal_min_and_fee.sql), додатково обрізана
-  // до AMBASSADOR_WITHDRAW_CAP_TON для is_ambassador
-  // (20260905120000_ambassador_withdrawal_restrictions.sql).
-  const maxForThisRequest = withdrawMaxForProfile(profile.lifetime_deposited_ton, profile.is_ambassador);
+  // Мінімум фіксований (0.1 TON, завжди); максимум і сам факт доступності
+  // виводу рахує спільна політика (lib/constants/economy.ts), яка дзеркалить
+  // request_withdrawal RPC: тіри за lifetime-депозитами, кап амбасадора і
+  // правило "один бездепозитний вивід рівно на мінімум, далі — тільки після
+  // депозиту" (20260907090000_no_deposit_single_withdrawal.sql).
+  const policy = withdrawPolicy({
+    lifetimeDepositedTon: profile.lifetime_deposited_ton,
+    isAmbassador: profile.is_ambassador,
+    withdrawalRequestCount: profile.withdrawal_request_count,
+  });
+  const maxForThisRequest = policy.maxTon;
 
   const todayUtc = new Date().toISOString().slice(0, 10);
   const alreadyRequestedToday = profile.last_withdrawal_request_date === todayUtc;
@@ -85,6 +91,7 @@ export function WithdrawModal({
     minOk &&
     maxOk &&
     !alreadyRequestedToday &&
+    !policy.depositRequired &&
     addressOk;
 
   const fee = hasValidNumber ? withdrawFee(requested) : 0;
@@ -195,20 +202,40 @@ export function WithdrawModal({
         </p>
       )}
 
+      {policy.depositRequired && (
+        <p className="mt-2.5 rounded-2xl bg-red-400/10 p-2 text-[11px] font-semibold text-red-400">
+          {t.wallet.withdraw.depositRequired(formatNumber(language, MIN_DEPOSIT_TON))}
+        </p>
+      )}
+
+      {policy.isFreeWithdrawal && (
+        <p className="mt-2.5 rounded-2xl bg-neon-cyan/10 p-2 text-[11px] font-semibold text-neon-cyan">
+          {t.wallet.withdraw.freeWithdrawalHint(
+            formatNumber(language, policy.maxTon),
+            formatNumber(language, MIN_DEPOSIT_TON),
+          )}
+        </p>
+      )}
+
       <label className="mt-2.5 block text-[11px] text-slate-500">{t.wallet.withdraw.amountLabel}</label>
       <input
         type="number"
         inputMode="decimal"
         placeholder={t.wallet.withdraw.amountPlaceholder}
         value={amount}
-        disabled={alreadyRequestedToday}
+        disabled={alreadyRequestedToday || policy.depositRequired}
         onChange={(e) => setAmount(e.target.value)}
         className="mt-1 w-full rounded-2xl border border-white/5 bg-[#0b0e14] px-3 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-neon-cyan/40 disabled:opacity-40"
       />
-      <div className="mt-1 flex items-center justify-between text-[10px] text-slate-600">
-        <span>{t.wallet.withdraw.minTierHint(formatNumber(language, WITHDRAW_MIN_TON))}</span>
-        <span>{t.wallet.withdraw.maxTierHint(formatNumber(language, maxForThisRequest))}</span>
-      </div>
+      {/* Ліміти мін/макс не мають сенсу, поки вивід узагалі заблоковано до
+          депозиту — інакше поруч із червоним "потрібен депозит" висіла б
+          суперечлива підказка "максимум зараз 0,1 TON". */}
+      {!policy.depositRequired && (
+        <div className="mt-1 flex items-center justify-between text-[10px] text-slate-600">
+          <span>{t.wallet.withdraw.minTierHint(formatNumber(language, WITHDRAW_MIN_TON))}</span>
+          <span>{t.wallet.withdraw.maxTierHint(formatNumber(language, maxForThisRequest))}</span>
+        </div>
+      )}
 
       {hasValidNumber && (
         <div className="mt-2.5 flex flex-col gap-1 rounded-2xl bg-white/[0.03] p-2.5 text-[11px]">

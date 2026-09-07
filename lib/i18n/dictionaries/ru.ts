@@ -213,6 +213,10 @@ const ru: TranslationDictionary = {
       minTierHint: (min) => `Минимум для этого вывода: ${min} TON`,
       maxTierHint: (max) => `Максимум за заявку сейчас: ${max} TON`,
       oneRequestPerDay: "Разрешена только 1 заявка в сутки (сброс в 00:00 UTC).",
+      depositRequired: (minDeposit) =>
+        `Ты уже использовал единственный вывод без депозита. Чтобы вывести снова, пополни минимум на ${minDeposit} TON.`,
+      freeWithdrawalHint: (amount, minDeposit) =>
+        `Первый вывод без депозита — ровно ${amount} TON. Дальше для вывода нужно пополнение минимум на ${minDeposit} TON.`,
       submit: "Вывести",
       submitting: "Отправляем заявку...",
       success: (amount, addressShort) =>
