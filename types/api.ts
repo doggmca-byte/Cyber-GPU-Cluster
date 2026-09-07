@@ -1,4 +1,5 @@
 import type { Tables } from "./database.types";
+import type { PromoState } from "@/lib/promo/promo";
 
 export type Profile = Tables<"profiles">;
 export type GpuTemplate = Tables<"gpu_templates">;
@@ -9,6 +10,13 @@ export interface SyncResponse {
   user_gpus: UserGpu[];
   gpu_templates: GpuTemplate[];
   total_hash_per_second: number;
+  /**
+   * Активна акційна знижка або null. Час у ends_at — серверний; клієнт
+   * рахує зворотний відлік від нього і server_time нижче, тому підкручений
+   * системний час на пристрої не подовжує акцію (списання все одно рахує
+   * buy_gpu за now() у БД).
+   */
+  promo: PromoState | null;
   /** TRUE лише для telegram_id зі списку TELEGRAM_ADMIN_IDS — сам список ніколи не йде в клієнт. */
   is_admin: boolean;
   server_time: string;

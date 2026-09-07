@@ -214,6 +214,7 @@ export type Database = {
           hash_balance: number
           id: string
           is_ambassador: boolean
+          is_bot_blocked: boolean
           last_daily_bonus_at: string | null
           last_withdrawal_request_date: string | null
           lifetime_deposited_ton: number
@@ -239,6 +240,7 @@ export type Database = {
           hash_balance?: number
           id?: string
           is_ambassador?: boolean
+          is_bot_blocked?: boolean
           last_daily_bonus_at?: string | null
           last_withdrawal_request_date?: string | null
           lifetime_deposited_ton?: number
@@ -264,6 +266,7 @@ export type Database = {
           hash_balance?: number
           id?: string
           is_ambassador?: boolean
+          is_bot_blocked?: boolean
           last_daily_bonus_at?: string | null
           last_withdrawal_request_date?: string | null
           lifetime_deposited_ton?: number
@@ -288,6 +291,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      promo_campaigns: {
+        Row: {
+          created_at: string
+          discount_percent: number
+          ends_at: string
+          id: string
+          is_active: boolean
+          slug: string
+          starts_at: string
+          target_levels: number[]
+        }
+        Insert: {
+          created_at?: string
+          discount_percent: number
+          ends_at: string
+          id?: string
+          is_active?: boolean
+          slug: string
+          starts_at: string
+          target_levels: number[]
+        }
+        Update: {
+          created_at?: string
+          discount_percent?: number
+          ends_at?: string
+          id?: string
+          is_active?: boolean
+          slug?: string
+          starts_at?: string
+          target_levels?: number[]
+        }
+        Relationships: []
       }
       referrals: {
         Row: {
@@ -606,6 +642,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      active_promo: {
+        Args: never
+        Returns: {
+          discount_percent: number
+          ends_at: string
+          slug: string
+          starts_at: string
+          target_levels: number[]
+        }[]
+      }
       admin_ambassador_stats: {
         Args: never
         Returns: {

@@ -102,6 +102,9 @@ const ar: TranslationDictionary = {
     buying: "جارٍ الشراء...",
     limitReached: "تم بلوغ الحد الأقصى",
     reviveOnFarm: "أحيِ في المزرعة لفتح الشراء",
+    promo: {
+      banner: (percent) => `خصم ${percent}% على أجهزة مختارة`,
+    },
     cycles: {
       title: (name) => `دورات: ${name}`,
       quantityLabel: "الكمية",

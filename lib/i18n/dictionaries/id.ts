@@ -102,6 +102,9 @@ const id: TranslationDictionary = {
     buying: "Membeli...",
     limitReached: "Batas tercapai",
     reviveOnFarm: "Bangkitkan di Farm untuk membuka pembelian",
+    promo: {
+      banner: (percent) => `-${percent}% untuk rig terpilih`,
+    },
     cycles: {
       title: (name) => `Siklus: ${name}`,
       quantityLabel: "Jumlah",

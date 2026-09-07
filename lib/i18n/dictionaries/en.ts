@@ -105,6 +105,9 @@ const en = {
     buying: "Buying...",
     limitReached: "Limit reached",
     reviveOnFarm: "Revive on Farm to unlock buying",
+    promo: {
+      banner: (percent: number) => `-${percent}% on selected rigs`,
+    },
     cycles: {
       title: (name: string) => `${name} Cycles`,
       quantityLabel: "Quantity",

@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Zap, Settings2 } from "lucide-react";
+import { Zap, Settings2, Timer } from "lucide-react";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { MinerIcon } from "@/components/miners/MinerIcons";
 import { GpuCyclesModal } from "@/components/market/GpuCyclesModal";
+import {
+  effectivePrice,
+  formatCountdown,
+  isLevelDiscounted,
+  promoMsLeft,
+  type PromoState,
+} from "@/lib/promo/promo";
 import type { BuyGpuResponse, GpuTemplate, SyncResponse } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 
@@ -39,10 +46,38 @@ export function MarketScreen() {
   return <MarketScreenReady data={state.data} initData={state.initData} />;
 }
 
+/**
+ * "Зараз" за шкалою СЕРВЕРА: беремо server_time з /api/user/sync і додаємо
+ * час, що минув на клієнті з моменту отримання відповіді. Так зворотний
+ * відлік і зникнення знижки не залежать від системного годинника пристрою
+ * (а списання все одно рахує buy_gpu за now() у БД).
+ */
+function useServerNow(serverTime: string): number {
+  const [baseline] = useState(() => ({
+    serverMs: new Date(serverTime).getTime(),
+    clientMs: Date.now(),
+  }));
+  const [nowMs, setNowMs] = useState(() => baseline.serverMs);
+
+  useEffect(() => {
+    const tick = () => setNowMs(baseline.serverMs + (Date.now() - baseline.clientMs));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [baseline]);
+
+  return nowMs;
+}
+
 function MarketScreenReady({ data, initData }: { data: SyncResponse; initData: string }) {
   const { t, language } = useTranslation();
   const { applyGpuPurchase } = useUserData();
-  const { profile, user_gpus, gpu_templates } = data;
+  const { profile, user_gpus, gpu_templates, promo, server_time } = data;
+
+  // Тік раз на секунду — коли час акції спливає, msLeft стає 0, і всі бейджі
+  // та ціни реактивно повертаються до базових БЕЗ перезавантаження сторінки.
+  const nowMs = useServerNow(server_time);
+  const msLeft = promoMsLeft(promo, nowMs);
 
   const amountByLevel = new Map(user_gpus.map((g) => [g.gpu_level, g.amount]));
   const deadByLevel = new Map(user_gpus.map((g) => [g.gpu_level, g.is_dead]));
@@ -98,6 +133,20 @@ function MarketScreenReady({ data, initData }: { data: SyncResponse; initData: s
         </span>
       </div>
 
+      {msLeft > 0 && promo && (
+        <div className="flex items-center justify-between gap-2 rounded-2xl border border-neon-gold/30 bg-neon-gold/10 px-3 py-2">
+          <span className="min-w-0 truncate text-[11px] font-semibold text-neon-gold">
+            {t.market.promo.banner(promo.discount_percent)}
+          </span>
+          {/* tabular-nums + фіксований формат HH:MM:SS — ширина не стрибає
+              щосекунди, тож верстку не зсуває навіть на вузьких екранах. */}
+          <span className="flex shrink-0 items-center gap-1 font-mono text-[11px] font-bold tabular-nums text-neon-gold">
+            <Timer size={12} />
+            {formatCountdown(msLeft)}
+          </span>
+        </div>
+      )}
+
       <div className="flex flex-col gap-2.5">
         {gpu_templates.map((template) => (
           <GpuCard
@@ -108,6 +157,9 @@ function MarketScreenReady({ data, initData }: { data: SyncResponse; initData: s
             isBuying={buyingLevel === template.level}
             disabled={buyingLevel !== null}
             error={errorByLevel[template.level]}
+            discounted={isLevelDiscounted(promo, template.level, nowMs)}
+            discountPercent={promo?.discount_percent ?? 0}
+            price={effectivePrice(promo, template.level, template.cost_ton, nowMs)}
             onBuy={() => buy(template)}
             onOpenCycles={() => setCyclesTemplate(template)}
           />
@@ -132,6 +184,9 @@ function GpuCard({
   isBuying,
   disabled,
   error,
+  discounted,
+  discountPercent,
+  price,
   onBuy,
   onOpenCycles,
 }: {
@@ -141,6 +196,11 @@ function GpuCard({
   isBuying: boolean;
   disabled: boolean;
   error?: string;
+  /** Чи діє знижка саме на цю модель ПРЯМО ЗАРАЗ (за часом сервера). */
+  discounted: boolean;
+  discountPercent: number;
+  /** Ціна, яку реально спише бекенд: акційна або базова. */
+  price: number;
   onBuy: () => void;
   onOpenCycles: () => void;
 }) {
@@ -166,6 +226,11 @@ function GpuCard({
             >
               {rarityLabel}
             </span>
+            {discounted && (
+              <span className="shrink-0 rounded-full border border-neon-gold/40 bg-neon-gold/15 px-1.5 py-0.5 text-[9px] font-bold tabular-nums text-neon-gold shadow-neon-gold">
+                -{discountPercent}%
+              </span>
+            )}
           </div>
 
           <p className="mt-0.5 text-[10px] text-slate-500">{t.market.owned(owned, template.max_limit)}</p>
@@ -212,11 +277,20 @@ function GpuCard({
           disabled={disabled || isMaxed}
           className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-xl bg-neon-green py-2 text-xs font-semibold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isMaxed
-            ? t.market.limitReached
-            : isBuying
-              ? t.market.buying
-              : t.market.buy(formatNumber(language, template.cost_ton, { maximumFractionDigits: 2 }))}
+          {isMaxed ? (
+            t.market.limitReached
+          ) : isBuying ? (
+            t.market.buying
+          ) : discounted ? (
+            <span className="flex items-center gap-1.5">
+              <span className="text-background/60 line-through">
+                {formatNumber(language, template.cost_ton, { maximumFractionDigits: 3 })}
+              </span>
+              {t.market.buy(formatNumber(language, price, { maximumFractionDigits: 3 }))}
+            </span>
+          ) : (
+            t.market.buy(formatNumber(language, template.cost_ton, { maximumFractionDigits: 2 }))
+          )}
         </button>
       )}
 

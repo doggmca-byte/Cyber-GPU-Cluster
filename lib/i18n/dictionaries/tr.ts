@@ -102,6 +102,9 @@ const tr: TranslationDictionary = {
     buying: "Satın alınıyor...",
     limitReached: "Limite ulaşıldı",
     reviveOnFarm: "Satın almanın kilidini açmak için Çiftlik'te canlandır",
+    promo: {
+      banner: (percent) => `Seçili rig'lerde -${percent}%`,
+    },
     cycles: {
       title: (name) => `Döngüler: ${name}`,
       quantityLabel: "Adet",

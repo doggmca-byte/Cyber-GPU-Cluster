@@ -102,6 +102,9 @@ const uk: TranslationDictionary = {
     buying: "Купуємо...",
     limitReached: "Ліміт досягнуто",
     reviveOnFarm: "Оживи на Фермі, щоб знову купувати",
+    promo: {
+      banner: (percent) => `-${percent}% на обрані риги`,
+    },
     cycles: {
       title: (name) => `Цикли: ${name}`,
       quantityLabel: "Кількість",

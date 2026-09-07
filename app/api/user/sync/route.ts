@@ -7,6 +7,7 @@ import { findProfileByTelegramId } from "@/lib/api/profile";
 import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
 import { checkChannelMembershipStatus } from "@/lib/telegram/getChatMember";
 import { calcTotalHashPerSecond } from "@/lib/farm/totalHashPerSecond";
+import type { PromoState } from "@/lib/promo/promo";
 import type { SyncResponse } from "@/types/api";
 import type { Database } from "@/types/database.types";
 
@@ -56,11 +57,18 @@ export async function POST(request: Request) {
     // обидва роути мусять давати однакове число для однакового стану БД.
     const totalHashPerSecond = calcTotalHashPerSecond(userGpus ?? [], gpuTemplates ?? []);
 
+    // Акція (якщо триває саме зараз за часом БД). Помилку читання навмисно
+    // ковтаємо: акція — це косметика поверх маркету, вона не має права
+    // зламати весь sync і залишити гравця без даних.
+    const { data: promoRows } = await admin.rpc("active_promo");
+    const promo: PromoState | null = promoRows && promoRows.length > 0 ? promoRows[0] : null;
+
     const response: SyncResponse = {
       profile,
       user_gpus: userGpus ?? [],
       gpu_templates: gpuTemplates ?? [],
       total_hash_per_second: totalHashPerSecond,
+      promo,
       // Лише TRUE/FALSE для ЦЬОГО конкретного telegram_id — сам список
       // TELEGRAM_ADMIN_IDS лишається серверним секретом і ніколи не йде в
       // клієнтський бандл чи цю відповідь. Header ховає посилання на /admin

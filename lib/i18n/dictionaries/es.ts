@@ -103,6 +103,9 @@ const es: TranslationDictionary = {
     buying: "Comprando...",
     limitReached: "Límite alcanzado",
     reviveOnFarm: "Reanima en la Granja para desbloquear la compra",
+    promo: {
+      banner: (percent) => `-${percent}% en equipos seleccionados`,
+    },
     cycles: {
       title: (name) => `Ciclos: ${name}`,
       quantityLabel: "Cantidad",
