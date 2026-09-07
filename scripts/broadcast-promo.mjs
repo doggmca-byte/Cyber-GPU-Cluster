@@ -50,7 +50,10 @@ if (!BOT_TOKEN || !SUPABASE_URL || !SERVICE_KEY) {
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const LIMIT = Number((args.find((a) => a.startsWith("--limit=")) ?? "").split("=")[1]) || null;
-const MILESTONE = Number((args.find((a) => a.startsWith("--milestone=")) ?? "").split("=")[1]) || null;
+const MILESTONE = (args.find((a) => a.startsWith("--milestone=")) ?? "").split("=")[1] || null;
+// Пропустити перших N адресатів — щоб після пробного прогону не надсилати
+// тим самим людям повідомлення вдруге.
+const SKIP = Number((args.find((a) => a.startsWith("--skip=")) ?? "").split("=")[1]) || 0;
 const RATE_PER_SECOND = 25;
 const GAP_MS = Math.ceil(1000 / RATE_PER_SECOND);
 
@@ -59,35 +62,35 @@ const LAUNCH_URL = `https://t.me/${BOT_USERNAME}?startapp=market`;
 
 const MESSAGES = {
   en: (n, rigs) => ({
-    text: `⚡ ${n} miners are now on Cyber GPU Cluster.\n\nTo mark it, we've switched on a 10% discount on:\n${rigs}\n\nThe promo runs for exactly 48 hours.`,
+    text: `⚡ ${n} active miners are now on Cyber GPU Cluster.\n\nTo celebrate the milestone, we've switched on a 10% discount on:\n${rigs}\n\nThe promo runs for exactly 48 hours.`,
     button: "Open Market",
   }),
   ru: (n, rigs) => ({
-    text: `⚡ В Cyber GPU Cluster уже ${n} майнеров.\n\nПо этому поводу включили скидку 10% на:\n${rigs}\n\nАкция действует ровно 48 часов.`,
+    text: `⚡ В Cyber GPU Cluster уже ${n} активных майнеров.\n\nВ честь этой отметки включили скидку 10% на:\n${rigs}\n\nАкция действует ровно 48 часов.`,
     button: "Открыть маркет",
   }),
   uk: (n, rigs) => ({
-    text: `⚡ У Cyber GPU Cluster уже ${n} майнерів.\n\nЗ цієї нагоди увімкнули знижку 10% на:\n${rigs}\n\nАкція діє рівно 48 годин.`,
+    text: `⚡ У Cyber GPU Cluster уже ${n} активних майнерів.\n\nНа честь цієї позначки увімкнули знижку 10% на:\n${rigs}\n\nАкція діє рівно 48 годин.`,
     button: "Відкрити маркет",
   }),
   es: (n, rigs) => ({
-    text: `⚡ Ya somos ${n} mineros en Cyber GPU Cluster.\n\nPara celebrarlo, activamos un 10% de descuento en:\n${rigs}\n\nLa promoción dura exactamente 48 horas.`,
+    text: `⚡ Ya somos ${n} mineros activos en Cyber GPU Cluster.\n\nPara celebrar este hito, activamos un 10% de descuento en:\n${rigs}\n\nLa promoción dura exactamente 48 horas.`,
     button: "Abrir mercado",
   }),
   ar: (n, rigs) => ({
-    text: `⚡ وصلنا إلى ${n} منقّب في Cyber GPU Cluster.\n\nبهذه المناسبة فعّلنا خصم 10% على:\n${rigs}\n\nالعرض ساري لمدة 48 ساعة بالضبط.`,
+    text: `⚡ وصلنا إلى ${n} منقّب نشط في Cyber GPU Cluster.\n\nاحتفالًا بهذا الإنجاز فعّلنا خصم 10% على:\n${rigs}\n\nالعرض ساري لمدة 48 ساعة بالضبط.`,
     button: "افتح المتجر",
   }),
   id: (n, rigs) => ({
-    text: `⚡ Sudah ada ${n} penambang di Cyber GPU Cluster.\n\nUntuk merayakannya, kami aktifkan diskon 10% untuk:\n${rigs}\n\nPromo berlaku tepat 48 jam.`,
+    text: `⚡ Sudah ada ${n} penambang aktif di Cyber GPU Cluster.\n\nUntuk merayakan pencapaian ini, kami aktifkan diskon 10% untuk:\n${rigs}\n\nPromo berlaku tepat 48 jam.`,
     button: "Buka Market",
   }),
   kk: (n, rigs) => ({
-    text: `⚡ Cyber GPU Cluster-де ${n} майнер бар.\n\nОсы орайда 10% жеңілдік қостық:\n${rigs}\n\nАкция дәл 48 сағат жұмыс істейді.`,
+    text: `⚡ Cyber GPU Cluster-де ${n} белсенді майнер бар.\n\nОсы белес құрметіне 10% жеңілдік қостық:\n${rigs}\n\nАкция дәл 48 сағат жұмыс істейді.`,
     button: "Дүкенді ашу",
   }),
   tr: (n, rigs) => ({
-    text: `⚡ Cyber GPU Cluster'da ${n} madenci var.\n\nBu vesileyle şu modellerde %10 indirim açtık:\n${rigs}\n\nKampanya tam 48 saat sürüyor.`,
+    text: `⚡ Cyber GPU Cluster'da ${n} aktif madenci var.\n\nBu dönüm noktası şerefine şu modellerde %10 indirim açtık:\n${rigs}\n\nKampanya tam 48 saat sürüyor.`,
     button: "Marketi aç",
   }),
 };
@@ -163,7 +166,8 @@ async function main() {
   const rows = await sbAll(
     "profiles?select=telegram_id,telegram_language_code&is_bot_blocked=eq.false&order=created_at.asc",
   );
-  const audience = LIMIT ? rows.slice(0, LIMIT) : rows;
+  const queue = SKIP > 0 ? rows.slice(SKIP) : rows;
+  const audience = LIMIT ? queue.slice(0, LIMIT) : queue;
 
   // Назви акційних моделей — з тієї самої БД, що й сама акція.
   const promo = await sb("rpc/active_promo", { method: "POST", body: "{}" });
@@ -178,9 +182,9 @@ async function main() {
     .map((tpl) => `• ${tpl.name}`)
     .join("\n");
 
-  const milestone = MILESTONE ?? rows.length;
+  const milestone = MILESTONE ?? String(rows.length);
 
-  console.log(`Audience: ${audience.length}${LIMIT ? ` (limited from ${rows.length})` : ""}`);
+  console.log(`Audience: ${audience.length} of ${rows.length}${SKIP ? ` (skipping first ${SKIP})` : ""}${LIMIT ? ` (limit ${LIMIT})` : ""}`);
   console.log(`Milestone in the text: ${milestone}`);
   console.log(`Discounted rigs:\n${rigs}`);
   console.log(`Promo ends at: ${campaign.ends_at}`);
