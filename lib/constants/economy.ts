@@ -127,10 +127,12 @@ export const MIN_DEPOSIT_TON = 0.3;
 export const REFERRAL_FIRST_HARVEST_BONUS_TON = 0.01;
 export const REFERRAL_FIRST_HARVEST_THRESHOLD_HASH = 100;
 
-// exchange_hash_to_ton (реферальна комісія з обміну/продажу HASH рефералом на біржі,
-// незалежно від p_target_balance — 20260819130000_ambassadors_manual_grants_and_exchange_referral.sql)
+// exchange_hash_to_ton: разова реферальна комісія за ПЕРШИЙ обмін реферала на
+// біржі — фіксовані 0.01 TON, незалежно від обсягу обміну і від
+// p_target_balance, рівно один раз на пару (referrals.exchange_commission_paid,
+// 20260909100000_exchange_referral_commission_flat.sql). Крок "за кожні 1000
+// HASH" прибрано разом із пропорційністю.
 export const REFERRAL_EXCHANGE_COMMISSION_TON = 0.01;
-export const REFERRAL_EXCHANGE_COMMISSION_STEP_HASH = 1000;
 
 // admin_grant_balance — ручне нарахування адміном (Адмінка → "Ручне нарахування").
 // Завжди кредитує лише game_balance, БЕЗ 5% реф-revshare і БЕЗ lifetime_deposited_ton —

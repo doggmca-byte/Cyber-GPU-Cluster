@@ -157,8 +157,8 @@ const id: TranslationDictionary = {
     claimSuccess: (amount) => `${amount} TON telah dikreditkan`,
     rulesTitle: "Cara kerja bonus referral",
     ruleRevshare: (percent) => `${percent}% dari setiap deposit temanmu — selamanya`,
-    ruleExchangeCommission: (bonus, step) =>
-      `${bonus} TON komisi referral untuk setiap ${step} HASH yang ditukar/dijual temanmu di exchange`,
+    ruleExchangeCommission: (bonus) =>
+      `Komisi referral sekali sebesar ${bonus} TON untuk pertukaran pertama temanmu di exchange`,
     yourLink: "Link referral kamu",
     share: "Bagikan",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME belum dikonfigurasi.",

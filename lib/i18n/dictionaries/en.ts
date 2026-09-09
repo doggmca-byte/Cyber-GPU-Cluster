@@ -160,8 +160,8 @@ const en = {
     claimSuccess: (amount: string) => `Credited ${amount} TON`,
     rulesTitle: "How referral rewards work",
     ruleRevshare: (percent: string) => `${percent}% of every deposit your friend makes, forever`,
-    ruleExchangeCommission: (bonus: string, step: string) =>
-      `${bonus} TON referral commission for every ${step} HASH your friend exchanges/sells on the exchange`,
+    ruleExchangeCommission: (bonus: string) =>
+      `${bonus} TON one-time referral commission for your friend's first exchange on the market`,
     yourLink: "Your referral link",
     share: "Share",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME is not configured.",

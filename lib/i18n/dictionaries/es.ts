@@ -158,8 +158,8 @@ const es: TranslationDictionary = {
     claimSuccess: (amount) => `Se abonaron ${amount} TON`,
     rulesTitle: "Cómo funcionan las recompensas por referidos",
     ruleRevshare: (percent) => `${percent}% de cada depósito de tu amigo — para siempre`,
-    ruleExchangeCommission: (bonus, step) =>
-      `${bonus} TON de comisión de referido por cada ${step} HASH que tu amigo cambie/venda en el exchange`,
+    ruleExchangeCommission: (bonus) =>
+      `${bonus} TON de comisión única por el primer intercambio de tu amigo en el exchange`,
     yourLink: "Tu enlace de referido",
     share: "Compartir",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME no está configurado.",

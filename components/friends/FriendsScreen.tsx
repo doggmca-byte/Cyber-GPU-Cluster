@@ -9,7 +9,6 @@ import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/
 import {
   REFERRAL_DEPOSIT_REVSHARE_RATE,
   REFERRAL_EXCHANGE_COMMISSION_TON,
-  REFERRAL_EXCHANGE_COMMISSION_STEP_HASH,
 } from "@/lib/constants/economy";
 import type { ClaimReferralResponse, SyncResponse } from "@/types/api";
 
@@ -195,7 +194,6 @@ function FriendsScreenReady({ data, initData }: { data: SyncResponse; initData: 
             •{" "}
             {t.friends.ruleExchangeCommission(
               formatNumber(language, REFERRAL_EXCHANGE_COMMISSION_TON, { maximumFractionDigits: 2 }),
-              formatNumber(language, REFERRAL_EXCHANGE_COMMISSION_STEP_HASH),
             )}
           </li>
         </ul>

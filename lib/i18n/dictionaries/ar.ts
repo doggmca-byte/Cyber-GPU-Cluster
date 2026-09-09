@@ -157,8 +157,8 @@ const ar: TranslationDictionary = {
     claimSuccess: (amount) => `تم إضافة ${amount} TON`,
     rulesTitle: "كيف تُحتسب مكافآت الإحالة",
     ruleRevshare: (percent) => `${percent}% من كل إيداع يقوم به صديقك — إلى الأبد`,
-    ruleExchangeCommission: (bonus, step) =>
-      `${bonus} TON عمولة إحالة عن كل ${step} HASH يبادلها/يبيعها صديقك في البورصة`,
+    ruleExchangeCommission: (bonus) =>
+      `${bonus} TON عمولة إحالة لمرة واحدة عن أول عملية تبادل يقوم بها صديقك في البورصة`,
     yourLink: "رابط الإحالة الخاص بك",
     share: "مشاركة",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME غير مُعدّ.",

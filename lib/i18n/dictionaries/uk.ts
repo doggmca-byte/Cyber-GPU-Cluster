@@ -157,8 +157,8 @@ const uk: TranslationDictionary = {
     claimSuccess: (amount) => `Зараховано ${amount} TON`,
     rulesTitle: "Як нараховується реферальна винагорода",
     ruleRevshare: (percent) => `${percent}% з кожного депозиту друга — назавжди`,
-    ruleExchangeCommission: (bonus, step) =>
-      `${bonus} TON реферальної комісії за кожні ${step} HASH, які друг обмінює/продає на біржі`,
+    ruleExchangeCommission: (bonus) =>
+      `${bonus} TON разової реферальної комісії за перший обмін друга на біржі`,
     yourLink: "Твоє реферальне посилання",
     share: "Поділитися",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME не налаштовано.",
