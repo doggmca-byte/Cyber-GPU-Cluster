@@ -207,6 +207,7 @@ export type Database = {
         Row: {
           ads_quota_reset_date: string
           ads_watched_since_withdraw: number
+          bot_block_reason: string | null
           created_at: string
           first_name: string | null
           game_balance: number
@@ -234,6 +235,7 @@ export type Database = {
         Insert: {
           ads_quota_reset_date?: string
           ads_watched_since_withdraw?: number
+          bot_block_reason?: string | null
           created_at?: string
           first_name?: string | null
           game_balance?: number
@@ -261,6 +263,7 @@ export type Database = {
         Update: {
           ads_quota_reset_date?: string
           ads_watched_since_withdraw?: number
+          bot_block_reason?: string | null
           created_at?: string
           first_name?: string | null
           game_balance?: number
@@ -762,6 +765,23 @@ export type Database = {
           new_game_balance: number
           new_gpu_amount: number
         }[]
+      }
+      admin_bot_reach: {
+        Args: never
+        Returns: {
+          active7d: number
+          active7d_reachable: number
+          active7d_unreachable: number
+          blocked: number
+          no_chat: number
+          reachable: number
+          unknown_reason: number
+        }[]
+      }
+      clear_bot_block: { Args: { p_user_id: string }; Returns: undefined }
+      flag_bot_unreachable: {
+        Args: { p_reason: string; p_user_id: string }
+        Returns: undefined
       }
       claim_daily_bonus: {
         Args: { p_reward_amount: number; p_user_id: string }

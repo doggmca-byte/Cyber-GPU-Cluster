@@ -29,16 +29,21 @@ export async function GET(request: Request) {
 
     const admin = createAdminClient();
 
-    const [totalsRes, statsRes] = await Promise.all([
+    const [totalsRes, statsRes, reachRes] = await Promise.all([
       admin.rpc("admin_session_totals"),
       admin.rpc("admin_session_stats", { p_days: days }),
+      admin.rpc("admin_bot_reach"),
     ]);
 
     if (totalsRes.error) throw rpcErrorToApiError(totalsRes.error);
     if (statsRes.error) throw rpcErrorToApiError(statsRes.error);
+    if (reachRes.error) throw rpcErrorToApiError(reachRes.error);
 
     const totalsRow = totalsRes.data?.[0];
     if (!totalsRow) throw new ApiError(500, "admin_session_totals returned no data");
+
+    const reachRow = reachRes.data?.[0];
+    if (!reachRow) throw new ApiError(500, "admin_bot_reach returned no data");
 
     const items: AdminSessionStatItem[] = (statsRes.data ?? []).map((row) => ({
       day: row.day,
@@ -56,6 +61,15 @@ export async function GET(request: Request) {
         mau: totalsRow.mau,
         sessions_today: totalsRow.sessions_today,
         registered: totalsRow.registered,
+      },
+      reach: {
+        reachable: reachRow.reachable,
+        blocked: reachRow.blocked,
+        no_chat: reachRow.no_chat,
+        unknown_reason: reachRow.unknown_reason,
+        active7d: reachRow.active7d,
+        active7d_reachable: reachRow.active7d_reachable,
+        active7d_unreachable: reachRow.active7d_unreachable,
       },
       items,
     };

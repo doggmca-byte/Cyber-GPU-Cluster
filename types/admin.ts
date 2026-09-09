@@ -110,8 +110,24 @@ export interface AdminSessionStatItem {
   new_users: number;
 }
 
+/**
+ * Досяжність бота. Головне число тут — active7d_unreachable: скільки ЖИВИХ
+ * гравців зараз неможливо сповістити. 'no_chat' (ніколи не відкривав чат із
+ * ботом) лікується дозволом у застосунку, 'blocked' — ні.
+ */
+export interface AdminBotReach {
+  reachable: number;
+  blocked: number;
+  no_chat: number;
+  unknown_reason: number;
+  active7d: number;
+  active7d_reachable: number;
+  active7d_unreachable: number;
+}
+
 export interface AdminSessionsResponse {
   totals: AdminSessionTotals;
+  reach: AdminBotReach;
   items: AdminSessionStatItem[];
 }
 

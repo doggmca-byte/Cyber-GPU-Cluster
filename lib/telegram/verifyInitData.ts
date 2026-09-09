@@ -10,6 +10,13 @@ export interface TelegramUser {
   username?: string;
   language_code?: string;
   photo_url?: string;
+  /**
+   * true — користувач дозволив боту писати йому в приватні повідомлення.
+   * Поле приходить усередині initData, тобто підписане ботом: клієнт не може
+   * його підробити, і саме тому на нього можна спиратись як на доказ
+   * досяжності (див. /api/user/sync -> clear_bot_block).
+   */
+  allows_write_to_pm?: boolean;
 }
 
 export interface VerifiedInitData {

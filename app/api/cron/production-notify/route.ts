@@ -93,9 +93,13 @@ export async function GET(request: Request) {
           // фільтрує is_bot_blocked). Без цього ті самі адресати поверталися
           // б у вибірку щодня: саме так і накопичилось 665 марних викликів
           // на 725 кандидатів.
-          const { error: flagError } = await admin.rpc("set_bot_blocked", {
+          // Причина важлива: 'no_chat' лікується дозволом у застосунку,
+          // 'blocked' — ні. Без розділення обидва стани виглядали однаково
+          // і 72% виключених насправді просто ніколи не відкривали чат.
+          const reason = err.message.toLowerCase().includes("chat not found") ? "no_chat" : "blocked";
+          const { error: flagError } = await admin.rpc("flag_bot_unreachable", {
             p_user_id: candidate.profile_id,
-            p_blocked: true,
+            p_reason: reason,
           });
           if (flagError) {
             console.error(

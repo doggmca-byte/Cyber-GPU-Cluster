@@ -57,6 +57,18 @@ export async function POST(request: Request) {
     // обидва роути мусять давати однакове число для однакового стану БД.
     const totalHashPerSecond = calcTotalHashPerSecond(userGpus ?? [], gpuTemplates ?? []);
 
+    // Дозвіл на повідомлення прийшов у ПІДПИСАНОМУ initData — отже боту
+    // тепер можна писати. Знімаємо позначку недосяжності, щоб людина
+    // повернулась у сповіщення. Без цього кроку WriteAccessPrompt був
+    // косметичним: користувач тиснув "Дозволити", а бекенд про це не
+    // дізнавався ніколи і тримав його виключеним назавжди.
+    if (user.allows_write_to_pm) {
+      const { error: clearError } = await admin.rpc("clear_bot_block", { p_user_id: profile.id });
+      if (clearError) {
+        console.error(`clear_bot_block failed for ${profile.id}: ${clearError.message}`);
+      }
+    }
+
     // Лог сесії: один рядок на відкриття застосунку (вікно 30 хв усередині
     // record_session) + last_seen_at. Помилку навмисно ковтаємо і НЕ чекаємо
     // на неї як на критичну — телеметрія не має права зламати вхід у гру.

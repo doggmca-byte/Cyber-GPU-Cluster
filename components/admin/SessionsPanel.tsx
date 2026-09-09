@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { RefreshCw, Radio } from "lucide-react";
-import type { AdminSessionsResponse, AdminSessionStatItem, AdminSessionTotals } from "@/types/admin";
+import type {
+  AdminBotReach,
+  AdminSessionsResponse,
+  AdminSessionStatItem,
+  AdminSessionTotals,
+} from "@/types/admin";
 
 const RANGES = [7, 30, 90] as const;
 
@@ -70,6 +75,7 @@ export function SessionsPanel({ onSessionExpired }: { onSessionExpired: () => vo
       {data && (
         <>
           <TotalsGrid totals={data.totals} />
+          <ReachCard reach={data.reach} />
 
           <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
             {RANGES.map((r) => (
@@ -113,6 +119,57 @@ function TotalsGrid({ totals }: { totals: AdminSessionTotals }) {
           </p>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Досяжність сповіщень. Ключовий рядок — скільки активних гравців зараз
+ * неможливо сповістити: саме цей розрив між "грає" і "отримує повідомлення"
+ * і був непомітним, поки все зводилось до одного прапорця.
+ */
+function ReachCard({ reach }: { reach: AdminBotReach }) {
+  const pct = reach.active7d > 0 ? Math.round((reach.active7d_reachable / reach.active7d) * 100) : 0;
+
+  return (
+    <div className="glass-card p-3">
+      <p className="text-[10px] uppercase tracking-wide text-white/40">Досяжність сповіщень</p>
+
+      <div className="mt-2 flex items-baseline gap-2">
+        <span className="font-mono text-lg font-bold tabular-nums text-neon-green">
+          {reach.active7d_reachable.toLocaleString("uk-UA")}
+        </span>
+        <span className="text-[11px] text-white/40">
+          з {reach.active7d.toLocaleString("uk-UA")} активних за 7 днів ({pct}%)
+        </span>
+      </div>
+
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+        <div className="h-full rounded-full bg-neon-green" style={{ width: `${pct}%` }} />
+      </div>
+
+      <div className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+        <Row label="Можна писати" value={reach.reachable} tone="text-neon-green" />
+        <Row label="Не відкривали чат" value={reach.no_chat} tone="text-neon-gold" />
+        <Row label="Заблокували бота" value={reach.blocked} tone="text-red-400" />
+        <Row label="Не класифіковано" value={reach.unknown_reason} tone="text-white/50" />
+      </div>
+
+      {reach.no_chat > 0 && (
+        <p className="mt-2 text-[10px] leading-relaxed text-white/30">
+          «Не відкривали чат» — це не блокування: вони запускали Mini App із посилання й ніколи не тиснули
+          Start. Повертаються в розсилки самі, щойно дадуть дозвіл на повідомлення в застосунку.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Row({ label, value, tone }: { label: string; value: number; tone: string }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="truncate text-white/40">{label}</span>
+      <span className={`shrink-0 font-mono font-bold tabular-nums ${tone}`}>{value.toLocaleString("uk-UA")}</span>
     </div>
   );
 }
