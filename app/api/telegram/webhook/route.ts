@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { readJsonBody } from "@/lib/api/request";
 import { sendWelcomeMessage } from "@/lib/telegram/sendWelcomeMessage";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { TelegramUpdate } from "@/lib/telegram/webhookTypes";
 
 export const runtime = "nodejs";
@@ -40,6 +41,21 @@ export async function POST(request: Request) {
     const update = await readJsonBody<TelegramUpdate>(request);
     const message = update.message;
     const text = message?.text;
+
+    // Будь-який вхідний апдейт означає, що бот НЕ заблокований: щоб написати
+    // йому, користувач мусив спершу зняти блокування. Знімаємо прапорець, щоб
+    // людина повернулась у розсилки — інакше вона лишилась би виключеною
+    // назавжди після одного давнього 403.
+    if (message?.from?.id) {
+      const admin = createAdminClient();
+      const { error } = await admin.rpc("set_bot_blocked_by_telegram_id", {
+        p_telegram_id: message.from.id,
+        p_blocked: false,
+      });
+      if (error) {
+        console.error("[telegram/webhook] failed to clear is_bot_blocked:", error);
+      }
+    }
 
     if (message && text?.startsWith("/start")) {
       const payload = text.slice("/start".length).trim();

@@ -88,6 +88,21 @@ export async function GET(request: Request) {
         sent++;
       } catch (err) {
         if (err instanceof TelegramDeliveryBlockedError) {
+          // Доставка неможлива назавжди — позначаємо, і завтра цей профіль
+          // уже не потрапить у список кандидатів (list_paused_production_users
+          // фільтрує is_bot_blocked). Без цього ті самі адресати поверталися
+          // б у вибірку щодня: саме так і накопичилось 665 марних викликів
+          // на 725 кандидатів.
+          const { error: flagError } = await admin.rpc("set_bot_blocked", {
+            p_user_id: candidate.profile_id,
+            p_blocked: true,
+          });
+          if (flagError) {
+            console.error(
+              `[cron/production-notify] failed to flag ${candidate.profile_id} as blocked:`,
+              flagError,
+            );
+          }
           blocked++;
         } else {
           failed++;

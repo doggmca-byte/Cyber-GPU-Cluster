@@ -900,6 +900,14 @@ export type Database = {
           revival_count: number
         }[]
       }
+      set_bot_blocked: {
+        Args: { p_blocked: boolean; p_user_id: string }
+        Returns: undefined
+      }
+      set_bot_blocked_by_telegram_id: {
+        Args: { p_blocked: boolean; p_telegram_id: number }
+        Returns: undefined
+      }
       start_retention_task_stage: {
         Args: {
           p_condition_met: boolean

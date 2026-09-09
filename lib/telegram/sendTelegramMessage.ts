@@ -23,6 +23,26 @@ export interface SendTelegramMessageOptions {
 export class TelegramDeliveryBlockedError extends Error {}
 
 /**
+ * Кілька 400-х описів теж перманентні за суттю: чат не існує/видалений,
+ * акаунт деактивований, бот заблокований. Раніше вони летіли у гілку
+ * "тимчасовий збій" і крон ретраїв їх ЩОДНЯ без жодного шансу на успіх —
+ * саме з цього і виросли 665 приречених викликів на 725 кандидатів.
+ *
+ * Список навмисно вузький і точний: будь-який інший 400 (напр. наш власний
+ * malformed request) лишається тимчасовим, бо після фікса він МАЄ ретраїтись,
+ * а не бути тихо похованим як "заблокований назавжди".
+ */
+function isPermanentDeliveryFailure(description: string): boolean {
+  const d = description.toLowerCase();
+  return (
+    d.includes("chat not found") ||
+    d.includes("bot was blocked by the user") ||
+    d.includes("user is deactivated") ||
+    d.includes("bot can't initiate conversation")
+  );
+}
+
+/**
  * Надсилає повідомлення від бота конкретному telegram_id (Bot API
  * sendMessage) — НЕ пов'язано з Mini App initData/WebApp SDK, окремий шлях:
  * бот сам ініціює розмову з користувачем (можливо лише якщо той хоч раз
@@ -63,7 +83,7 @@ export async function sendTelegramMessage(
     // лише за офіційним error_code 403, щоб не сплутати з тимчасовим 400
     // (напр. malformed request через наш власний баг, який МАЄ ретраїтись
     // після фіксу, а не тихо позначатись як "заблокований назавжди").
-    if (data?.error_code === 403) {
+    if (data?.error_code === 403 || isPermanentDeliveryFailure(description)) {
       throw new TelegramDeliveryBlockedError(description);
     }
     throw new Error(`telegram sendMessage failed: ${description}`);
