@@ -216,6 +216,7 @@ export type Database = {
           is_ambassador: boolean
           is_bot_blocked: boolean
           last_daily_bonus_at: string | null
+          last_seen_at: string | null
           last_withdrawal_request_date: string | null
           lifetime_deposited_ton: number
           lifetime_hash_generated: number
@@ -242,6 +243,7 @@ export type Database = {
           is_ambassador?: boolean
           is_bot_blocked?: boolean
           last_daily_bonus_at?: string | null
+          last_seen_at?: string | null
           last_withdrawal_request_date?: string | null
           lifetime_deposited_ton?: number
           lifetime_hash_generated?: number
@@ -268,6 +270,7 @@ export type Database = {
           is_ambassador?: boolean
           is_bot_blocked?: boolean
           last_daily_bonus_at?: string | null
+          last_seen_at?: string | null
           last_withdrawal_request_date?: string | null
           lifetime_deposited_ton?: number
           lifetime_hash_generated?: number
@@ -592,6 +595,32 @@ export type Database = {
           },
         ]
       }
+      user_sessions: {
+        Row: {
+          id: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_tasks: {
         Row: {
           channel_penalty_applied: boolean
@@ -679,6 +708,27 @@ export type Database = {
         Returns: {
           game_balance: number
           withdrawable_balance: number
+        }[]
+      }
+      admin_session_stats: {
+        Args: { p_days?: number }
+        Returns: {
+          active_users: number
+          day: string
+          new_users: number
+          returning_users: number
+          sessions: number
+        }[]
+      }
+      admin_session_totals: {
+        Args: never
+        Returns: {
+          dau: number
+          mau: number
+          online_now: number
+          registered: number
+          sessions_today: number
+          wau: number
         }[]
       }
       apply_channel_unsubscribe_penalty: {
@@ -807,6 +857,7 @@ export type Database = {
           withdrawable_balance: number
         }[]
       }
+      record_session: { Args: { p_user_id: string }; Returns: undefined }
       reject_withdrawal: {
         Args: { p_reason: string; p_transaction_id: string }
         Returns: {

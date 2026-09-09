@@ -57,6 +57,14 @@ export async function POST(request: Request) {
     // обидва роути мусять давати однакове число для однакового стану БД.
     const totalHashPerSecond = calcTotalHashPerSecond(userGpus ?? [], gpuTemplates ?? []);
 
+    // Лог сесії: один рядок на відкриття застосунку (вікно 30 хв усередині
+    // record_session) + last_seen_at. Помилку навмисно ковтаємо і НЕ чекаємо
+    // на неї як на критичну — телеметрія не має права зламати вхід у гру.
+    const { error: sessionError } = await admin.rpc("record_session", { p_user_id: profile.id });
+    if (sessionError) {
+      console.error(`record_session failed for ${profile.id}: ${sessionError.message}`);
+    }
+
     // Акція (якщо триває саме зараз за часом БД). Помилку читання навмисно
     // ковтаємо: акція — це косметика поверх маркету, вона не має права
     // зламати весь sync і залишити гравця без даних.

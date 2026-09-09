@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { LogOut, Wallet, Users, BarChart3, Gift } from "lucide-react";
+import { LogOut, Wallet, Users, BarChart3, Gift, Activity } from "lucide-react";
 import { WithdrawalsPanel } from "@/components/admin/WithdrawalsPanel";
 import { AmbassadorsPanel } from "@/components/admin/AmbassadorsPanel";
 import { AmbassadorStatsPanel } from "@/components/admin/AmbassadorStatsPanel";
 import { ManualGrantsPanel } from "@/components/admin/ManualGrantsPanel";
+import { SessionsPanel } from "@/components/admin/SessionsPanel";
 
-type AdminTab = "withdrawals" | "ambassadors" | "stats" | "grants";
+type AdminTab = "withdrawals" | "sessions" | "ambassadors" | "stats" | "grants";
 
 const TABS: Array<{ id: AdminTab; label: string; icon: typeof Wallet }> = [
   { id: "withdrawals", label: "Виведення", icon: Wallet },
+  { id: "sessions", label: "Сесії", icon: Activity },
   { id: "ambassadors", label: "Амбасадори", icon: Users },
   { id: "stats", label: "Статистика", icon: BarChart3 },
   { id: "grants", label: "Нарахування", icon: Gift },
@@ -66,6 +68,7 @@ export function AdminShell({
       </div>
 
       {tab === "withdrawals" && <WithdrawalsPanel onSessionExpired={onSessionExpired} />}
+      {tab === "sessions" && <SessionsPanel onSessionExpired={onSessionExpired} />}
       {tab === "ambassadors" && <AmbassadorsPanel onSessionExpired={onSessionExpired} />}
       {tab === "stats" && <AmbassadorStatsPanel onSessionExpired={onSessionExpired} />}
       {tab === "grants" && <ManualGrantsPanel onSessionExpired={onSessionExpired} />}

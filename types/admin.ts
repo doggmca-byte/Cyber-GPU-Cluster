@@ -85,6 +85,36 @@ export interface AdminAmbassadorStatsResponse {
   items: AdminAmbassadorStatItem[];
 }
 
+/**
+ * Вкладка "Сесії" — реальний DAU з логу user_sessions (по одному рядку на
+ * відкриття застосунку, вікно сесії 30 хв). На відміну від оцінок за
+ * транзакціями/рекламою, сюди потрапляє і той, хто зайшов лише зібрати HASH.
+ */
+export interface AdminSessionTotals {
+  /** Були в застосунку за останні 5 хвилин. */
+  online_now: number;
+  dau: number;
+  wau: number;
+  mau: number;
+  sessions_today: number;
+  registered: number;
+}
+
+export interface AdminSessionStatItem {
+  /** YYYY-MM-DD, UTC. */
+  day: string;
+  sessions: number;
+  active_users: number;
+  /** Активні, які зареєструвалися РАНІШЕ цього дня, тобто повернулися. */
+  returning_users: number;
+  new_users: number;
+}
+
+export interface AdminSessionsResponse {
+  totals: AdminSessionTotals;
+  items: AdminSessionStatItem[];
+}
+
 /** Вкладка "Ручне нарахування" — грант на game_balance за telegram_id, is_manual:true. */
 export interface AdminGrantResponse {
   telegram_id: number;
