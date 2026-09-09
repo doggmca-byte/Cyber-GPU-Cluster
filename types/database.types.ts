@@ -328,6 +328,7 @@ export type Database = {
       referrals: {
         Row: {
           created_at: string
+          exchange_commission_paid: boolean
           has_reached_threshold: boolean
           id: string
           pending_reward: number
@@ -337,6 +338,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          exchange_commission_paid?: boolean
           has_reached_threshold?: boolean
           id?: string
           pending_reward?: number
@@ -346,6 +348,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          exchange_commission_paid?: boolean
           has_reached_threshold?: boolean
           id?: string
           pending_reward?: number
