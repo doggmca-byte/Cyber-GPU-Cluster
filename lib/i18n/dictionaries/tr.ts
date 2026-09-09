@@ -157,8 +157,8 @@ const tr: TranslationDictionary = {
     claimSuccess: (amount) => `${amount} TON hesabına geçirildi`,
     rulesTitle: "Referans ödülleri nasıl hesaplanır",
     ruleRevshare: (percent) => `Arkadaşının her yatırımından ${percent}% — sonsuza dek`,
-    ruleExchangeCommission: (bonus) =>
-      `Arkadaşının borsadaki ilk takası için tek seferlik ${bonus} TON referans komisyonu`,
+    ruleExchangeCommission: (bonus, step) =>
+      `Arkadaşının borsada değiştirdiği/sattığı her ${step} HASH için ${bonus} TON referans komisyonu`,
     yourLink: "Referans linkin",
     share: "Paylaş",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME yapılandırılmamış.",

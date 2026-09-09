@@ -157,8 +157,8 @@ const ru: TranslationDictionary = {
     claimSuccess: (amount) => `Зачислено ${amount} TON`,
     rulesTitle: "Как начисляется реферальное вознаграждение",
     ruleRevshare: (percent) => `${percent}% с каждого депозита друга — навсегда`,
-    ruleExchangeCommission: (bonus) =>
-      `${bonus} TON разовой реферальной комиссии за первый обмен друга на бирже`,
+    ruleExchangeCommission: (bonus, step) =>
+      `${bonus} TON реферальной комиссии за каждые ${step} HASH, которые друг обменивает/продаёт на бирже`,
     yourLink: "Твоя реферальная ссылка",
     share: "Поделиться",
     notConfigured: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME не настроен.",
