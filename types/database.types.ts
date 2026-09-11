@@ -783,6 +783,10 @@ export type Database = {
         Args: { p_reason: string; p_user_id: string }
         Returns: undefined
       }
+      claim_job: {
+        Args: { p_min_interval_seconds: number; p_name: string }
+        Returns: boolean
+      }
       claim_daily_bonus: {
         Args: { p_reward_amount: number; p_user_id: string }
         Returns: {

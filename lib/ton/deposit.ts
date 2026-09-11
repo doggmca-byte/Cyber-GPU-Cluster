@@ -145,7 +145,15 @@ export async function fetchTreasuryTransactions(
     const url = new URL(`${TONCENTER_BASE_URL}/getTransactions`);
     url.searchParams.set("address", treasuryAddress);
     url.searchParams.set("limit", String(PAGE_SIZE));
-    url.searchParams.set("archival", "false");
+    // archival=true ОБОВ'ЯЗКОВО. Неархівні вузли toncenter тримають лише
+    // коротку свіжу історію, і на запит limit=100 по цій скарбниці вже
+    // стабільно відповідають 500 (перевірено 11.09: archival=false — 0 успіхів
+    // з 10, archival=true — 10 з 10). Через це падали ВСІ шляхи зарахування
+    // одразу — кнопка "Перевірити оплату", поллінг після TonConnect, добовий
+    // крон і адмін-санація: ретраї вичерпувались, функція повертала порожній
+    // список, і депозити просто не зараховувались. Архівні вузли мають повну
+    // історію, тож глибина запиту їм не заважає.
+    url.searchParams.set("archival", "true");
     if (apiKey) url.searchParams.set("api_key", apiKey);
     if (cursor) {
       url.searchParams.set("lt", cursor.lt);

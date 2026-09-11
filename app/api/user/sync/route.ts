@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyInitData, getTelegramBotToken } from "@/lib/telegram/verifyInitData";
 import { ApiError, handleRouteError } from "@/lib/api/errors";
@@ -7,6 +7,7 @@ import { findProfileByTelegramId } from "@/lib/api/profile";
 import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
 import { checkChannelMembershipStatus } from "@/lib/telegram/getChatMember";
 import { calcTotalHashPerSecond } from "@/lib/farm/totalHashPerSecond";
+import { runOpportunisticDepositScan } from "@/lib/wallet/opportunisticDepositScan";
 import type { PromoState } from "@/lib/promo/promo";
 import type { SyncResponse } from "@/types/api";
 import type { Database } from "@/types/database.types";
@@ -68,6 +69,13 @@ export async function POST(request: Request) {
         console.error(`clear_bot_block failed for ${profile.id}: ${clearError.message}`);
       }
     }
+
+    // Скан свіжих депозитів — ПІСЛЯ відповіді (after), тож вхід у гру не
+    // чекає на toncenter. Замок claim_job пускає рівно один скан на 2 хв на
+    // весь застосунок, тож сотні входів не перетворюються на сотні запитів.
+    // Закриває реальну діру з аудиту 11.09: ручний переказ без натискання
+    // "Перевірити оплату" раніше чекав на добовий крон майже цілу добу.
+    after(() => runOpportunisticDepositScan(admin));
 
     // Лог сесії: один рядок на відкриття застосунку (вікно 30 хв усередині
     // record_session) + last_seen_at. Помилку навмисно ковтаємо і НЕ чекаємо
