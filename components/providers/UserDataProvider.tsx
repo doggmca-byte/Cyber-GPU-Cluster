@@ -59,43 +59,69 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     }
     initDataRef.current = initData;
 
-    // AbortController-таймаут — захист від "вічно висячого" fetch (сервер
-    // приймає з'єднання, але ніколи не відповідає): без цього проміс sync()
-    // не резолвився б і не реджектився б ніколи, і UserDataProvider завис би
-    // в "loading" назавжди. IntroLoader має власний незалежний fail-safe
-    // (7.5с) для UX, але цей таймаут ще й звільняє сам зависаючий запит.
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    // Шлюз Supabase зрідка гикає і віддає 502/503/504 навіть на найпростіше
+    // читання (аудит 12.09: 130 з 30 165 звернень за добу, 0.43%). Один вхід
+    // у гру робить ~6 звернень до БД, тож приблизно кожен сороковий запуск
+    // падав у 500 — і гравець бачив червоне "Проблема зі з'єднанням" замість
+    // гри, хоча повтор за пів секунди спрацював би. Тому пробуємо тричі.
+    //
+    // 4xx не повторюємо: протухла initData чи невалідний підпис від повтору
+    // не полагодяться, там помилку треба показати одразу.
+    const RETRY_DELAYS_MS = [300, 900];
 
-    try {
-      const res = await fetch("/api/user/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ initData }),
-        signal: controller.signal,
-      });
+    for (let attempt = 0; ; attempt += 1) {
+      const isLastAttempt = attempt >= RETRY_DELAYS_MS.length;
 
-      if (!res.ok) {
+      // AbortController-таймаут — захист від "вічно висячого" fetch (сервер
+      // приймає з'єднання, але ніколи не відповідає): без нього проміс sync()
+      // не резолвився б і не реджектився б ніколи. Тримаємо його коротким:
+      // звичайний sync відповідає за ~2с, тож запит, що висить 6с, майже
+      // напевно вже не відповість — швидше перепитати, ніж чекати.
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      try {
+        const res = await fetch("/api/user/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ initData }),
+          signal: controller.signal,
+        });
+
+        if (res.ok) {
+          const data = (await res.json()) as SyncResponse;
+          setState({ status: "ready", data, initData });
+          return;
+        }
+
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? `sync failed with status ${res.status}`);
+        const message = body?.error ?? `sync failed with status ${res.status}`;
+
+        if (res.status < 500 || isLastAttempt) {
+          setState({ status: "error", message });
+          return;
+        }
+      } catch (err) {
+        if (isLastAttempt) {
+          const isTimeout = err instanceof DOMException && err.name === "AbortError";
+          setState({
+            status: "error",
+            message: isTimeout
+              ? "request timed out — server took too long to respond"
+              : err instanceof Error
+                ? err.message
+                : "unknown sync error",
+          });
+          return;
+        }
+      } finally {
+        clearTimeout(timeoutId);
       }
 
-      const data = (await res.json()) as SyncResponse;
-      setState({ status: "ready", data, initData });
-    } catch (err) {
-      const isTimeout = err instanceof DOMException && err.name === "AbortError";
-      setState({
-        status: "error",
-        message: isTimeout
-          ? "request timed out — server took too long to respond"
-          : err instanceof Error
-            ? err.message
-            : "unknown sync error",
-      });
-    } finally {
-      clearTimeout(timeoutId);
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
     }
   }, []);
+
 
   useEffect(() => {
     void sync();
