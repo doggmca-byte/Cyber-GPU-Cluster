@@ -7,6 +7,7 @@ import { findProfileByTelegramId } from "@/lib/api/profile";
 import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
 import { checkChannelMembershipStatus } from "@/lib/telegram/getChatMember";
 import { calcTotalHashPerSecond } from "@/lib/farm/totalHashPerSecond";
+import { loadGpuTemplates } from "@/lib/farm/gpuTemplates";
 import { runOpportunisticDepositScan } from "@/lib/wallet/opportunisticDepositScan";
 import type { PromoState } from "@/lib/promo/promo";
 import type { SyncResponse } from "@/types/api";
@@ -43,58 +44,64 @@ export async function POST(request: Request) {
       profile = await enforceChannelUnsubscribePenalties(admin, profile, user.id);
     }
 
-    const [{ data: userGpus, error: gpusError }, { data: gpuTemplates, error: templatesError }] =
-      await Promise.all([
-        admin.from("user_gpus").select("*").eq("user_id", profile.id).order("gpu_level"),
-        admin.from("gpu_templates").select("*").order("level"),
-      ]);
+    const [{ data: userGpus, error: gpusError }, gpuTemplates] = await Promise.all([
+      admin.from("user_gpus").select("*").eq("user_id", profile.id).order("gpu_level"),
+      loadGpuTemplates(admin),
+    ]);
 
     if (gpusError) throw new ApiError(500, `failed to load user_gpus: ${gpusError.message}`);
-    if (templatesError) {
-      throw new ApiError(500, `failed to load gpu_templates: ${templatesError.message}`);
-    }
 
     // Спільна формула з /api/farm/buy (lib/farm/totalHashPerSecond.ts) —
     // обидва роути мусять давати однакове число для однакового стану БД.
-    const totalHashPerSecond = calcTotalHashPerSecond(userGpus ?? [], gpuTemplates ?? []);
+    const totalHashPerSecond = calcTotalHashPerSecond(userGpus ?? [], gpuTemplates);
 
-    // Дозвіл на повідомлення прийшов у ПІДПИСАНОМУ initData — отже боту
-    // тепер можна писати. Знімаємо позначку недосяжності, щоб людина
-    // повернулась у сповіщення. Без цього кроку WriteAccessPrompt був
-    // косметичним: користувач тиснув "Дозволити", а бекенд про це не
-    // дізнавався ніколи і тримав його виключеним назавжди.
-    if (user.allows_write_to_pm) {
-      const { error: clearError } = await admin.rpc("clear_bot_block", { p_user_id: profile.id });
-      if (clearError) {
-        console.error(`clear_bot_block failed for ${profile.id}: ${clearError.message}`);
+    // Все, що не потрібне для відповіді, виконується ПІСЛЯ неї (after) і не
+    // затримує вхід у гру ні на мілісекунду. Це не косметика: коли шлюз
+    // Supabase гикає, він віддає 504 не одразу, а через ~5 секунд — тож три
+    // допоміжні виклики поспіль здатні були перетворити вхід у 15-секундне
+    // очікування, після якого клієнт здавався за таймаутом. Тепер найгірше,
+    // що може статися з телеметрією, — рядок у логах.
+    after(async () => {
+      // Дозвіл на повідомлення прийшов у ПІДПИСАНОМУ initData — отже боту
+      // тепер можна писати. Знімаємо позначку недосяжності, щоб людина
+      // повернулась у сповіщення. Без цього кроку WriteAccessPrompt був
+      // косметичним: користувач тиснув "Дозволити", а бекенд про це не
+      // дізнавався ніколи і тримав його виключеним назавжди.
+      if (user.allows_write_to_pm) {
+        const { error: clearError } = await admin.rpc("clear_bot_block", { p_user_id: profile.id });
+        if (clearError) {
+          console.error(`clear_bot_block failed for ${profile.id}: ${clearError.message}`);
+        }
       }
-    }
 
-    // Скан свіжих депозитів — ПІСЛЯ відповіді (after), тож вхід у гру не
-    // чекає на toncenter. Замок claim_job пускає рівно один скан на 2 хв на
-    // весь застосунок, тож сотні входів не перетворюються на сотні запитів.
-    // Закриває реальну діру з аудиту 11.09: ручний переказ без натискання
-    // "Перевірити оплату" раніше чекав на добовий крон майже цілу добу.
-    after(() => runOpportunisticDepositScan(admin));
+      // Лог сесії: один рядок на відкриття застосунку (вікно 30 хв усередині
+      // record_session) + last_seen_at.
+      const { error: sessionError } = await admin.rpc("record_session", { p_user_id: profile.id });
+      if (sessionError) {
+        console.error(`record_session failed for ${profile.id}: ${sessionError.message}`);
+      }
 
-    // Лог сесії: один рядок на відкриття застосунку (вікно 30 хв усередині
-    // record_session) + last_seen_at. Помилку навмисно ковтаємо і НЕ чекаємо
-    // на неї як на критичну — телеметрія не має права зламати вхід у гру.
-    const { error: sessionError } = await admin.rpc("record_session", { p_user_id: profile.id });
-    if (sessionError) {
-      console.error(`record_session failed for ${profile.id}: ${sessionError.message}`);
-    }
+      // Скан свіжих депозитів. Замок claim_job пускає рівно один скан на
+      // 2 хв на весь застосунок, тож сотні входів не перетворюються на сотні
+      // запитів до toncenter. Закриває діру з аудиту 11.09: ручний переказ
+      // без натискання "Перевірити оплату" раніше чекав на добовий крон.
+      await runOpportunisticDepositScan(admin);
+    });
 
-    // Акція (якщо триває саме зараз за часом БД). Помилку читання навмисно
-    // ковтаємо: акція — це косметика поверх маркету, вона не має права
+    // Акція (якщо триває саме зараз за часом БД). Єдиний допоміжний виклик,
+    // що лишився в критичному шляху, бо його результат їде у відповіді —
+    // тому з жорстким запобіжником: 1.5 с, і йдемо далі без акції. Помилку
+    // ковтаємо: банер знижки — косметика поверх маркету, вона не має права
     // зламати весь sync і залишити гравця без даних.
-    const { data: promoRows } = await admin.rpc("active_promo");
+    const { data: promoRows } = await admin
+      .rpc("active_promo")
+      .abortSignal(AbortSignal.timeout(1500));
     const promo: PromoState | null = promoRows && promoRows.length > 0 ? promoRows[0] : null;
 
     const response: SyncResponse = {
       profile,
       user_gpus: userGpus ?? [],
-      gpu_templates: gpuTemplates ?? [],
+      gpu_templates: gpuTemplates,
       total_hash_per_second: totalHashPerSecond,
       promo,
       // Лише TRUE/FALSE для ЦЬОГО конкретного telegram_id — сам список

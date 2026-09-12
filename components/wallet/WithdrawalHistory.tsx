@@ -6,6 +6,7 @@ import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import type { LanguageCode } from "@/lib/i18n/languages";
 import type { WithdrawalHistoryItem, WithdrawalHistoryResponse, WithdrawalStatus } from "@/types/api";
+import { postJsonWithRetry } from "@/lib/api/postJsonWithRetry";
 
 /**
  * Історія власних заявок на вивід — раніше єдиним сигналом про долю заявки
@@ -24,18 +25,7 @@ export function WithdrawalHistory({ initData }: { initData: string }) {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/wallet/withdrawals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ initData }),
-      });
-
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? `failed with status ${res.status}`);
-      }
-
-      const data = (await res.json()) as WithdrawalHistoryResponse;
+      const data = await postJsonWithRetry<WithdrawalHistoryResponse>("/api/wallet/withdrawals", { initData });
       setItems(data.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : t.wallet.history.loadError);

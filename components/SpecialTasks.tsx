@@ -27,6 +27,7 @@ import type {
   RetentionTaskVerifyResponse,
 } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
+import { postJsonWithRetry } from "@/lib/api/postJsonWithRetry";
 
 type LoadState =
   | { phase: "loading" }
@@ -46,16 +47,7 @@ export function SpecialTasks({ initData }: { initData: string }) {
   const load = useCallback(async () => {
     setState({ phase: "loading" });
     try {
-      const res = await fetch("/api/retention-tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ initData }),
-      });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? `retention-tasks status failed with status ${res.status}`);
-      }
-      const data = (await res.json()) as RetentionTasksResponse;
+      const data = await postJsonWithRetry<RetentionTasksResponse>("/api/retention-tasks", { initData });
       setState({ phase: "ready", tasks: data.tasks, stages: data.stages });
     } catch (err) {
       setState({

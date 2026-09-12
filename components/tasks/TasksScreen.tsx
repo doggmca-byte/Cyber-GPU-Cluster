@@ -39,6 +39,7 @@ import type {
   SyncResponse,
 } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
+import { postJsonWithRetry } from "@/lib/api/postJsonWithRetry";
 
 // Дзеркалить константи в record_partner_ad_watch
 // (supabase/migrations/20260904090000_raise_partner_ad_daily_limit_to_30.sql) —
@@ -189,18 +190,7 @@ function TasksScreenReady({ initData }: { initData: string }) {
   const loadTasks = useCallback(async () => {
     setTasksState({ status: "loading" });
     try {
-      const res = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ initData }),
-      });
-
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? `tasks fetch failed with status ${res.status}`);
-      }
-
-      const data = (await res.json()) as TasksResponse;
+      const data = await postJsonWithRetry<TasksResponse>("/api/tasks", { initData });
       setTasksState({ status: "ready", tasks: data.tasks, completed: data.completed_count, total: data.total_count });
     } catch (err) {
       setTasksState({

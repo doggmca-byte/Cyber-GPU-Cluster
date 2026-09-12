@@ -6,6 +6,7 @@ import { readJsonBody } from "@/lib/api/request";
 import { requireProfileByTelegramId } from "@/lib/api/profile";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
 import { calcTotalHashPerSecond } from "@/lib/farm/totalHashPerSecond";
+import { loadGpuTemplates } from "@/lib/farm/gpuTemplates";
 import type { BuyGpuResponse } from "@/types/api";
 
 export const runtime = "nodejs";
@@ -53,16 +54,12 @@ export async function POST(request: Request) {
 
     // Транзакція вже пройшла — перечитуємо фактичні рядки, щоб віддати
     // клієнту справжні id/amount/last_harvest_at, а не синтетичні локальні.
-    const [{ data: userGpus, error: gpusError }, { data: gpuTemplates, error: templatesError }] =
-      await Promise.all([
-        admin.from("user_gpus").select("*").eq("user_id", profile.id).order("gpu_level"),
-        admin.from("gpu_templates").select("*").order("level"),
-      ]);
+    const [{ data: userGpus, error: gpusError }, gpuTemplates] = await Promise.all([
+      admin.from("user_gpus").select("*").eq("user_id", profile.id).order("gpu_level"),
+      loadGpuTemplates(admin),
+    ]);
 
     if (gpusError) throw new ApiError(500, `failed to load user_gpus: ${gpusError.message}`);
-    if (templatesError) {
-      throw new ApiError(500, `failed to load gpu_templates: ${templatesError.message}`);
-    }
 
     const response: BuyGpuResponse = {
       gpu_level: gpuLevel as number,
@@ -70,7 +67,7 @@ export async function POST(request: Request) {
       new_gpu_amount: data.new_gpu_amount,
       hash_harvested: data.hash_harvested,
       user_gpus: userGpus ?? [],
-      total_hash_per_second: calcTotalHashPerSecond(userGpus ?? [], gpuTemplates ?? []),
+      total_hash_per_second: calcTotalHashPerSecond(userGpus ?? [], gpuTemplates),
       server_time: new Date().toISOString(),
     };
 

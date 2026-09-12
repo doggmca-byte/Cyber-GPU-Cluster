@@ -15,31 +15,54 @@ let cachedClient: SupabaseClient<Database> | null = null;
  * і червоний екран "Проблема зі з'єднанням" замість гри.
  */
 const RETRYABLE_STATUSES = new Set([502, 503, 504]);
-const RETRY_DELAYS_MS = [150, 500];
+const RETRY_DELAYS_MS = [150, 400];
 
 /**
- * Повторюємо ЛИШЕ ідемпотентні читання (GET/HEAD). RPC і записи йдуть POST/
- * PATCH: 504 означає, що відповідь не дійшла, а не що операція не виконалась,
- * тож автоматичний повтор міг би, наприклад, списати кошти двічі.
+ * Власний таймаут читання. Виміряно 12.09: здорова відповідь приходить за
+ * 111 мс (p95 — 470 мс), а невдала висить 5.1 с і лише потім віддає 504.
+ * Тобто чекати на чужий таймаут — це подарувати 5 секунд нізащо: дешевше
+ * обірвати на 2.5 с (у п'ять разів більше за p95) і перепитати, бо повтор
+ * майже завжди відповідає за ті самі 111 мс.
+ */
+const READ_TIMEOUT_MS = 2500;
+
+/**
+ * Повторюємо і обриваємо по таймауту ЛИШЕ ідемпотентні читання (GET/HEAD) —
+ * це 80% усіх збоїв. RPC і записи йдуть POST/PATCH і не чіпаються взагалі:
+ * 504 там означає, що загубилась відповідь, а не що операція не виконалась,
+ * тож і повтор, і обрив могли б списати кошти двічі або лишити транзакцію
+ * в невизначеному стані.
  */
 async function fetchWithRetry(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const method = (init?.method ?? "GET").toUpperCase();
   const isIdempotentRead = method === "GET" || method === "HEAD";
 
+  if (!isIdempotentRead) return fetch(input, init);
+
+  const callerSignal = init?.signal ?? null;
+
   for (let attempt = 0; ; attempt += 1) {
     const isLastAttempt = attempt >= RETRY_DELAYS_MS.length;
 
+    // Скасування від викликача і наш таймаут — різні речі: перше означає
+    // "результат більше не потрібен" (повторювати нема сенсу), друге —
+    // "сервер задумався, спробуймо ще раз".
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(() => timeoutController.abort(), READ_TIMEOUT_MS);
+    const signal = callerSignal
+      ? AbortSignal.any([callerSignal, timeoutController.signal])
+      : timeoutController.signal;
+
     try {
-      const response = await fetch(input, init);
-      if (!isIdempotentRead || isLastAttempt || !RETRYABLE_STATUSES.has(response.status)) {
-        return response;
-      }
+      const response = await fetch(input, { ...init, signal });
+      if (isLastAttempt || !RETRYABLE_STATUSES.has(response.status)) return response;
       // Вичитуємо тіло, щоб з'єднання повернулось у пул, а не висіло до GC.
       await response.arrayBuffer().catch(() => undefined);
     } catch (error) {
-      // AbortError — це усвідомлене скасування (таймаут викликача), не збій мережі.
-      const isAbort = error instanceof Error && error.name === "AbortError";
-      if (!isIdempotentRead || isLastAttempt || isAbort) throw error;
+      if (callerSignal?.aborted) throw error;
+      if (isLastAttempt) throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
 
     await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));

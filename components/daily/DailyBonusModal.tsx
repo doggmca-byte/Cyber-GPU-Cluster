@@ -14,6 +14,7 @@ import {
   DAILY_BONUS_REWARD_TON,
 } from "@/lib/constants/economy";
 import type { DailyBonusClaimResponse, DailyBonusStatusResponse } from "@/types/api";
+import { postJsonWithRetry } from "@/lib/api/postJsonWithRetry";
 
 // Скільки секунд показуємо чекліст-заглушку перед автоматичним запуском
 // реклами. Сервер (/api/daily-bonus/claim) усе одно перевіряє
@@ -57,18 +58,7 @@ export function DailyBonusModal({ initData, onClose }: { initData: string; onClo
   const loadStatus = useCallback(async () => {
     setState({ phase: "loading" });
     try {
-      const res = await fetch("/api/daily-bonus", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ initData }),
-      });
-
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? `daily-bonus status failed with status ${res.status}`);
-      }
-
-      const data = (await res.json()) as DailyBonusStatusResponse;
+      const data = await postJsonWithRetry<DailyBonusStatusResponse>("/api/daily-bonus", { initData });
       if (data.can_claim) {
         setState({ phase: "available", rewardAmount: data.reward_amount });
       } else {

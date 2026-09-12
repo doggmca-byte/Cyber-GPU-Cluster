@@ -12,6 +12,7 @@ import {
   REFERRAL_EXCHANGE_COMMISSION_STEP_HASH,
 } from "@/lib/constants/economy";
 import type { ClaimReferralResponse, SyncResponse } from "@/types/api";
+import { postJsonWithRetry } from "@/lib/api/postJsonWithRetry";
 
 interface ReferralStats {
   friends_count: number;
@@ -48,18 +49,7 @@ function FriendsScreenReady({ data, initData }: { data: SyncResponse; initData: 
 
     (async () => {
       try {
-        const res = await fetch("/api/friends/stats", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData }),
-        });
-
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(body?.error ?? `stats failed with status ${res.status}`);
-        }
-
-        const result = (await res.json()) as ReferralStats;
+        const result = await postJsonWithRetry<ReferralStats>("/api/friends/stats", { initData });
         if (!cancelled) setStats(result);
       } catch (err) {
         if (!cancelled) {
