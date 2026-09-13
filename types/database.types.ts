@@ -853,6 +853,23 @@ export type Database = {
           user_id: string
         }[]
       }
+      list_transactions_for_channel: {
+        Args: { p_limit?: number }
+        Returns: {
+          amount: number
+          created_at: string
+          fee: number
+          first_name: string | null
+          id: string
+          tx_hash: string | null
+          type: string
+          username: string | null
+        }[]
+      }
+      mark_transaction_published: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       list_paused_production_users: {
         Args: { p_max_unclaimed_hours?: number }
         Returns: {
