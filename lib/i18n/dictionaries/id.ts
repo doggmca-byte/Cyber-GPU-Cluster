@@ -101,6 +101,7 @@ const id: TranslationDictionary = {
     buy: (price) => `Beli · ${price} TON`,
     buying: "Membeli...",
     limitReached: "Batas tercapai",
+    notEnough: (amount: string) => `Kurang ${amount} TON`,
     reviveOnFarm: "Bangkitkan di Farm untuk membuka pembelian",
     promo: {
       banner: (percent) => `-${percent}% untuk rig terpilih`,

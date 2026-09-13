@@ -101,6 +101,7 @@ const uk: TranslationDictionary = {
     buy: (price) => `Купити · ${price} TON`,
     buying: "Купуємо...",
     limitReached: "Ліміт досягнуто",
+    notEnough: (amount: string) => `Не вистачає ${amount} TON`,
     reviveOnFarm: "Оживи на Фермі, щоб знову купувати",
     promo: {
       banner: (percent) => `-${percent}% на обрані риги`,

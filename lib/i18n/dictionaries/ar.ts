@@ -101,6 +101,7 @@ const ar: TranslationDictionary = {
     buy: (price) => `شراء · ${price} TON`,
     buying: "جارٍ الشراء...",
     limitReached: "تم بلوغ الحد الأقصى",
+    notEnough: (amount: string) => `ينقصك ${amount} TON`,
     reviveOnFarm: "أحيِ في المزرعة لفتح الشراء",
     promo: {
       banner: (percent) => `خصم ${percent}% على أجهزة مختارة`,

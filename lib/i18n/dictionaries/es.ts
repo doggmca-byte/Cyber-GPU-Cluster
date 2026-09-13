@@ -102,6 +102,7 @@ const es: TranslationDictionary = {
     buy: (price) => `Comprar · ${price} TON`,
     buying: "Comprando...",
     limitReached: "Límite alcanzado",
+    notEnough: (amount: string) => `Faltan ${amount} TON`,
     reviveOnFarm: "Reanima en la Granja para desbloquear la compra",
     promo: {
       banner: (percent) => `-${percent}% en equipos seleccionados`,

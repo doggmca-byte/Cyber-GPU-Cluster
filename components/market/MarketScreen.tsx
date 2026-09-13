@@ -160,6 +160,7 @@ function MarketScreenReady({ data, initData }: { data: SyncResponse; initData: s
             discounted={isLevelDiscounted(promo, template.level, nowMs)}
             discountPercent={promo?.discount_percent ?? 0}
             price={effectivePrice(promo, template.level, template.cost_ton, nowMs)}
+            balance={profile.game_balance}
             onBuy={() => buy(template)}
             onOpenCycles={() => setCyclesTemplate(template)}
           />
@@ -187,6 +188,7 @@ function GpuCard({
   discounted,
   discountPercent,
   price,
+  balance,
   onBuy,
   onOpenCycles,
 }: {
@@ -201,6 +203,8 @@ function GpuCard({
   discountPercent: number;
   /** Ціна, яку реально спише бекенд: акційна або базова. */
   price: number;
+  /** Ігровий баланс гравця — щоб не пускати в купівлю, на яку не вистачає. */
+  balance: number;
   onBuy: () => void;
   onOpenCycles: () => void;
 }) {
@@ -208,6 +212,11 @@ function GpuCard({
   const isMaxed = owned >= template.max_limit;
   const rarityClass = RARITY_COLOR[template.rarity] ?? RARITY_COLOR.common;
   const rarityLabel = getRarityLabel(t, template.rarity);
+  // Ціни й баланси — дробові, тож пряме порівняння дало б "не вистачає
+  // 0.0000000001" на рівному балансі. Епсилон прибирає саме цей випадок і
+  // нічого більше: сервер однаково лишається останнім словом у покупці.
+  const shortBy = price - balance;
+  const canAfford = shortBy <= 1e-9;
   const hashPerHour = template.hash_per_second * 3600;
   const hashPerDay = hashPerHour * 24;
 
@@ -274,7 +283,7 @@ function GpuCard({
         <button
           type="button"
           onClick={onBuy}
-          disabled={disabled || isMaxed}
+          disabled={disabled || isMaxed || !canAfford}
           className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-xl bg-neon-green py-2 text-xs font-semibold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isMaxed ? (
@@ -292,6 +301,12 @@ function GpuCard({
             t.market.buy(formatNumber(language, template.cost_ton, { maximumFractionDigits: 2 }))
           )}
         </button>
+      )}
+
+      {!isMaxed && !isDead && !canAfford && (
+        <p className="mt-1.5 text-center text-[10px] text-slate-500">
+          {t.market.notEnough(formatNumber(language, shortBy, { maximumFractionDigits: 3 }))}
+        </p>
       )}
 
       {error && <p className="mt-2 text-center text-[11px] text-red-400">{error}</p>}

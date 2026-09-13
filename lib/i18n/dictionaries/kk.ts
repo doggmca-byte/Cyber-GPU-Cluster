@@ -101,6 +101,7 @@ const kk: TranslationDictionary = {
     buy: (price) => `Сатып алу · ${price} TON`,
     buying: "Сатып алынуда...",
     limitReached: "Лимитке жетті",
+    notEnough: (amount: string) => `${amount} TON жетпейді`,
     reviveOnFarm: "Сатып алуды ашу үшін Фермада тірілт",
     promo: {
       banner: (percent) => `Таңдаулы ригтерге -${percent}%`,

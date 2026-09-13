@@ -104,6 +104,7 @@ const en = {
     buy: (price: string) => `Buy · ${price} TON`,
     buying: "Buying...",
     limitReached: "Limit reached",
+    notEnough: (amount: string) => `Not enough — ${amount} TON short`,
     reviveOnFarm: "Revive on Farm to unlock buying",
     promo: {
       banner: (percent: number) => `-${percent}% on selected rigs`,
