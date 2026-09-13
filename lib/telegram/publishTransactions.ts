@@ -41,15 +41,23 @@ export function maskPlayer(username: string | null, firstName: string | null): s
  * екранувати. Некоректний хеш краще не показувати зовсім, ніж дати
  * посилання в нікуди.
  */
-function txExplorerUrl(txHash: string | null): string | null {
+function txHashHex(txHash: string | null): string | null {
   if (!txHash) return null;
   try {
     const hex = Buffer.from(txHash, "base64").toString("hex");
-    if (hex.length !== 64) return null;
-    return `https://tonviewer.com/transaction/${hex}`;
+    return hex.length === 64 ? hex : null;
   } catch {
     return null;
   }
+}
+
+/** 64 символи хешу в дописі — це стіна тексту; впізнаваними є краї. */
+function shortenHash(hex: string): string {
+  return `${hex.slice(0, 8)}...${hex.slice(-8)}`;
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function formatAmount(value: number): string {
@@ -57,50 +65,34 @@ function formatAmount(value: number): string {
   return Number(value.toFixed(6)).toString();
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  const date = d.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-  const time = d.toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "UTC",
-  });
-  return `${date}, ${time} UTC`;
-}
-
 /**
  * Мова дописів — англійська: канал один на всю аудиторію, а вона в нас
  * вісьмимовна (від іспанської до казахської), тож персоналізувати, як у
  * розсилках, тут неможливо. Назва самого каналу теж англійська.
+ *
+ * Часу в дописі немає навмисно — Telegram і так підписує кожне повідомлення
+ * власним часом, а окремий рядок із датою лише з'їдав би висоту стрічки.
  */
 export function formatTransactionPost(tx: PendingTransaction): string {
-  const player = maskPlayer(tx.username, tx.first_name);
-  const link = txExplorerUrl(tx.tx_hash);
-  const lines: string[] = [];
+  const player = escapeHtml(maskPlayer(tx.username, tx.first_name));
+  const hex = txHashHex(tx.tx_hash);
+  const isDeposit = tx.type === "deposit";
 
-  if (tx.type === "deposit") {
-    lines.push("💰 Deposit");
-    lines.push(`Player: ${player}`);
-    lines.push(`Amount: ${formatAmount(tx.amount)} TON`);
-  } else {
-    // amount у виплатах від'ємний (списання з балансу), fee утримується з
-    // нього — на гаманець гравця приходить різниця. Показуємо саме те, що
-    // реально прийшло, інакше канал завищував би виплати на розмір комісії.
-    const requested = Math.abs(tx.amount);
-    const fee = tx.fee ?? 0;
-    lines.push("💸 Withdrawal");
-    lines.push(`Player: ${player}`);
-    lines.push(`Paid out: ${formatAmount(requested - fee)} TON`);
-    if (fee > 0) lines.push(`Fee: ${formatAmount(fee)} TON`);
+  // У виплатах amount від'ємний (списання з балансу), а fee утримується з
+  // нього — на гаманець приходить різниця. Показуємо саме те, що реально
+  // прийшло, інакше канал завищував би виплати на розмір комісії.
+  const amount = isDeposit ? tx.amount : Math.abs(tx.amount) - (tx.fee ?? 0);
+
+  const lines: string[] = [
+    `<b>${isDeposit ? "Deposit to" : "Withdrawal of"} Cyber GPU Cluster</b>`,
+    isDeposit ? "💳 Deposit" : "💸 Payout",
+    `👤 Player: ${player}`,
+    `💰 Amount: ${formatAmount(amount)} TON`,
+  ];
+
+  if (hex) {
+    lines.push(`🔗 Hash: <a href="https://tonviewer.com/transaction/${hex}">${shortenHash(hex)}</a>`);
   }
-
-  lines.push(formatDate(tx.created_at));
-  if (link) lines.push(link);
 
   return lines.join("\n");
 }
@@ -113,6 +105,8 @@ async function postToChannel(text: string): Promise<void> {
     body: JSON.stringify({
       chat_id: CHANNEL,
       text,
+      // Посилання ховається під коротким хешем, тож без HTML ніяк.
+      parse_mode: "HTML",
       // Прев'ю tonviewer роздуло б кожен допис на пів екрана.
       link_preview_options: { is_disabled: true },
     }),
