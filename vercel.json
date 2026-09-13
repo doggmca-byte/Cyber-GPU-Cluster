@@ -1,12 +1,18 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["lhr1"],
   "crons": [
     {
       "path": "/api/cron/deposits",
-      "schedule": "0 3 * * *"
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/channel-penalties",
+      "schedule": "*/30 * * * *"
     },
     {
       "path": "/api/cron/production-notify",
-      "schedule": "0 9 * * *"
+      "schedule": "0 6,8,10,12,14,16,18,20 * * *"
     }
   ]
 }

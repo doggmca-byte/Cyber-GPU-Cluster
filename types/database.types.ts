@@ -844,6 +844,15 @@ export type Database = {
         }[]
       }
       harvest_user_hash: { Args: { p_user_id: string }; Returns: number }
+      list_channel_penalty_candidates: {
+        Args: { p_limit?: number }
+        Returns: {
+          chat_id: string
+          task_id: string
+          telegram_id: number
+          user_id: string
+        }[]
+      }
       list_paused_production_users: {
         Args: { p_max_unclaimed_hours?: number }
         Returns: {
