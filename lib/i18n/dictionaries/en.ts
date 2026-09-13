@@ -341,6 +341,10 @@ const en = {
         title: "Cookie Hunters",
         description: "+$3 bonus just for signing up — shoot and earn.",
       },
+      dogs_house_miner_start: {
+        title: "Dogs House Miner",
+        description: "Launch the bot and start mining GRAM.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Start mining in COIN KERO.",

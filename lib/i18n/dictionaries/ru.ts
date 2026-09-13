@@ -338,6 +338,10 @@ const ru: TranslationDictionary = {
         title: "Cookie Hunters",
         description: "+$3 на бонусный счёт просто за регистрацию — стреляй и зарабатывай.",
       },
+      dogs_house_miner_start: {
+        title: "Dogs House Miner",
+        description: "Запусти бота и начни майнить GRAM.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Начни майнить в COIN KERO.",

@@ -338,6 +338,10 @@ const kk: TranslationDictionary = {
         title: "Cookie Hunters",
         description: "+$3 бонус тек тіркелгені үшін — ат да таба бер.",
       },
+      dogs_house_miner_start: {
+        title: "Dogs House Miner",
+        description: "Ботты іске қос та, GRAM өндіре баста.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "COIN KERO-да майнинг бастаңыз.",

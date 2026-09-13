@@ -339,6 +339,10 @@ const es: TranslationDictionary = {
         title: "Cookie Hunters",
         description: "+$3 de bono solo por registrarte — dispara y gana.",
       },
+      dogs_house_miner_start: {
+        title: "Dogs House Miner",
+        description: "Inicia el bot y empieza a minar GRAM.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Empieza a minar en COIN KERO.",

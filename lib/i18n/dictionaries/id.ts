@@ -338,6 +338,10 @@ const id: TranslationDictionary = {
         title: "Cookie Hunters",
         description: "+$3 bonus hanya dengan mendaftar — tembak dan hasilkan.",
       },
+      dogs_house_miner_start: {
+        title: "Dogs House Miner",
+        description: "Jalankan bot dan mulai menambang GRAM.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Mulai menambang di COIN KERO.",
