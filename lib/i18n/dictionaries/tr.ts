@@ -310,6 +310,10 @@ const tr: TranslationDictionary = {
         title: "Sohbet grubumuza katıl",
         description: "Toplulukla sohbet etmek için resmi Telegram grubumuza katıl.",
       },
+      subscribe_payouts_channel: {
+        title: "Ödeme kanalına abone ol",
+        description: "Tüm ödemelerin paylaşıldığı kanala katıl.",
+      },
       visit_website: {
         title: "Web sitemizi ziyaret et",
         description: "Cyber GPU Cluster web sitesini aç.",

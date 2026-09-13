@@ -313,6 +313,10 @@ const en = {
         title: "Join our chat",
         description: "Join our official Telegram group chat to talk with the community.",
       },
+      subscribe_payouts_channel: {
+        title: "Subscribe to the payouts channel",
+        description: "Join the channel where every payout is published.",
+      },
       visit_website: {
         title: "Visit our website",
         description: "Open the Cyber GPU Cluster website.",

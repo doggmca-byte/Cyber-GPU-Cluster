@@ -311,6 +311,10 @@ const es: TranslationDictionary = {
         title: "Únete a nuestro chat",
         description: "Únete a nuestro grupo oficial de Telegram para hablar con la comunidad.",
       },
+      subscribe_payouts_channel: {
+        title: "Suscríbete al canal de pagos",
+        description: "Únete al canal donde se publican todos los pagos.",
+      },
       visit_website: {
         title: "Visita nuestro sitio web",
         description: "Abre el sitio web de Cyber GPU Cluster.",

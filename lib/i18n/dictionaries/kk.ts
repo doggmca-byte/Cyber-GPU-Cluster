@@ -310,6 +310,10 @@ const kk: TranslationDictionary = {
         title: "Чатымызға қосыл",
         description: "Қауымдастықпен сөйлесу үшін ресми Telegram чатымызға қосыл.",
       },
+      subscribe_payouts_channel: {
+        title: "Төлемдер арнасына жазыл",
+        description: "Барлық төлемдер жарияланатын арнаға қосыл.",
+      },
       visit_website: {
         title: "Сайтымызға кір",
         description: "Cyber GPU Cluster сайтын аш.",

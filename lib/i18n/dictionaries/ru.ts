@@ -310,6 +310,10 @@ const ru: TranslationDictionary = {
         title: "Присоединяйся к чату",
         description: "Присоединяйся к официальному групповому чату, чтобы общаться с сообществом.",
       },
+      subscribe_payouts_channel: {
+        title: "Подпишись на канал выплат",
+        description: "Присоединяйся к каналу, где публикуются все выплаты.",
+      },
       visit_website: {
         title: "Посети наш сайт",
         description: "Открой сайт Cyber GPU Cluster.",
