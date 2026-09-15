@@ -343,6 +343,10 @@ const uk: TranslationDictionary = {
         title: "Dogs House Miner",
         description: "Запусти бота й почни майнити GRAM.",
       },
+      mrg_miner_start: {
+        title: "MRG Miner",
+        description: "Відкрий застосунок і почни майнити.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Почни майнити в COIN KERO.",

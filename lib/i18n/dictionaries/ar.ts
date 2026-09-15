@@ -342,6 +342,10 @@ const ar: TranslationDictionary = {
         title: "Dogs House Miner",
         description: "شغّل البوت وابدأ بتعدين GRAM.",
       },
+      mrg_miner_start: {
+        title: "MRG Miner",
+        description: "افتح التطبيق وابدأ التعدين.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "ابدأ التعدين في COIN KERO.",

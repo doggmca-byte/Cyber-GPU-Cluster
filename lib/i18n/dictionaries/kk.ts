@@ -343,6 +343,10 @@ const kk: TranslationDictionary = {
         title: "Dogs House Miner",
         description: "Ботты іске қос та, GRAM өндіре баста.",
       },
+      mrg_miner_start: {
+        title: "MRG Miner",
+        description: "Қосымшаны аш та, майнингті баста.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "COIN KERO-да майнинг бастаңыз.",

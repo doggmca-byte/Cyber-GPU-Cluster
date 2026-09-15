@@ -346,6 +346,10 @@ const en = {
         title: "Dogs House Miner",
         description: "Launch the bot and start mining GRAM.",
       },
+      mrg_miner_start: {
+        title: "MRG Miner",
+        description: "Open the app and start mining.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Start mining in COIN KERO.",

@@ -343,6 +343,10 @@ const id: TranslationDictionary = {
         title: "Dogs House Miner",
         description: "Jalankan bot dan mulai menambang GRAM.",
       },
+      mrg_miner_start: {
+        title: "MRG Miner",
+        description: "Buka aplikasi dan mulai menambang.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Mulai menambang di COIN KERO.",

@@ -343,6 +343,10 @@ const tr: TranslationDictionary = {
         title: "Dogs House Miner",
         description: "Botu başlat ve GRAM madenciliğine başla.",
       },
+      mrg_miner_start: {
+        title: "MRG Miner",
+        description: "Uygulamayı aç ve madenciliğe başla.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "COIN KERO'da madenciliğe başla.",
