@@ -20,11 +20,10 @@ import {
 import { useUserData, type UserDataState } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
-import { showRewardedAd } from "@/lib/ads/monetag";
 import { showGigaRewardedAd } from "@/lib/ads/gigapub";
 import { showAdsgramRewardedAd } from "@/lib/ads/adsgram";
 import { nextPartnerAdSlot } from "@/lib/ads/partnerAdRotation";
-import { startVerifiedAttempt, pollVerifiedAttempt, type VerifiedPollResult } from "@/lib/ads/verifiedAdWatch";
+import type { VerifiedPollResult } from "@/lib/ads/verifiedAdWatch";
 import { mountTadsAd, tadsContainerId, TADS_WIDGET_ID } from "@/lib/ads/tads";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { SupportButton } from "@/components/layout/SupportButton";
@@ -585,28 +584,6 @@ function PartnerAdsCard({ initData }: { initData: string }) {
           return;
         }
         await creditClientTrust();
-        return;
-      }
-
-      if (slot === "monetag") {
-        // Заводимо токен спроби ДО показу — потрібен для S2S-верифікації.
-        // Якщо сам запит не вдався, не блокуємо юзера повністю, а падаємо
-        // назад на клієнто-довірчий шлях лише для цього конкретного показу.
-        const ymid = await startVerifiedAttempt(initData, "partner_ad_watch");
-        const shown = await showRewardedAd(ymid ?? undefined);
-        if (!shown) {
-          setError(t.tasks.partnerAds.adNotCompleted);
-          return;
-        }
-
-        if (!ymid) {
-          await creditClientTrust();
-          return;
-        }
-
-        setIsConfirming(true);
-        const outcome = await pollVerifiedAttempt(initData, ymid);
-        applyVerifiedOutcome(outcome);
         return;
       }
 

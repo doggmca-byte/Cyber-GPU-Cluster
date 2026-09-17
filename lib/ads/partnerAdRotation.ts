@@ -1,10 +1,16 @@
 /**
- * Строга 4-позиційна ротація САМЕ для кнопки "Дивитись рекламу"
- * (PartnerAdsCard, purpose=partner_ad_watch) — 1.GigaPub 2.Monetag
- * 3.AdsGram 4.TADS, по колу, рівно один майданчик на клік, БЕЗ фолбеку на
- * наступного, якщо в поточного немає інвентарю (на відміну від
- * showRewardedAdRotating у rewardedAd.ts, який навмисно пробує ВСІХ підряд
- * для надійності показу).
+ * Строга 3-позиційна ротація САМЕ для кнопки "Дивитись рекламу"
+ * (PartnerAdsCard, purpose=partner_ad_watch) — 1.GigaPub 2.AdsGram 3.TADS,
+ * по колу, рівно один майданчик на клік, БЕЗ фолбеку на наступного, якщо в
+ * поточного немає інвентарю (на відміну від showRewardedAdRotating у
+ * rewardedAd.ts, який навмисно пробує ВСІХ підряд для надійності показу).
+ *
+ * Monetag звідси прибрано свідомо. Кожен партнерський перегляд коштує нам
+ * 0.001 TON нагороди гравцю — це ~$1.35 на тисячу показів; Monetag за весь
+ * час приніс $2 на 6623 покази, тобто $0.30 на тисячу. Єдиний майданчик, що
+ * стабільно працював у мінус. У безкоштовних flows (щоденний бонус, квота
+ * виводу) він лишається: там показ нам не коштує нічого, і навіть така
+ * ставка — чистий плюс.
  *
  * Окремий localStorage-ключ від rewardedAd.ts (той лишається для
  * daily_bonus_watch/withdraw_ad_watch — там TADS не бере участі: його
@@ -19,10 +25,12 @@
  * бану акаунта за фрод-кліки) — тому на позиції "tads" ротації кнопка не
  * відкриває нічого сама, а лише підказує натиснути банер нижче.
  */
-export type PartnerAdSlot = "gigapub" | "monetag" | "adsgram" | "tads";
+export type PartnerAdSlot = "gigapub" | "adsgram" | "tads";
 
-const PARTNER_AD_ORDER: readonly PartnerAdSlot[] = ["gigapub", "monetag", "adsgram", "tads"];
-const ROTATION_STORAGE_KEY = "cgc_partner_ad_rotation_v2";
+const PARTNER_AD_ORDER: readonly PartnerAdSlot[] = ["gigapub", "adsgram", "tads"];
+// v3, бо позиція у старому ключі рахувалась по чотирьох слотах — зі зміною
+// довжини вона б'є не в ту саму мережу, що очікує гравець.
+const ROTATION_STORAGE_KEY = "cgc_partner_ad_rotation_v3";
 
 export function nextPartnerAdSlot(): PartnerAdSlot {
   if (typeof window === "undefined") return PARTNER_AD_ORDER[0];
