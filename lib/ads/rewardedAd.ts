@@ -7,29 +7,49 @@ export type RewardedProvider = "gigapub" | "monetag" | "adsgram";
 const PROVIDER_ORDER: readonly RewardedProvider[] = ["gigapub", "monetag", "adsgram"];
 const ROTATION_STORAGE_KEY = "cgc_ad_provider_rotation";
 
+/**
+ * Черга для flows, де нарахування відбувається ПІСЛЯ показу — щоденний бонус
+ * і реклама під квоту виводу.
+ *
+ * AdsGram тут навмисно відсутній, хоча рекламу він показує: його Reward URL
+ * один на весь застосунок і завжди зараховує ПАРТНЕРСЬКИЙ перегляд
+ * (record_partner_ad_watch, app/api/ads/adsgram-postback). Показавши ним
+ * рекламу під бонус, ми б тихо списали людині один із 30 денних партнерських
+ * переглядів і доплатили за нього — зіпсували б і лічильник, і економіку.
+ *
+ * Частка GigaPub подвоєна свідомо: за тиждень Monetag 480 разів відповів
+ * non_valued (рекламу показав, платити відмовився), тоді як GigaPub
+ * підтверджує практично все.
+ */
+const VERIFIED_FLOW_ORDER: readonly RewardedProvider[] = ["gigapub", "monetag", "gigapub"];
+const VERIFIED_FLOW_ROTATION_KEY = "cgc_ad_provider_rotation_verified";
+
 // Чия черга йти першим — зберігаємо в localStorage, а не в змінній модуля,
 // щоб чергування тримало лад між перезавантаженнями сторінки/сесіями, а не
 // скидалось на "завжди перший у списку" при кожному новому монтуванні
 // DailyBonusModal/WatchAdButton/PartnerAdsCard.
-function rotatedProviderOrder(): RewardedProvider[] {
-  if (typeof window === "undefined") return [...PROVIDER_ORDER];
+function rotatedProviderOrder(
+  order: readonly RewardedProvider[] = PROVIDER_ORDER,
+  storageKey: string = ROTATION_STORAGE_KEY,
+): RewardedProvider[] {
+  if (typeof window === "undefined") return [...order];
 
   let index = 0;
   try {
-    index = Number(window.localStorage.getItem(ROTATION_STORAGE_KEY)) || 0;
+    index = Number(window.localStorage.getItem(storageKey)) || 0;
   } catch {
     // localStorage може бути недоступний (приватний режим, заборонено в
     // WebView) — просто не чергуємо між сесіями, це не критично.
   }
 
   try {
-    window.localStorage.setItem(ROTATION_STORAGE_KEY, String(index + 1));
+    window.localStorage.setItem(storageKey, String(index + 1));
   } catch {
     // ignore
   }
 
-  const start = index % PROVIDER_ORDER.length;
-  return [...PROVIDER_ORDER.slice(start), ...PROVIDER_ORDER.slice(0, start)];
+  const start = index % order.length;
+  return [...order.slice(start), ...order.slice(0, start)];
 }
 
 function showByProvider(provider: RewardedProvider): Promise<boolean> {
@@ -60,28 +80,39 @@ export async function showRewardedAdRotating(): Promise<boolean> {
   return false;
 }
 
-export interface RewardedAdWithProviderResult {
+export interface VerifiedFlowAdResult {
   watched: boolean;
-  /** Хто саме показав — null, якщо watched: false (жоден провайдер не спрацював). */
+  /** Хто саме показав — null, якщо жоден провайдер не спрацював. */
   provider: RewardedProvider | null;
+  /** Токен спроби Monetag — лише якщо показ реально дістався Monetag. */
+  ymid: string | null;
 }
 
 /**
- * Той самий алгоритм чергування, що й showRewardedAdRotating, але для
- * flows, де нарахування залежить від ТОГО, ХТО саме показав рекламу
- * (наразі — PartnerAdsCard/record_partner_ad_watch): Monetag передає
- * monetagYmid у SDK-виклик (server-side S2S-підтвердження через
- * /api/ads/monetag-postback), AdsGram підтверджує через власний Reward URL
- * postback (app/api/ads/adsgram-postback, кореляція по telegramId, без
- * потреби в токені спроби з нашого боку) — GigaPub і далі на клієнтській
- * довірі (немає жодного S2S-механізму, підтверджено їхньою ж документацією).
- * Викликач сам вирішує, що робити з кожним provider — тут лише сирий факт
- * "хто показав".
+ * Показ реклами для щоденного бонусу та квоти виводу.
+ *
+ * Ключова відмінність від попередньої версії: токен спроби Monetag
+ * запитується ЛИШЕ тоді, коли черга реально дійшла до Monetag. Раніше він
+ * відкривався наперед, ще до вибору провайдера, — і кожен показ, що діставався
+ * іншій мережі, лишав по собі назавжди "pending" рядок в
+ * ad_verification_attempts. Таких порожніх рядків набігало близько 600 на добу,
+ * через що статистика показувала в Monetag 40% підтверджень замість справжніх
+ * 65% і ховала за собою реальні збої.
  */
-export async function showRewardedAdRotatingWithProvider(monetagYmid: string): Promise<RewardedAdWithProviderResult> {
-  for (const provider of rotatedProviderOrder()) {
-    const shown = provider === "monetag" ? await showRewardedAd(monetagYmid) : await showByProvider(provider);
-    if (shown) return { watched: true, provider };
+export async function showRewardedAdForVerifiedFlow(
+  getMonetagYmid: () => Promise<string | null>,
+): Promise<VerifiedFlowAdResult> {
+  for (const provider of rotatedProviderOrder(VERIFIED_FLOW_ORDER, VERIFIED_FLOW_ROTATION_KEY)) {
+    if (provider === "monetag") {
+      const ymid = await getMonetagYmid();
+      // Без токена показ усе одно робимо — просто нарахування піде клієнтською
+      // довірою, як було до появи S2S-верифікації.
+      if (await showRewardedAd(ymid ?? undefined)) return { watched: true, provider, ymid };
+      continue;
+    }
+
+    if (await showByProvider(provider)) return { watched: true, provider, ymid: null };
   }
-  return { watched: false, provider: null };
+
+  return { watched: false, provider: null, ymid: null };
 }

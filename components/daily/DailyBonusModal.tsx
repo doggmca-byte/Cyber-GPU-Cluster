@@ -6,7 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
-import { showRewardedAdRotating, showRewardedAdRotatingWithProvider } from "@/lib/ads/rewardedAd";
+import { showRewardedAdForVerifiedFlow } from "@/lib/ads/rewardedAd";
 import { startVerifiedAttempt, pollVerifiedAttempt } from "@/lib/ads/verifiedAdWatch";
 import {
   DAILY_BONUS_MIN_AD_INTERACTIONS,
@@ -265,26 +265,13 @@ function AutoAdView({
     setClaimError(null);
 
     try {
-      const ymid = await startVerifiedAttempt(initData, "daily_bonus_watch");
+      // Спроба Monetag відкривається не наперед, а лише якщо черга реально
+      // дійде до Monetag (showRewardedAdForVerifiedFlow) — інакше кожен показ
+      // від іншої мережі лишав по собі вічно "pending" рядок.
+      const shown = await showRewardedAdForVerifiedFlow(() =>
+        startVerifiedAttempt(initData, "daily_bonus_watch"),
+      );
 
-      if (!ymid) {
-        // Запит на відкриття спроби не вдався — повністю клієнто-довірчий
-        // шлях для БУДЬ-ЯКОГО провайдера, як і раніше цієї фічі.
-        const adWatched = await showRewardedAdRotating();
-        if (!adWatched) {
-          if (mountedRef.current) {
-            setClaimError(t.dailyBonus.noAdAvailable);
-            setIsProcessing(false);
-          }
-          return;
-        }
-
-        const result = await claimTrusted();
-        if (mountedRef.current) onClaimed(result);
-        return;
-      }
-
-      const shown = await showRewardedAdRotatingWithProvider(ymid);
       if (!shown.watched) {
         if (mountedRef.current) {
           setClaimError(t.dailyBonus.noAdAvailable);
@@ -293,17 +280,16 @@ function AutoAdView({
         return;
       }
 
-      if (shown.provider !== "monetag") {
-        // gigapub: немає S2S postback. adsgram: Reward URL підтверджує лише
-        // purpose 'partner_ad_watch' — не можемо чекати на неможливе
-        // підтвердження для щоденного бонусу, лишається довіра.
+      if (shown.provider !== "monetag" || !shown.ymid) {
+        // GigaPub не має S2S postback, а Monetag без токена спроби підтвердити
+        // нічим — в обох випадках лишається клієнтська довіра, як і раніше.
         const result = await claimTrusted();
         if (mountedRef.current) onClaimed(result);
         return;
       }
 
       if (mountedRef.current) setIsConfirming(true);
-      const outcome = await pollVerifiedAttempt(initData, ymid);
+      const outcome = await pollVerifiedAttempt(initData, shown.ymid);
 
       if (!mountedRef.current) return;
 

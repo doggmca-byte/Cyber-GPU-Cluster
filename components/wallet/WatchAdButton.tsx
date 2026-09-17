@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Loader2, PlayCircle } from "lucide-react";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
-import { showRewardedAdRotating, showRewardedAdRotatingWithProvider } from "@/lib/ads/rewardedAd";
+import { showRewardedAdForVerifiedFlow } from "@/lib/ads/rewardedAd";
 import { startVerifiedAttempt, pollVerifiedAttempt } from "@/lib/ads/verifiedAdWatch";
 import type { AdWatchResponse } from "@/types/api";
 
@@ -37,44 +37,20 @@ export function WatchAdButton({ initData }: { initData: string }) {
     setError(null);
 
     try {
-      const ymid = await startVerifiedAttempt(initData, "withdraw_ad_watch");
+      // Спроба Monetag відкривається лише якщо черга реально дійде до
+      // Monetag — інакше показ від іншої мережі лишав вічний "pending" рядок.
+      const shown = await showRewardedAdForVerifiedFlow(() =>
+        startVerifiedAttempt(initData, "withdraw_ad_watch"),
+      );
 
-      if (!ymid) {
-        const adWatched = await showRewardedAdRotating();
-        if (!adWatched) {
-          setError(t.watchAd.adNotCompleted);
-          return;
-        }
-
-        const res = await fetch("/api/ads/watch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData }),
-        });
-
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(body?.error ?? `ad watch failed with status ${res.status}`);
-        }
-
-        const result = (await res.json()) as AdWatchResponse;
-        patchProfile({
-          ads_watched_since_withdraw: result.ads_watched_since_withdraw,
-          withdrawal_quota: result.withdrawal_quota,
-        });
-        return;
-      }
-
-      const shown = await showRewardedAdRotatingWithProvider(ymid);
       if (!shown.watched) {
         setError(t.watchAd.adNotCompleted);
         return;
       }
 
-      if (shown.provider !== "monetag") {
-        // gigapub: немає S2S postback. adsgram: Reward URL підтверджує лише
-        // purpose 'partner_ad_watch', не 'withdraw_ad_watch' — не можемо
-        // чекати на неможливе підтвердження, лишається довіра.
+      if (shown.provider !== "monetag" || !shown.ymid) {
+        // GigaPub не має S2S postback, а Monetag без токена спроби підтвердити
+        // нічим — в обох випадках нарахування йде клієнтською довірою.
         const res = await fetch("/api/ads/watch", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -95,7 +71,7 @@ export function WatchAdButton({ initData }: { initData: string }) {
       }
 
       setIsConfirming(true);
-      const outcome = await pollVerifiedAttempt(initData, ymid);
+      const outcome = await pollVerifiedAttempt(initData, shown.ymid);
 
       if (outcome.kind === "confirmed") {
         patchProfile({
