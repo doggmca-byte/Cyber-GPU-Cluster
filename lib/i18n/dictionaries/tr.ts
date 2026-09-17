@@ -27,6 +27,9 @@ const tr: TranslationDictionary = {
     specialTasksAnnouncement:
       "🎁 Yeni Özel Görevler yayında! Adına etiketimizi veya Bio'na referans linkini ekle ve 6 aşama boyunca koru (15 dk → 30 gün) — görev başına 0.232 TON'a kadar kazan. Uygulamayı aç → Görevler → ⭐ Özel'e dokun ve başla.",
     openAppButton: "Cyber GPU Cluster'ı Aç",
+    dailyBonusReady: `🎁 Günlük bonusun hazır.\n\nTek dokunuş yeter, seri de büyümeye devam eder.`,
+    tasksWaiting: (count: number, reward: string) =>
+      `✅ ${count} tamamlanmamış görevin var — toplam ${reward} TON'a kadar.\n\nÇoğu bir dakikadan kısa sürüyor.`,
     welcomeTitle: "⚡ Küme operatörünü bekliyor!",
     welcomeBody:
       "GPU Cluster'ını başlat, $HASH kaz, çiftlik gücünü yükselt ve TON olarak çek.\n\nReferanslarla ekibini kur — ne kadar çok arkadaş, o kadar çok bonus.\n\nHemen gir ve madenciliğe başla — döngü çoktan başladı!",

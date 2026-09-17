@@ -27,6 +27,9 @@ const es: TranslationDictionary = {
     specialTasksAnnouncement:
       "🎁 ¡Ya están las nuevas Tareas Especiales! Añade nuestra etiqueta a tu nombre o tu enlace de referido a la Bio y mantenlo durante 6 etapas (15 min → 30 días) — gana hasta 0.232 TON por tarea. Abre la app → Tareas → ⭐ Especiales para empezar.",
     openAppButton: "Abrir Cyber GPU Cluster",
+    dailyBonusReady: `🎁 Tu bono diario está listo.\n\nUn toque y ya está, y la racha sigue creciendo.`,
+    tasksWaiting: (count: number, reward: string) =>
+      `✅ Tienes ${count} tareas pendientes — hasta ${reward} TON en total.\n\nLa mayoría lleva menos de un minuto.`,
     welcomeTitle: "⚡ ¡El Clúster espera a su operador!",
     welcomeBody:
       "Lanza tu GPU Cluster, mina $HASH, potencia tu granja y retira en TON.\n\nArma tu equipo con referidos — más amigos, más bonos.\n\nEntra y empieza a minar — ¡el ciclo ya comenzó!",

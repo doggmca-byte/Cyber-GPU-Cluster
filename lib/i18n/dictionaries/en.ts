@@ -30,6 +30,9 @@ const en = {
     specialTasksAnnouncement:
       '🎁 New Special Tasks are live! Add our tag to your name or your referral link to your bio and hold it through 6 stages (15 min → 30 days) — earn up to 0.232 TON per task. Open the app → Tasks → ⭐ Special to start.',
     openAppButton: "Open Cyber GPU Cluster",
+    dailyBonusReady: `🎁 Your daily bonus is ready.\n\nIt only takes a tap — and the streak keeps growing.`,
+    tasksWaiting: (count: number, reward: string) =>
+      `✅ You have ${count} unfinished tasks waiting — up to ${reward} TON in total.\n\nMost of them take under a minute.`,
     welcomeTitle: "⚡ The Cluster is waiting for its operator!",
     welcomeBody:
       "Launch your GPU Cluster, mine $HASH, power up your farm, and cash out in TON.\n\nBuild your crew with referrals — more friends, more bonuses.\n\nJump in and start mining — the cycle has already begun!",
