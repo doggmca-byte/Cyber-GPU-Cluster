@@ -21,8 +21,8 @@ import { useUserData, type UserDataState } from "@/components/providers/UserData
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import { showGigaRewardedAd } from "@/lib/ads/gigapub";
-import { showAdsgramRewardedAd } from "@/lib/ads/adsgram";
-import { nextPartnerAdSlot } from "@/lib/ads/partnerAdRotation";
+import { showAdsgramRewardedAdDetailed } from "@/lib/ads/adsgram";
+import { markPartnerAdNoFill, nextPartnerAdSlot } from "@/lib/ads/partnerAdRotation";
 import type { VerifiedPollResult } from "@/lib/ads/verifiedAdWatch";
 import { mountTadsAd, tadsContainerId, TADS_WIDGET_ID } from "@/lib/ads/tads";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
@@ -590,8 +590,11 @@ function PartnerAdsCard({ initData }: { initData: string }) {
       // slot === "adsgram": немає токена спроби наперед — підтвердження через
       // порівняння лічильника partner_ads_watched_today "до" й "після" показу.
       const baselineWatchedToday = profile.partner_ads_watched_today;
-      const adWatched = await showAdsgramRewardedAd();
-      if (!adWatched) {
+      const adsgramOutcome = await showAdsgramRewardedAdDetailed();
+      if (adsgramOutcome !== "shown") {
+        // "Реклами немає" — наступні кліки на 15 хвилин підуть в інші мережі,
+        // а не знову в порожній AdsGram з тим самим вікном.
+        if (adsgramOutcome === "no_fill") markPartnerAdNoFill("adsgram");
         setError(t.tasks.partnerAds.adNotCompleted);
         return;
       }

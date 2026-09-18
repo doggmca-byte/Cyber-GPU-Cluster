@@ -95,15 +95,29 @@ function rotatedBlockIds(): string[] {
   return [...ADSGRAM_BLOCK_IDS.slice(start), ...ADSGRAM_BLOCK_IDS.slice(0, start)];
 }
 
-async function showOneBlock(blockId: string): Promise<boolean> {
+export type AdsgramOutcome = "shown" | "no_fill" | "not_completed";
+
+/**
+ * AdsGram віддає однакову форму і для "реклами немає", і для "гравець закрив
+ * достроково" — різниця лише в тому, на якому етапі все зупинилось. Помилка
+ * ще на етапі "load" означає, що реклама навіть не почала рендеритись: саме
+ * тоді SDK показує власне вікно "No ads available at the moment".
+ */
+function classify(result: Partial<AdsgramShowResult> | undefined): AdsgramOutcome {
+  if (result?.done === true) return "shown";
+  if (result?.error === true && (result.state === "load" || result.state === undefined)) return "no_fill";
+  return "not_completed";
+}
+
+async function showOneBlock(blockId: string): Promise<AdsgramOutcome> {
   const controller = getController(blockId);
-  if (!controller) return false;
+  if (!controller) return "no_fill";
 
   try {
-    const result = await controller.show();
-    return result.done === true;
-  } catch {
-    return false;
+    return classify(await controller.show());
+  } catch (err) {
+    // На відсутність реклами SDK реджектить проміс тим самим об'єктом результату.
+    return classify(err as Partial<AdsgramShowResult>);
   }
 }
 
@@ -116,8 +130,21 @@ async function showOneBlock(blockId: string): Promise<boolean> {
  * SDK ще не готовий, чи жоден блок не має інвентарю/показ закрито достроково.
  */
 export async function showAdsgramRewardedAd(): Promise<boolean> {
-  for (const blockId of rotatedBlockIds()) {
-    if (await showOneBlock(blockId)) return true;
+  return (await showAdsgramRewardedAdDetailed()) === "shown";
+}
+
+/**
+ * Те саме, що showAdsgramRewardedAd, але каже, ЧОМУ реклама не показалась.
+ * Наступний блок пробуємо лише коли в поточного немає реклами: якщо гравець
+ * сам закрив показ, другий блок одразу слідом був би нав'язливим.
+ */
+export async function showAdsgramRewardedAdDetailed(): Promise<AdsgramOutcome> {
+  const blocks = rotatedBlockIds();
+  if (blocks.length === 0) return "no_fill";
+
+  for (const blockId of blocks) {
+    const outcome = await showOneBlock(blockId);
+    if (outcome !== "no_fill") return outcome;
   }
-  return false;
+  return "no_fill";
 }
