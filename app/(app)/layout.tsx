@@ -1,6 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { TelegramInit } from "@/components/TelegramInit";
+import { VersionWatcher } from "@/components/VersionWatcher";
 import { IntroLoader } from "@/components/IntroLoader";
 import { UserDataProvider } from "@/components/providers/UserDataProvider";
 import { TonConnectProvider } from "@/components/providers/TonConnectProvider";
@@ -16,6 +17,7 @@ export default function AppLayout({
   return (
     <LanguageProvider>
       <TelegramInit />
+      <VersionWatcher />
 
       <TonConnectProvider>
         <UserDataProvider>

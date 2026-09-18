@@ -39,7 +39,7 @@ export function WatchAdButton({ initData }: { initData: string }) {
     try {
       // Спроба Monetag відкривається лише якщо черга реально дійде до
       // Monetag — інакше показ від іншої мережі лишав вічний "pending" рядок.
-      const shown = await showRewardedAdForVerifiedFlow(() =>
+      const shown = await showRewardedAdForVerifiedFlow("withdraw", () =>
         startVerifiedAttempt(initData, "withdraw_ad_watch"),
       );
 

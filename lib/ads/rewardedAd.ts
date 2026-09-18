@@ -7,22 +7,28 @@ export type RewardedProvider = "gigapub" | "monetag" | "adsgram";
 const PROVIDER_ORDER: readonly RewardedProvider[] = ["gigapub", "monetag", "adsgram"];
 const ROTATION_STORAGE_KEY = "cgc_ad_provider_rotation";
 
+export type VerifiedFlow = "daily_bonus" | "withdraw";
+
 /**
- * Черга для flows, де нарахування відбувається ПІСЛЯ показу — щоденний бонус
- * і реклама під квоту виводу.
+ * Які мережі показують рекламу в кожному з двох "post-show" flows. Порядок —
+ * це порядок спроб: наступна мережа пробується, лише якщо попередня не мала
+ * реклами. Ротації тут немає навмисно — склад кожного flow вибраний руками.
  *
- * AdsGram тут навмисно відсутній, хоча рекламу він показує: його Reward URL
- * один на весь застосунок і завжди зараховує ПАРТНЕРСЬКИЙ перегляд
- * (record_partner_ad_watch, app/api/ads/adsgram-postback). Показавши ним
- * рекламу під бонус, ми б тихо списали людині один із 30 денних партнерських
- * переглядів і доплатили за нього — зіпсували б і лічильник, і економіку.
+ * Щоденний бонус — ЛИШЕ Monetag. Показ тут нам нічого не коштує (бонус
+ * фіксований, а не за перегляд), тож навіть його $0.30 з тисячі — чистий
+ * дохід; а розвести мережі по flows означає, що Monetag більше не з'їдає
+ * жодного платного партнерського перегляду.
  *
- * Частка GigaPub подвоєна свідомо: за тиждень Monetag 480 разів відповів
- * non_valued (рекламу показав, платити відмовився), тоді як GigaPub
- * підтверджує практично все.
+ * Квота виводу — ті самі мережі, що й партнерська кнопка: GigaPub, а якщо
+ * в нього немає реклами — AdsGram. Порядок не випадковий: Reward URL AdsGram
+ * один на весь застосунок і завжди зараховує ПАРТНЕРСЬКИЙ перегляд, тож
+ * кожен показ AdsGram тут додає гравцю ще й партнерську нагороду. Ставимо
+ * його другим, щоб це траплялось лише тоді, коли GigaPub нічого не віддав.
  */
-const VERIFIED_FLOW_ORDER: readonly RewardedProvider[] = ["gigapub", "monetag", "gigapub"];
-const VERIFIED_FLOW_ROTATION_KEY = "cgc_ad_provider_rotation_verified";
+const FLOW_ORDER: Record<VerifiedFlow, readonly RewardedProvider[]> = {
+  daily_bonus: ["monetag"],
+  withdraw: ["gigapub", "adsgram"],
+};
 
 // Чия черга йти першим — зберігаємо в localStorage, а не в змінній модуля,
 // щоб чергування тримало лад між перезавантаженнями сторінки/сесіями, а не
@@ -100,9 +106,10 @@ export interface VerifiedFlowAdResult {
  * 65% і ховала за собою реальні збої.
  */
 export async function showRewardedAdForVerifiedFlow(
+  flow: VerifiedFlow,
   getMonetagYmid: () => Promise<string | null>,
 ): Promise<VerifiedFlowAdResult> {
-  for (const provider of rotatedProviderOrder(VERIFIED_FLOW_ORDER, VERIFIED_FLOW_ROTATION_KEY)) {
+  for (const provider of FLOW_ORDER[flow]) {
     if (provider === "monetag") {
       const ymid = await getMonetagYmid();
       // Без токена показ усе одно робимо — просто нарахування піде клієнтською

@@ -268,7 +268,7 @@ function AutoAdView({
       // Спроба Monetag відкривається не наперед, а лише якщо черга реально
       // дійде до Monetag (showRewardedAdForVerifiedFlow) — інакше кожен показ
       // від іншої мережі лишав по собі вічно "pending" рядок.
-      const shown = await showRewardedAdForVerifiedFlow(() =>
+      const shown = await showRewardedAdForVerifiedFlow("daily_bonus", () =>
         startVerifiedAttempt(initData, "daily_bonus_watch"),
       );
 
