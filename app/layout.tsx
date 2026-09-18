@@ -45,14 +45,12 @@ export default function RootLayout({
       <body className="min-h-dvh bg-background font-sans text-white antialiased">
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
         {/*
-          Monetag SDK (zone 11600101) — реєструє window.show_11600101, який
-          дергають lib/ads/monetag.ts (showRewardedAd) з DailyBonusModal та
-          WatchAdButton. strategy="afterInteractive": next/script сам
-          відповідає за коректну вставку/гідратацію тега незалежно від його
-          літерального місця в JSX-дереві, тому додаткового <head> тут не
-          потрібно — це і рятує від SSR/CSR-розбіжностей гідратації.
+          Monetag SDK тут навмисно НЕ підключений. Він показується лише в
+          рекламі щоденного бонусу, тож lib/ads/monetag.ts вантажить його сам
+          у момент першого показу. Поки SDK висів на кожній сторінці, його
+          вікна з'являлись там, де Monetag уже не було в ротації, — у
+          партнерській рекламі й на кнопці виводу.
         */}
-        <Script data-sdk="show_11600101" data-zone="11600101" src="//libtl.com/sdk.js" strategy="afterInteractive" />
         {/*
           GigaPub SDK (App ID 7784) — реєструє window.showGiga, який дергає
           lib/ads/gigapub.ts (showGigaRewardedAd). Другий rewarded-провайдер

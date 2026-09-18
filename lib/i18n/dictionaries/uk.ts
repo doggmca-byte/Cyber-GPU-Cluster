@@ -441,7 +441,7 @@ const uk: TranslationDictionary = {
     },
     partnerAds: {
       title: "Дивись рекламу партнерів",
-      description: "Переглядай рекламу від GigaPub та Monetag і отримуй TON за кожен перегляд.",
+      description: "Переглядай рекламу партнерів і отримуй TON за кожен перегляд.",
       button: "Переглянути рекламу",
       loading: "Завантаження реклами...",
       adNotCompleted: "Рекламу не переглянуто до кінця. Спробуй ще раз.",

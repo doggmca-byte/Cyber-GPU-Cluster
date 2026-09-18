@@ -441,7 +441,7 @@ const id: TranslationDictionary = {
     },
     partnerAds: {
       title: "Tonton iklan mitra",
-      description: "Tonton iklan dari GigaPub dan Monetag dan dapatkan TON untuk setiap tontonan.",
+      description: "Tonton iklan mitra dan dapatkan TON untuk setiap tontonan.",
       button: "Tonton iklan",
       loading: "Memuat iklan...",
       adNotCompleted: "Iklan belum selesai ditonton. Coba lagi.",

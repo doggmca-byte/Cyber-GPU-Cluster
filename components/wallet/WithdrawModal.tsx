@@ -74,11 +74,11 @@ export function WithdrawModal({
   const todayUtc = new Date().toISOString().slice(0, 10);
   const alreadyRequestedToday = profile.last_withdrawal_request_date === todayUtc;
 
-  // Перегляд реклами (ads_watched_since_withdraw) більше НЕ блокує вивід —
-  // лишається лише як інформативний прогрес/бонус до квоти (record_ad_watch
-  // все одно додає +0.05 TON квоти за кожен перегляд, незалежно від цього
-  // порогу). Реальні hard-blockers: баланс, квота, тіньований мін/макс,
-  // адреса, ліміт "1 заявка/добу".
+  // 20 переглядів реклами перед КОЖНИМ виводом — знову жорстке правило
+  // (request_withdrawal, 20260918200000_require_ads_before_each_withdrawal.sql).
+  // Лічильник обнуляється після кожної заявки, тож і кнопка знову гасне до
+  // наступних 20 переглядів. Прогрес і кнопка перегляду вже показуються
+  // вгорі модалки, поки поріг не досягнуто.
   const adsProgress = profile.ads_watched_since_withdraw >= MIN_ADS_BEFORE_WITHDRAW;
   const balanceOk = hasValidNumber && requested <= profile.withdrawable_balance;
   const quotaOk = hasValidNumber && requested <= profile.withdrawal_quota;
@@ -86,6 +86,7 @@ export function WithdrawModal({
   const maxOk = hasValidNumber && requested <= maxForThisRequest;
   const canSubmit =
     hasValidNumber &&
+    adsProgress &&
     balanceOk &&
     quotaOk &&
     minOk &&

@@ -441,7 +441,7 @@ const tr: TranslationDictionary = {
     },
     partnerAds: {
       title: "Ortak reklamlarını izle",
-      description: "GigaPub ve Monetag reklamlarını izle, her izleme için TON kazan.",
+      description: "Partner reklamlarını izle, her izleme için TON kazan.",
       button: "Reklamı izle",
       loading: "Reklam yükleniyor...",
       adNotCompleted: "Reklam tamamlanmadı. Tekrar dene.",

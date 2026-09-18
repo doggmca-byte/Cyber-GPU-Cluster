@@ -440,7 +440,7 @@ const ar: TranslationDictionary = {
     },
     partnerAds: {
       title: "شاهد إعلانات الشركاء",
-      description: "شاهد إعلانات من GigaPub وMonetag واربح TON عن كل مشاهدة.",
+      description: "شاهد إعلانات الشركاء واربح TON عن كل مشاهدة.",
       button: "مشاهدة الإعلان",
       loading: "جارٍ تحميل الإعلان...",
       adNotCompleted: "لم يكتمل الإعلان. حاول مرة أخرى.",

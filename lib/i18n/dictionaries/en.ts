@@ -444,7 +444,7 @@ const en = {
     },
     partnerAds: {
       title: "Watch partner ads",
-      description: "Watch ads from GigaPub and Monetag and earn TON for every view.",
+      description: "Watch partner ads and earn TON for every view.",
       button: "Watch ad",
       loading: "Loading ad...",
       adNotCompleted: "Ad wasn't completed. Try again.",

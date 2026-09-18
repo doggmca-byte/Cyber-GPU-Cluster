@@ -441,7 +441,7 @@ const kk: TranslationDictionary = {
     },
     partnerAds: {
       title: "Серіктес жарнамасын көру",
-      description: "GigaPub пен Monetag жарнамаларын көріп, әр көрсетілім үшін TON тап.",
+      description: "Серіктестер жарнамасын көріп, әр көрсетілім үшін TON тап.",
       button: "Жарнаманы көру",
       loading: "Жарнама жүктелуде...",
       adNotCompleted: "Жарнама соңына дейін көрілмеді. Қайта көріңіз.",

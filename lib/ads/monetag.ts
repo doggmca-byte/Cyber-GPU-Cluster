@@ -36,10 +36,65 @@ declare global {
  * конкретного юзера. Без ymid (як і раніше) — просто client-side результат
  * без можливості server-side підтвердження.
  */
+const MONETAG_ZONE = "11600101";
+const MONETAG_SDK_SRC = "https://libtl.com/sdk.js";
+
+/** Скільки чекати, поки SDK зареєструє window.show_11600101 після завантаження. */
+const SDK_READY_TIMEOUT_MS = 10_000;
+
+let sdkLoading: Promise<boolean> | null = null;
+
+/**
+ * Підвантажує SDK Monetag лише тоді, коли реклама Monetag справді потрібна.
+ *
+ * Раніше скрипт висів у app/layout.tsx на кожній сторінці. Навіть коли наш
+ * код Monetag не викликав, гравці бачили його вікна в партнерській рекламі й
+ * на кнопці виводу — звідки його вже прибрали. Тепер SDK з'являється на
+ * сторінці тільки з першим показом реклами щоденного бонусу.
+ *
+ * Повторні виклики чекають на те саме завантаження; невдале — скидається,
+ * щоб наступна спроба могла завантажити скрипт заново.
+ */
+function loadMonetagSdk(): Promise<boolean> {
+  if (typeof window === "undefined") return Promise.resolve(false);
+  if (typeof window.show_11600101 === "function") return Promise.resolve(true);
+  if (sdkLoading) return sdkLoading;
+
+  sdkLoading = new Promise<boolean>((resolve) => {
+    const fail = () => {
+      sdkLoading = null;
+      resolve(false);
+    };
+
+    const script = document.createElement("script");
+    script.src = MONETAG_SDK_SRC;
+    script.async = true;
+    script.dataset.zone = MONETAG_ZONE;
+    script.dataset.sdk = `show_${MONETAG_ZONE}`;
+    script.onerror = fail;
+    document.head.appendChild(script);
+
+    // show_11600101 з'являється не в момент onload, а коли SDK сам себе
+    // ініціалізує, — тому чекаємо саме на функцію, а не на подію скрипта.
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      if (typeof window.show_11600101 === "function") {
+        window.clearInterval(timer);
+        resolve(true);
+      } else if (Date.now() - startedAt > SDK_READY_TIMEOUT_MS) {
+        window.clearInterval(timer);
+        fail();
+      }
+    }, 100);
+  });
+
+  return sdkLoading;
+}
+
 export async function showRewardedAd(ymid?: string): Promise<boolean> {
-  if (typeof window === "undefined" || typeof window.show_11600101 !== "function") {
-    return false;
-  }
+  if (typeof window === "undefined") return false;
+  if (!(await loadMonetagSdk())) return false;
+  if (typeof window.show_11600101 !== "function") return false;
 
   try {
     await window.show_11600101(ymid ? { ymid } : undefined);

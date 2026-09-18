@@ -442,7 +442,7 @@ const es: TranslationDictionary = {
     },
     partnerAds: {
       title: "Mira anuncios de socios",
-      description: "Mira anuncios de GigaPub y Monetag y gana TON por cada visualización.",
+      description: "Mira anuncios de socios y gana TON por cada visualización.",
       button: "Ver anuncio",
       loading: "Cargando anuncio...",
       adNotCompleted: "El anuncio no se completó. Inténtalo de nuevo.",
