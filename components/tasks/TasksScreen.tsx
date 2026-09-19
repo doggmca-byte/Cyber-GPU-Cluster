@@ -90,11 +90,19 @@ function getEmojiIcon(task: TaskItem): string | null {
 }
 
 // Адмін може додати нове завдання в task_templates без відповідного перекладу —
-// у такому разі показуємо сам слаг замість краху рендера (як getRarityLabel у
-// FarmScreen/MarketScreen).
+// у такому разі показуємо слаг у читабельному вигляді (без підкреслень, кожне
+// слово з великої літери) замість краху рендера.
+function humanizeSlug(key: string): string {
+  return key
+    .split("_")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 function getTaskCopy(t: TranslationDictionary, key: string): { title: string; description: string } {
   const entry = (t.tasks.items as Record<string, { title: string; description: string } | undefined>)[key];
-  return entry ?? { title: key, description: "" };
+  return entry ?? { title: humanizeSlug(key), description: "" };
 }
 
 type TasksState =
