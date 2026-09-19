@@ -354,6 +354,10 @@ const id: TranslationDictionary = {
         title: "Chat «Tukar Referral»",
         description: "Gabung ke chat dan bagikan tautan referral-mu secara gratis.",
       },
+      axvr_stars_miner_start: {
+        title: "AXVR Stars Miner",
+        description: "Buka bot dan mulai menambang Stars.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Mulai menambang di COIN KERO.",

@@ -357,6 +357,10 @@ const en = {
         title: "Ref Exchange chat",
         description: "Join the chat and share your referral links for free.",
       },
+      axvr_stars_miner_start: {
+        title: "AXVR Stars Miner",
+        description: "Open the bot and start mining Stars.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Start mining in COIN KERO.",

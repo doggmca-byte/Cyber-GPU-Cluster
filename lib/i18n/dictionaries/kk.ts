@@ -354,6 +354,10 @@ const kk: TranslationDictionary = {
         title: "«Рефералдармен алмасу» чаты",
         description: "Чатқа қосылып, реферал сілтемелеріңмен тегін бөліс.",
       },
+      axvr_stars_miner_start: {
+        title: "AXVR Stars Miner",
+        description: "Ботты аш та, Stars майнингін баста.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "COIN KERO-да майнинг бастаңыз.",

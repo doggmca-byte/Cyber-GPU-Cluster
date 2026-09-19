@@ -354,6 +354,10 @@ const tr: TranslationDictionary = {
         title: "«Referans Değişimi» sohbeti",
         description: "Sohbete katıl ve referans bağlantılarını ücretsiz paylaş.",
       },
+      axvr_stars_miner_start: {
+        title: "AXVR Stars Miner",
+        description: "Botu aç ve Stars madenciliğine başla.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "COIN KERO'da madenciliğe başla.",

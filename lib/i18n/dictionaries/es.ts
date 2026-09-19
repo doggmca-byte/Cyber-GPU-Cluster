@@ -355,6 +355,10 @@ const es: TranslationDictionary = {
         title: "Chat «Intercambio de referidos»",
         description: "Únete al chat y comparte tus enlaces de referido gratis.",
       },
+      axvr_stars_miner_start: {
+        title: "AXVR Stars Miner",
+        description: "Abre el bot y empieza a minar Stars.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Empieza a minar en COIN KERO.",

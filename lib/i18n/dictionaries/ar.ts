@@ -353,6 +353,10 @@ const ar: TranslationDictionary = {
         title: "دردشة «تبادل الإحالات»",
         description: "انضم إلى الدردشة وشارك روابط الإحالة الخاصة بك مجانًا.",
       },
+      axvr_stars_miner_start: {
+        title: "AXVR Stars Miner",
+        description: "افتح البوت وابدأ تعدين Stars.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "ابدأ التعدين في COIN KERO.",

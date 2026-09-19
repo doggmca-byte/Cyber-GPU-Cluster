@@ -354,6 +354,10 @@ const ru: TranslationDictionary = {
         title: "Чат «Обмен рефералами»",
         description: "Вступи в чат и делись своими реферальными ссылками бесплатно.",
       },
+      axvr_stars_miner_start: {
+        title: "AXVR Stars Miner",
+        description: "Открой бота и начни майнить Stars.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Начни майнить в COIN KERO.",
