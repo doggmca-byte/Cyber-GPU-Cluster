@@ -349,6 +349,10 @@ const ar: TranslationDictionary = {
         title: "MRG Miner",
         description: "افتح التطبيق وابدأ التعدين.",
       },
+      shares_your_links_chat: {
+        title: "دردشة «تبادل الإحالات»",
+        description: "انضم إلى الدردشة وشارك روابط الإحالة الخاصة بك مجانًا.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "ابدأ التعدين في COIN KERO.",

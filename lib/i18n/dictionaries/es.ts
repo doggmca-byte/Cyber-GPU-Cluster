@@ -351,6 +351,10 @@ const es: TranslationDictionary = {
         title: "MRG Miner",
         description: "Abre la app y empieza a minar.",
       },
+      shares_your_links_chat: {
+        title: "Chat «Intercambio de referidos»",
+        description: "Únete al chat y comparte tus enlaces de referido gratis.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Empieza a minar en COIN KERO.",

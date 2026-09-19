@@ -350,6 +350,10 @@ const id: TranslationDictionary = {
         title: "MRG Miner",
         description: "Buka aplikasi dan mulai menambang.",
       },
+      shares_your_links_chat: {
+        title: "Chat «Tukar Referral»",
+        description: "Gabung ke chat dan bagikan tautan referral-mu secara gratis.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Mulai menambang di COIN KERO.",

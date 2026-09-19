@@ -350,6 +350,10 @@ const tr: TranslationDictionary = {
         title: "MRG Miner",
         description: "Uygulamayı aç ve madenciliğe başla.",
       },
+      shares_your_links_chat: {
+        title: "«Referans Değişimi» sohbeti",
+        description: "Sohbete katıl ve referans bağlantılarını ücretsiz paylaş.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "COIN KERO'da madenciliğe başla.",

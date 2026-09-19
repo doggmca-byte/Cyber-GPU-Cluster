@@ -353,6 +353,10 @@ const en = {
         title: "MRG Miner",
         description: "Open the app and start mining.",
       },
+      shares_your_links_chat: {
+        title: "Ref Exchange chat",
+        description: "Join the chat and share your referral links for free.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Start mining in COIN KERO.",

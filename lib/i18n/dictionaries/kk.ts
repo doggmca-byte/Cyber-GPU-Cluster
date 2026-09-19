@@ -350,6 +350,10 @@ const kk: TranslationDictionary = {
         title: "MRG Miner",
         description: "Қосымшаны аш та, майнингті баста.",
       },
+      shares_your_links_chat: {
+        title: "«Рефералдармен алмасу» чаты",
+        description: "Чатқа қосылып, реферал сілтемелеріңмен тегін бөліс.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "COIN KERO-да майнинг бастаңыз.",

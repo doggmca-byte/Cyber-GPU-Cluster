@@ -350,6 +350,10 @@ const ru: TranslationDictionary = {
         title: "MRG Miner",
         description: "Открой приложение и начни майнить.",
       },
+      shares_your_links_chat: {
+        title: "Чат «Обмен рефералами»",
+        description: "Вступи в чат и делись своими реферальными ссылками бесплатно.",
+      },
       coin_kero_start: {
         title: "COIN KERO | BOT",
         description: "Начни майнить в COIN KERO.",
