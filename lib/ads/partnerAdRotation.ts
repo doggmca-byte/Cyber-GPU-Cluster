@@ -25,12 +25,17 @@
  * бану акаунта за фрод-кліки) — тому на позиції "tads" ротації кнопка не
  * відкриває нічого сама, а лише підказує натиснути банер нижче.
  */
-export type PartnerAdSlot = "gigapub" | "adsgram" | "tads";
+export type PartnerAdSlot = "gigapub" | "adsgram";
 
-const PARTNER_AD_ORDER: readonly PartnerAdSlot[] = ["gigapub", "adsgram", "tads"];
-// v3, бо позиція у старому ключі рахувалась по чотирьох слотах — зі зміною
-// довжини вона б'є не в ту саму мережу, що очікує гравець.
-const ROTATION_STORAGE_KEY = "cgc_partner_ad_rotation_v3";
+/**
+ * TADS із кнопки прибрано. Його банер не можна "показати" по натисканню —
+ * гравець мусить сам клікнути по креативу, — тож на його черзі кнопка лише
+ * радила натиснути банер нижче, і кожне таке натискання минало без реклами.
+ * TADS живе окремою карткою (TadsBannerCard) і з кнопкою не пов'язаний.
+ */
+const PARTNER_AD_ORDER: readonly PartnerAdSlot[] = ["gigapub", "adsgram"];
+// v4: позиція у старому ключі рахувалась по трьох слотах.
+const ROTATION_STORAGE_KEY = "cgc_partner_ad_rotation_v4";
 
 /**
  * Скільки пропускати мережу, яка щойно відповіла "реклами немає".

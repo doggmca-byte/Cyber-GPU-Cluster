@@ -560,16 +560,6 @@ function PartnerAdsCard({ initData }: { initData: string }) {
     // кліку "напрягатиме людей").
     const slot = nextPartnerAdSlot();
 
-    if (slot === "tads") {
-      // TADS-банер уже постійно змонтований нижче (TadsBannerCard) і чекає
-      // на РЕАЛЬНИЙ клік користувача по самій рекламній творчій одиниці —
-      // симулювати показ/клік із цієї кнопки не можна. Просто підказуємо
-      // (окремий стан від error — це не помилка, тож не червоним).
-      setError(null);
-      setHint(t.tasks.partnerAds.tadsTurnHint);
-      return;
-    }
-
     setIsWatching(true);
     setIsConfirming(false);
     setError(null);

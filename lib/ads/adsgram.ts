@@ -98,14 +98,23 @@ function rotatedBlockIds(): string[] {
 export type AdsgramOutcome = "shown" | "no_fill" | "not_completed";
 
 /**
- * AdsGram віддає однакову форму і для "реклами немає", і для "гравець закрив
- * достроково" — різниця лише в тому, на якому етапі все зупинилось. Помилка
- * ще на етапі "load" означає, що реклама навіть не почала рендеритись: саме
- * тоді SDK показує власне вікно "No ads available at the moment".
+ * Чому показ не відбувся — перевірено по коду самого SDK (sad.min.js):
+ *
+ *   - "реклами немає" — noBannerToShowError: state "load", done false і,
+ *     що важливо, error FALSE. Попередня версія чекала error: true і тому
+ *     жодного разу не розпізнала порожню відповідь;
+ *   - "сесія занадто довга", "занадто часто", "No available ad" — серверні
+ *     помилки AdsGram, що приходять ВЗАГАЛІ без полів результату (свій клас
+ *     помилки з одним message). Реклама при цьому теж не показана.
+ *
+ * Обидва випадки для нас однакові: мережа зараз нічого не віддасть. Решта
+ * (state "render"/"playing"/"destroy" без done) — показ почався, але не
+ * завершився: гравець закрив рекламу або вона зламалась посеред відтворення.
  */
-function classify(result: Partial<AdsgramShowResult> | undefined): AdsgramOutcome {
-  if (result?.done === true) return "shown";
-  if (result?.error === true && (result.state === "load" || result.state === undefined)) return "no_fill";
+function classify(result: unknown): AdsgramOutcome {
+  const r = (result ?? {}) as Partial<AdsgramShowResult>;
+  if (r.done === true) return "shown";
+  if (r.state === "load" || r.state === undefined) return "no_fill";
   return "not_completed";
 }
 
@@ -116,8 +125,8 @@ async function showOneBlock(blockId: string): Promise<AdsgramOutcome> {
   try {
     return classify(await controller.show());
   } catch (err) {
-    // На відсутність реклами SDK реджектить проміс тим самим об'єктом результату.
-    return classify(err as Partial<AdsgramShowResult>);
+    // SDK реджектить проміс і об'єктом результату, і власною помилкою сервера.
+    return classify(err);
   }
 }
 
