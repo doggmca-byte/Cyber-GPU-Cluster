@@ -154,10 +154,17 @@ async function createProfileWithOptionalReferral(
     // (переможець гонки вже обробив referral) — просто читаємо, що вийшло.
     if (insertError.code === "23505") {
       const existing = await findProfileByTelegramId(admin, user.id);
-      if (existing) return existing;
+      if (existing) {
+        // Профіль щойно створив паралельний запит — гарантуємо, що стартовий
+        // майнер уже є й для цієї відповіді (ідемпотентно, дубль неможливий).
+        await grantStarterGpu(admin, existing.id);
+        return existing;
+      }
     }
     throw new ApiError(500, `failed to create profile: ${insertError.message}`);
   }
+
+  await grantStarterGpu(admin, inserted.id);
 
   if (referrerProfileId) {
     const { error: referralError } = await admin.from("referrals").insert({
@@ -172,6 +179,28 @@ async function createProfileWithOptionalReferral(
   }
 
   return inserted;
+}
+
+// Рівень стартового майнера — Raspberry Neural Core (gpu_templates.level = 1).
+const STARTER_GPU_LEVEL = 1;
+
+/**
+ * Видає новому профілю один майнер L1 одразу при створенні: він просто стоїть
+ * у списку активних серверів, без жодних повідомлень. ignoreDuplicates —
+ * UNIQUE (user_id, gpu_level): повторний виклик (гонка двох sync) нічого не
+ * змінює. Некритично: збій не має ламати реєстрацію, лише лишає рядок у логах.
+ */
+async function grantStarterGpu(admin: ReturnType<typeof createAdminClient>, profileId: string): Promise<void> {
+  const { error } = await admin
+    .from("user_gpus")
+    .upsert(
+      { user_id: profileId, gpu_level: STARTER_GPU_LEVEL, amount: 1 },
+      { onConflict: "user_id,gpu_level", ignoreDuplicates: true },
+    );
+
+  if (error) {
+    console.error(`[api/user/sync] failed to grant starter gpu for ${profileId}: ${error.message}`);
+  }
 }
 
 async function syncDisplayFields(

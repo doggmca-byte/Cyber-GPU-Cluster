@@ -51,7 +51,7 @@ interface UseMiningEngineResult {
  * Zero-lag Mining Engine.
  *
  * unclaimed = Σ по картках min(elapsed * hash_per_second * amount, headroom),
- * elapsed = (Date.now() + clockOffset - last_harvest_at), обмежений 12 годинами
+ * elapsed = (Date.now() + clockOffset - last_harvest_at), обмежений MAX_UNCLAIMED_SECONDS
  * (calcUnclaimedHash — дзеркало harvest_user_hash).
  *
  * Жодного локального "baseline": раніше він жив у useRef і скидався на 0 лише в

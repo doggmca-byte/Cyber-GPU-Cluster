@@ -44,7 +44,10 @@ export async function startVerifiedAttempt(initData: string, purpose: VerifiedAd
   }
 }
 
-const POLL_ATTEMPTS = 8;
+// 14 × 2 с = 28 с: за даними ad_verification_attempts p99 затримки postback —
+// ~25 с (p50 ≈ 2.7 с), тож колишні 16 с обривали опитування ще до того, як
+// приходило підтвердження, яке потім усе одно зараховувалось.
+const POLL_ATTEMPTS = 14;
 const POLL_DELAY_MS = 2000;
 
 export type VerifiedPollResult =

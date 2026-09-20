@@ -158,7 +158,7 @@ export const WELCOME_BONUS_TON = 0.25;
 // скидає лічильник картки на v_now). Той самий кап застосовує клієнтський
 // прев'ю-розрахунок (hooks/useMiningEngine.ts, components/farm/FarmScreen.tsx),
 // інакше великий лічильник показував би більше, ніж сервер реально нарахує.
-export const MAX_UNCLAIMED_HOURS = 12;
+export const MAX_UNCLAIMED_HOURS = 8;
 export const MAX_UNCLAIMED_SECONDS = MAX_UNCLAIMED_HOURS * 3600;
 
 // record_ad_watch / request_withdrawal: ads_watched_since_withdraw

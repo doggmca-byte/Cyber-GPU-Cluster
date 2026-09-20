@@ -25,8 +25,10 @@ const en = {
     label: "Support",
   },
   notifications: {
-    productionPaused: (hashBalance: string) =>
-      `⛏️ Your GPU Cluster has stopped mining — no HASH collected in over 12 hours.\n\nCurrent balance: ${hashBalance} HASH. Open the app and tap "Collect HASH" to keep earning.`,
+    // Параметр лишається в сигнатурі: en задає тип для всіх мов, а решта
+    // словників ще підставляє в текст поточний баланс.
+    productionPaused: (_hashBalance: string) =>
+      "Your farm storage is full! Launch Cyber GPU Cluster to collect your $HASH and resume mining.",
     specialTasksAnnouncement:
       '🎁 New Special Tasks are live! Add our tag to your name or your referral link to your bio and hold it through 6 stages (15 min → 30 days) — earn up to 0.232 TON per task. Open the app → Tasks → ⭐ Special to start.',
     openAppButton: "Open Cyber GPU Cluster",

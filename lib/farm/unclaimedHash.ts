@@ -5,7 +5,7 @@ export interface UnclaimedHashSnapshot {
   /** Скільки $HASH накопичено й ще не зібрано на момент serverNowMs. */
   unclaimed: number;
   /**
-   * true, коли хоч одна жива картка впирається в кап (12 год без збору або
+   * true, коли хоч одна жива картка впирається в кап (MAX_UNCLAIMED_HOURS без збору або
    * lifecycle-ліміт) — ферма показує "виробництво призупинено".
    */
   isAtCap: boolean;
@@ -13,7 +13,7 @@ export interface UnclaimedHashSnapshot {
 
 /**
  * Дзеркало harvest_user_hash: для кожної живої картки
- *   min( clamp(now - last_harvest_at, 0, 12h) * hash_per_second * amount,
+ *   min( clamp(now - last_harvest_at, 0, MAX_UNCLAIMED_SECONDS) * hash_per_second * amount,
  *        lifecycle_cap - lifetime_hash_generated ).
  *
  * Це ЧИСТА функція від (user_gpus, шаблони, поточний час сервера): жодного

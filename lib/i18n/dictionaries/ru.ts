@@ -22,8 +22,8 @@ const ru: TranslationDictionary = {
     label: "Поддержка",
   },
   notifications: {
-    productionPaused: (hashBalance) =>
-      `⛏️ Твой GPU Cluster остановил майнинг — HASH не собирался больше 12 часов.\n\nТекущий баланс: ${hashBalance} HASH. Открой приложение и нажми «Собрать HASH», чтобы продолжить зарабатывать.`,
+    productionPaused: () =>
+      "Хранилище фермы заполнено! Зайдите в Cyber GPU Cluster, чтобы забрать $HASH и продолжить майнинг.",
     specialTasksAnnouncement:
       "🎁 Появились новые Особые задания! Добавь наш тег в имя или свою реферальную ссылку в Bio и удерживай через 6 этапов (15 мин → 30 дней) — получи до 0.232 TON за задание. Открой приложение → Задания → ⭐ Особые, чтобы начать.",
     openAppButton: "Открыть Cyber GPU Cluster",

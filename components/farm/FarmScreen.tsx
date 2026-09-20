@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Zap, Gift, Cpu, Bot, Copy, Check, Server, ChevronRight, CirclePlus, PauseCircle, Clock } from "lucide-react";
 import { useMiningEngine } from "@/hooks/useMiningEngine";
+import { requestWriteAccessOnce } from "@/lib/telegram/requestWriteAccessOnce";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
@@ -13,7 +14,6 @@ import type { SyncResponse } from "@/types/api";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { TasksEntryButton } from "@/components/tasks/TasksEntryButton";
 import { DailyBonusModal } from "@/components/daily/DailyBonusModal";
-import { WriteAccessPrompt } from "@/components/farm/WriteAccessPrompt";
 import { MinerIcon, getRarityColorHex } from "@/components/miners/MinerIcons";
 import { gpuLifecycleCapHash, gpuRevivalCost, GPU_REVIVAL_MAX_COUNT } from "@/lib/constants/economy";
 import type { ReviveGpuResponse } from "@/types/api";
@@ -60,6 +60,14 @@ function FarmScreenReady({
     onHarvestFailure: resync,
   });
 
+  // Перший в історії збір ($HASH ще жодного разу не збирався) — заодно
+  // просимо нативний дозвіл писати в чат. Викликаємо синхронно в обробнику
+  // кліку (жест користувача), до запиту, а не після нього.
+  const handleHarvest = useCallback(() => {
+    if (profile.harvest_count === 0) requestWriteAccessOnce();
+    void harvest();
+  }, [profile.harvest_count, harvest]);
+
   // Косметичні дані (аватар) беремо напряму з initDataUnsafe на клієнті —
   // це не довірені дані і НЕ використовуються ні для чого, крім фото в UI.
   // Джерело правди для id/балансів — виключно верифікована відповідь сервера.
@@ -87,8 +95,6 @@ function FarmScreenReady({
         <DailyBonusModal initData={initData} onClose={() => setIsDailyBonusOpen(false)} />
       )}
 
-      <WriteAccessPrompt />
-
       <TasksEntryButton initData={initData} />
 
       <MiningPanel
@@ -97,7 +103,7 @@ function FarmScreenReady({
         isAtCap={isAtCap}
         isHarvesting={isHarvesting}
         harvestError={harvestError}
-        onHarvest={harvest}
+        onHarvest={handleHarvest}
       />
 
       <ActiveServersSection

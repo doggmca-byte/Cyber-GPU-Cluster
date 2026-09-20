@@ -48,6 +48,15 @@ export const dynamic = "force-dynamic";
 // написання (і "true"/"1" про всяк випадок), а не покладаємось на рівно ОДНЕ.
 const PAID_REWARD_EVENT_VALUES = new Set(["valued", "yes", "true", "1"]);
 
+// ymid — це id рядка ad_verification_attempts (uuid). Будь-що інше (порожній
+// макрос, показ без ymid, чуже значення) в .eq("id", ...) дало б помилку типу
+// uuid й 500, яку Monetag рахує невдалою доставкою й ретраїть без кінця.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function normalizeRewardEventType(raw: string | null | undefined): string {
+  return (raw ?? "").trim().toLowerCase();
+}
+
 /**
  * S2S postback від сервера Monetag (docs.monetag.com/docs/postbacks) —
  * підтверджує, що конкретний rewarded-показ (ymid, виданий
@@ -72,12 +81,17 @@ export async function GET(request: Request) {
       throw new ApiError(401, "invalid secret");
     }
 
-    const ymid = url.searchParams.get("ymid");
-    if (!ymid) throw new ApiError(400, "ymid is required");
+    // Порожній/чужий/не-uuid ymid — нема що зараховувати, але це НЕ помилка
+    // доставки: відповідаємо чистим 200, щоб Monetag не вважав постбек невдалим.
+    const ymid = url.searchParams.get("ymid")?.trim() ?? "";
+    if (!UUID_RE.test(ymid)) {
+      return NextResponse.json({ ok: true, status: "ignored" });
+    }
 
-    const rewardEventTypeRaw = url.searchParams.get("reward_event_type") ?? "";
+    const rewardEventTypeRaw = (url.searchParams.get("reward_event_type") ?? "").trim();
+    const rewardEventType = normalizeRewardEventType(rewardEventTypeRaw);
     const telegramIdRaw = url.searchParams.get("telegram_id");
-    const telegramId = telegramIdRaw ? Number(telegramIdRaw) : null;
+    const telegramId = telegramIdRaw && Number.isFinite(Number(telegramIdRaw)) ? Number(telegramIdRaw) : null;
 
     const admin = createAdminClient();
 
@@ -87,18 +101,29 @@ export async function GET(request: Request) {
       .eq("id", ymid)
       .maybeSingle();
 
+    // Тимчасовий збій БД — справжня помилка: 5xx, щоб Monetag повторив постбек.
     if (attemptError) throw new ApiError(500, `failed to load attempt: ${attemptError.message}`);
-    if (!attempt) throw new ApiError(404, "unknown ymid");
+    // Невідомий ymid (напр. спроба з іншого середовища) — повторювати марно: 200.
+    if (!attempt) return NextResponse.json({ ok: true, status: "ignored" });
 
     // Ідемпотентно: Monetag може повторити postback (мережеві ретраї) —
     // другий виклик з тим самим ymid НЕ повинен нараховувати вдруге.
-    if (attempt.status !== "pending") {
+    //
+    // Виняток — спроба, відхилена лише тому, що ПЕРШИЙ postback був
+    // non_valued (Monetag шле окремі події на показ і клік, і оплаченою може
+    // бути пізніша). Якщо потім приходить valued — це той самий показ, і його
+    // треба зарахувати, а не лишати назавжди rejected. Відмови через ліміт
+    // (P0001) сюди не потрапляють: там reported_reward_event_type = valued.
+    const previouslyReported = normalizeRewardEventType(attempt.reported_reward_event_type);
+    const wasUnpaidRejection = attempt.status === "rejected" && !PAID_REWARD_EVENT_VALUES.has(previouslyReported);
+    if (attempt.status !== "pending" && !wasUnpaidRejection) {
       return NextResponse.json({ ok: true, status: attempt.status });
     }
 
-    const isPaid = PAID_REWARD_EVENT_VALUES.has(rewardEventTypeRaw.toLowerCase());
+    const isPaid = PAID_REWARD_EVENT_VALUES.has(rewardEventType);
 
     if (!isPaid) {
+      // Лише з pending: вже confirmed/rejected ніколи не перезаписуємо.
       await admin
         .from("ad_verification_attempts")
         .update({
@@ -106,7 +131,8 @@ export async function GET(request: Request) {
           reported_telegram_id: telegramId,
           reported_reward_event_type: rewardEventTypeRaw || null,
         })
-        .eq("id", ymid);
+        .eq("id", ymid)
+        .eq("status", "pending");
 
       return NextResponse.json({ ok: true, status: "rejected" });
     }
@@ -137,6 +163,8 @@ export async function GET(request: Request) {
       // не критична помилка нашого боку, просто не нараховуємо, але
       // ПОЗНАЧАЄМО rejected, щоб не намагатись знову.
       if (rpcError.code === "P0001") {
+        // Лише з pending: якщо паралельний дублікат постбека вже встиг
+        // зарахувати цей показ (confirmed), відмову другого не записуємо.
         await admin
           .from("ad_verification_attempts")
           .update({
@@ -144,12 +172,16 @@ export async function GET(request: Request) {
             reported_telegram_id: telegramId,
             reported_reward_event_type: rewardEventTypeRaw || null,
           })
-          .eq("id", ymid);
+          .eq("id", ymid)
+          .eq("status", "pending");
         return NextResponse.json({ ok: true, status: "rejected", reason: rpcError.message });
       }
       throw rpcErrorToApiError(rpcError);
     }
 
+    // confirmed перемагає будь-який інший статус (у т.ч. rejected, якого
+    // паралельний дублікат міг встигнути записати раніше за нас), і сам
+    // ніколи не перезаписується.
     await admin
       .from("ad_verification_attempts")
       .update({
@@ -158,7 +190,8 @@ export async function GET(request: Request) {
         reported_telegram_id: telegramId,
         reported_reward_event_type: rewardEventTypeRaw || null,
       })
-      .eq("id", ymid);
+      .eq("id", ymid)
+      .neq("status", "confirmed");
 
     return NextResponse.json({ ok: true, status: "confirmed" });
   } catch (error) {
