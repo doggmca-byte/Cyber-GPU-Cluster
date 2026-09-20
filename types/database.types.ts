@@ -843,6 +843,7 @@ export type Database = {
           withdrawable_balance: number
         }[]
       }
+      collect_hash: { Args: { p_user_id: string }; Returns: Json }
       harvest_user_hash: { Args: { p_user_id: string }; Returns: number }
       list_channel_penalty_candidates: {
         Args: { p_limit?: number }

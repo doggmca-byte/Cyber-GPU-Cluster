@@ -9,13 +9,13 @@ import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import type { LanguageCode } from "@/lib/i18n/languages";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
-import type { HarvestResponse, SyncResponse } from "@/types/api";
+import type { SyncResponse } from "@/types/api";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { TasksEntryButton } from "@/components/tasks/TasksEntryButton";
 import { DailyBonusModal } from "@/components/daily/DailyBonusModal";
 import { WriteAccessPrompt } from "@/components/farm/WriteAccessPrompt";
 import { MinerIcon, getRarityColorHex } from "@/components/miners/MinerIcons";
-import { MAX_UNCLAIMED_SECONDS, gpuLifecycleCapHash, gpuRevivalCost, GPU_REVIVAL_MAX_COUNT } from "@/lib/constants/economy";
+import { gpuLifecycleCapHash, gpuRevivalCost, GPU_REVIVAL_MAX_COUNT } from "@/lib/constants/economy";
 import type { ReviveGpuResponse } from "@/types/api";
 
 export function FarmScreen() {
@@ -25,87 +25,39 @@ export function FarmScreen() {
   if (state.status === "no-telegram") return <NoTelegramNotice />;
   if (state.status === "error") return <SyncErrorNotice message={state.message} />;
 
-  return <FarmScreenReady data={state.data} initData={state.initData} />;
+  return <FarmScreenReady data={state.data} initData={state.initData} clockOffsetMs={state.clockOffsetMs} />;
 }
 
-function FarmScreenReady({ data, initData }: { data: SyncResponse; initData: string }) {
-  const { patchProfile } = useUserData();
-  const { profile, user_gpus, gpu_templates, total_hash_per_second, server_time } = data;
+function FarmScreenReady({
+  data,
+  initData,
+  clockOffsetMs,
+}: {
+  data: SyncResponse;
+  initData: string;
+  clockOffsetMs: number;
+}) {
+  const { applyHarvest, resync } = useUserData();
+  const { profile, user_gpus, gpu_templates, total_hash_per_second } = data;
 
   const templateByLevel = useMemo(
     () => new Map(gpu_templates.map((tmpl) => [tmpl.level, tmpl])),
     [gpu_templates],
   );
 
-  // Скільки $HASH уже накопичено, але ще не забрано, ЗАРАЗ (на момент
-  // server_time) — сума (server_time - last_harvest_at) * hash_per_second *
-  // amount по кожній картці, той самий розрахунок (включно з капом
-  // MAX_UNCLAIMED_SECONDS на кожен елапсед), що виконує harvest_user_hash на
-  // бекенді. Рахуємо це, а не беремо profile.hash_balance як базу — інакше
-  // великий лічильник показував би загальний баланс і "стрибав" би на нього
-  // ж таки після харвесту (баг, знайдений тестуванням на реальному пристрої).
-  //
-  // capRemainingSeconds — скільки секунд лишилось до НАЙБЛИЖЧОГО капа (12г
-  // без харвесту АБО lifecycle-ліміт картки, залежно, що настане раніше) в
-  // НАЙБЛИЖЧОЇ картки (мінімум по всіх живих). useMiningEngine заморожує
-  // живий лічильник рівно тоді, коли цей бюджет вичерпається, — інакше він
-  // показував би більше, ніж сервер реально нарахує при харвесті (той самий
-  // клас бага). Мертві (is_dead) картки взагалі не рахуються — сервер для
-  // них теж пропускає нарахування (continue в harvest_user_hash).
-  const { initialUnclaimedHash, capRemainingSeconds } = useMemo(() => {
-    const serverTimeMs = new Date(server_time).getTime();
-    let unclaimed = 0;
-    let remaining = Infinity;
-    let hasOwnedGpu = false;
-
-    for (const gpu of user_gpus) {
-      if (gpu.amount <= 0 || gpu.is_dead) continue;
-      const template = templateByLevel.get(gpu.gpu_level);
-      if (!template) continue;
-      hasOwnedGpu = true;
-
-      const rate = template.hash_per_second * gpu.amount;
-      const elapsedSeconds = Math.max((serverTimeMs - new Date(gpu.last_harvest_at).getTime()) / 1000, 0);
-      const cappedByTime = Math.min(elapsedSeconds, MAX_UNCLAIMED_SECONDS);
-      const rowHarvestedByTime = cappedByTime * rate;
-
-      const rowCap = gpuLifecycleCapHash(template.cost_ton, gpu.amount);
-      const rowHeadroom = Math.max(rowCap - gpu.lifetime_hash_generated, 0);
-      const rowHarvested = Math.min(rowHarvestedByTime, rowHeadroom);
-      unclaimed += rowHarvested;
-
-      const secondsUntilTimeCap = MAX_UNCLAIMED_SECONDS - cappedByTime;
-      const secondsUntilLifecycleCap = rate > 0 ? Math.max(rowHeadroom - rowHarvestedByTime, 0) / rate : Infinity;
-      remaining = Math.min(remaining, secondsUntilTimeCap, secondsUntilLifecycleCap);
-    }
-
-    return {
-      initialUnclaimedHash: unclaimed,
-      capRemainingSeconds: hasOwnedGpu ? remaining : null,
-    };
-  }, [user_gpus, templateByLevel, server_time]);
-
-  const handleHarvestSuccess = useCallback(
-    (result: HarvestResponse) => {
-      // Пропатчити глобальний стан одразу — Header (HASH/TON бейджі) та решта
-      // екранів мають побачити нові баланси без очікування наступного
-      // повного /api/user/sync.
-      patchProfile({
-        hash_balance: result.hash_balance,
-        game_balance: result.game_balance,
-        withdrawable_balance: result.withdrawable_balance,
-      });
-    },
-    [patchProfile],
-  );
-
+  // Лічильник "накопичено" — чиста функція від user_gpus (last_harvest_at,
+  // lifetime_hash_generated, is_dead) із ГЛОБАЛЬНОГО стейту й поточного часу,
+  // без жодної локальної бази. Після успішного збору applyHarvest кладе в цей
+  // стейт свіжі user_gpus з відповіді сервера, тож при поверненні на вкладку
+  // "Ферма" (компонент монтується наново) лічильник одразу правильний, а не
+  // "відкочується" до суми, що вже була зібрана.
   const { unclaimedHash, isAtCap, isHarvesting, harvestError, harvest } = useMiningEngine({
-    initialUnclaimedHash,
-    capRemainingSecondsAtServerTime: capRemainingSeconds,
-    totalHashPerSecond: total_hash_per_second,
-    serverTime: server_time,
+    userGpus: user_gpus,
+    gpuTemplates: gpu_templates,
+    clockOffsetMs,
     initData,
-    onHarvestSuccess: handleHarvestSuccess,
+    onHarvestSuccess: applyHarvest,
+    onHarvestFailure: resync,
   });
 
   // Косметичні дані (аватар) беремо напряму з initDataUnsafe на клієнті —

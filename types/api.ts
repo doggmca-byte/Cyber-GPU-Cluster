@@ -22,11 +22,25 @@ export interface SyncResponse {
   server_time: string;
 }
 
+/**
+ * Відповідь /api/farm/harvest — атомарний знімок з collect_hash (одна
+ * транзакція в БД). Клієнт бере з нього ВСЕ: і баланси, і user_gpus (з них він
+ * рахує лічильник), тож нічого не лишається старим у глобальному стейті.
+ */
 export interface HarvestResponse {
-  harvested: number;
-  hash_balance: number;
+  success: true;
+  /** Скільки $HASH нараховано саме цим збором. */
+  collected: number;
+  new_hash_balance: number;
   game_balance: number;
   withdrawable_balance: number;
+  /** Момент збору за годинником БД; null, якщо живих карток немає. */
+  last_collected_at: string | null;
+  /** Усі рядки user_gpus ПІСЛЯ збору (свіжі last_harvest_at/lifetime/is_dead). */
+  user_gpus: UserGpu[];
+  /** Потужність після збору: картка могла "померти" від lifecycle-капа. */
+  total_hash_per_second: number;
+  /** Годинник БД у момент відповіді — для синхронізації клієнтського годинника. */
   server_time: string;
 }
 

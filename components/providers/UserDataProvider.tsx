@@ -10,18 +10,47 @@ import {
   useState,
 } from "react";
 import { getWebAppInitData } from "@/lib/telegram/getWebAppInitData";
-import type { BuyGpuResponse, Profile, SyncResponse } from "@/types/api";
+import type { BuyGpuResponse, HarvestResponse, Profile, SyncResponse } from "@/types/api";
 
 export type UserDataState =
   | { status: "loading" }
   | { status: "no-telegram" }
   | { status: "error"; message: string }
-  | { status: "ready"; data: SyncResponse; initData: string };
+  | {
+      status: "ready";
+      data: SyncResponse;
+      initData: string;
+      /**
+       * "Годинник сервера - годинник пристрою", мс, за останньою відповіддю
+       * сервера. last_harvest_at пише БД, тож щоб порахувати, скільки минуло,
+       * "зараз" на клієнті = Date.now() + clockOffsetMs (інакше зсунутий
+       * годинник телефона перекручував би лічильник).
+       */
+      clockOffsetMs: number;
+    };
+
+/** Різниця серверного й клієнтського годинника на момент отримання відповіді. */
+function calcClockOffsetMs(serverTimeIso: string): number {
+  const serverMs = Date.parse(serverTimeIso);
+  return Number.isNaN(serverMs) ? 0 : serverMs - Date.now();
+}
 
 interface UserDataContextValue {
   state: UserDataState;
   /** Повний ресинк із /api/user/sync (напр. після referral-claim чи pull-to-refresh). */
   refresh: () => Promise<void>;
+  /**
+   * Тихий ресинк: той самий /api/user/sync, але БЕЗ переходу в "loading" (екран
+   * не розмонтовується) і без "error" при невдачі — старий стан просто лишається.
+   */
+  resync: () => Promise<void>;
+  /**
+   * Застосовує РЕЗУЛЬТАТ успішного збору $HASH: баланси, user_gpus (свіжі
+   * last_harvest_at/lifetime/is_dead), потужність і годинник — усе рівно так,
+   * як повернув бекенд. Саме user_gpus живить лічильник на Фермі, тож без
+   * його оновлення екран після зміни вкладки "відкочувався" до старої суми.
+   */
+  applyHarvest: (result: HarvestResponse) => void;
   /** Оптимістичний локальний патч полів профілю (баланси/квота) без round-trip. */
   patchProfile: (patch: Partial<Profile>) => void;
   /** Оптимістична зміна кількості конкретного рівня GPU (+1 при купівлі тощо). */
@@ -42,19 +71,21 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<UserDataState>({ status: "loading" });
   const initDataRef = useRef<string | null>(null);
 
-  const sync = useCallback(async () => {
+  const sync = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     // Скидаємо на "loading" ЩОРАЗУ на початку виклику (не лише початкове
     // значення useState) — інакше повторний sync() після помилки (IntroLoader
     // "Спробувати знову" → refresh()) лишав би стан "error" протягом усього
     // нового запиту: підписники (IntroLoader, SyncErrorNotice) бачили б
     // застарілу помилку замість skeleton, і IntroLoader міг би миттю знову
     // зафейлитись, ще не дочекавшись реальної відповіді нового fetch.
-    setState({ status: "loading" });
+    // silent-ресинк (після невдалого збору) навпаки нічого не скидає: екран
+    // лишається на місці, а при невдачі зберігається попередній стан.
+    if (!silent) setState({ status: "loading" });
 
     const initData = initDataRef.current ?? getWebAppInitData();
 
     if (!initData) {
-      setState({ status: "no-telegram" });
+      if (!silent) setState({ status: "no-telegram" });
       return;
     }
     initDataRef.current = initData;
@@ -91,7 +122,7 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
 
         if (res.ok) {
           const data = (await res.json()) as SyncResponse;
-          setState({ status: "ready", data, initData });
+          setState({ status: "ready", data, initData, clockOffsetMs: calcClockOffsetMs(data.server_time) });
           return;
         }
 
@@ -99,11 +130,12 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
         const message = body?.error ?? `sync failed with status ${res.status}`;
 
         if (res.status < 500 || isLastAttempt) {
-          setState({ status: "error", message });
+          if (!silent) setState({ status: "error", message });
           return;
         }
       } catch (err) {
         if (isLastAttempt) {
+          if (silent) return;
           const isTimeout = err instanceof DOMException && err.name === "AbortError";
           setState({
             status: "error",
@@ -127,6 +159,35 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void sync();
   }, [sync]);
+
+  // Обгортки, а не прямий sync: refresh часто віддають в onClick, і тоді подія
+  // потрапила б у параметр options.
+  const refresh = useCallback(() => sync(), [sync]);
+  const resync = useCallback(() => sync({ silent: true }), [sync]);
+
+  const applyHarvest = useCallback((result: HarvestResponse) => {
+    setState((prev) => {
+      if (prev.status !== "ready") return prev;
+
+      return {
+        ...prev,
+        data: {
+          ...prev.data,
+          // Баланси й user_gpus — рівно з відповіді бекенду, без жодних дельт.
+          profile: {
+            ...prev.data.profile,
+            hash_balance: result.new_hash_balance,
+            game_balance: result.game_balance,
+            withdrawable_balance: result.withdrawable_balance,
+          },
+          user_gpus: result.user_gpus,
+          total_hash_per_second: result.total_hash_per_second,
+          server_time: result.server_time,
+        },
+        clockOffsetMs: calcClockOffsetMs(result.server_time),
+      };
+    });
+  }, []);
 
   const patchProfile = useCallback((patch: Partial<Profile>) => {
     setState((prev) => {
@@ -163,7 +224,9 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
           profile,
           user_gpus: result.user_gpus,
           total_hash_per_second: result.total_hash_per_second,
+          server_time: result.server_time,
         },
+        clockOffsetMs: calcClockOffsetMs(result.server_time),
       };
     });
   }, []);
@@ -172,7 +235,9 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => {
       if (prev.status !== "ready") return prev;
 
-      const now = new Date().toISOString();
+      // revive_gpu ставить last_harvest_at за годинником БД, тож "зараз" беремо
+      // за серверним часом (з поправкою), а не за годинником пристрою.
+      const now = new Date(Date.now() + prev.clockOffsetMs).toISOString();
       const nextUserGpus = prev.data.user_gpus.map((g) =>
         g.gpu_level === level
           ? { ...g, is_dead: false, lifetime_hash_generated: 0, last_harvest_at: now, revival_count: revivalCount }
@@ -191,8 +256,8 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<UserDataContextValue>(
-    () => ({ state, refresh: sync, patchProfile, applyGpuPurchase, patchGpuRevived }),
-    [state, sync, patchProfile, applyGpuPurchase, patchGpuRevived],
+    () => ({ state, refresh, resync, applyHarvest, patchProfile, applyGpuPurchase, patchGpuRevived }),
+    [state, refresh, resync, applyHarvest, patchProfile, applyGpuPurchase, patchGpuRevived],
   );
 
   return <UserDataContext.Provider value={value}>{children}</UserDataContext.Provider>;

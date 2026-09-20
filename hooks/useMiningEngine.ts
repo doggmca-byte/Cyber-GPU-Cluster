@@ -1,187 +1,131 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { HarvestResponse } from "@/types/api";
-import { MAX_UNCLAIMED_SECONDS } from "@/lib/constants/economy";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { GpuTemplate, HarvestResponse, UserGpu } from "@/types/api";
+import { calcUnclaimedHash } from "@/lib/farm/unclaimedHash";
+
+// Захист від "вічно висячого" fetch: без нього кнопка лишилась би на
+// "Збираємо..." назавжди, якщо сервер прийняв з'єднання й мовчить.
+const HARVEST_TIMEOUT_MS = 15_000;
 
 interface UseMiningEngineOptions {
+  /** user_gpus з глобального стейту — ЄДИНЕ джерело last_harvest_at/lifetime/is_dead. */
+  userGpus: readonly UserGpu[];
+  gpuTemplates: readonly GpuTemplate[];
   /**
-   * Скільки $HASH уже накопичено, але ще НЕ забрано, НА МОМЕНТ serverTime —
-   * викликач рахує це як суму (server_time - gpu.last_harvest_at) *
-   * hash_per_second * amount по всіх картках, КОЖНУ картку зокрема
-   * обмежену MAX_UNCLAIMED_SECONDS (той самий розрахунок і кап, що виконує
-   * harvest_user_hash на бекенді). НЕ загальний hash_balance — саме тому
-   * лічильник більше не "стрибає" на весь баланс при харвесті.
+   * Різниця "годинник сервера - годинник пристрою", мс (див. UserDataProvider).
+   * last_harvest_at пише БД, тож "зараз" для нього = Date.now() + clockOffsetMs.
    */
-  initialUnclaimedHash: number;
-  /**
-   * Скільки секунд лишилось до капа накопичення (найменше значення серед
-   * усіх карток, порахованих СТАНОМ НА serverTime) — null, якщо GPU немає
-   * взагалі. Коли рахунок доходить до цього моменту, лічильник заморожується
-   * (виробництво "зупиняється" — той самий кап, що й на бекенді).
-   */
-  capRemainingSecondsAtServerTime: number | null;
-  /** Сумарна швидкість видобутку, HASH/сек, з усіх куплених GPU. */
-  totalHashPerSecond: number;
-  /** server_time (ISO), для якого порахований initialUnclaimedHash. */
-  serverTime: string;
+  clockOffsetMs: number;
   /** Сирий Telegram initData для запиту /api/farm/harvest. */
   initData: string;
   /**
-   * Викликається одразу після успішного /api/farm/harvest із повною
-   * відповіддю бекенду — щоб caller пропатчив глобальний UserDataProvider
-   * (Header має побачити нові hash_balance/game_balance/withdrawable_balance
-   * миттєво, без очікування наступного повного /api/user/sync).
+   * Викликається одразу після успішного збору з повною відповіддю бекенду —
+   * caller кладе її в глобальний стейт (баланси, user_gpus, годинник) РІВНО
+   * такою, якою її повернув сервер.
    */
-  onHarvestSuccess?: (data: HarvestResponse) => void;
+  onHarvestSuccess: (data: HarvestResponse) => void;
+  /**
+   * Збір не вдався (мережа/таймаут/5xx). Відповідь могла загубитись ПІСЛЯ того,
+   * як сервер уже зарахував HASH, тож caller тихо пересинхронізує стан з БД.
+   */
+  onHarvestFailure?: () => void;
 }
 
 interface UseMiningEngineResult {
   /**
-   * Скільки $HASH накопичено з моменту ОСТАННЬОГО харвесту. Росте з
-   * initialUnclaimedHash (а не з 0 сліпо — враховує "офлайн"-бекграунд,
-   * якщо застосунок був закритий якийсь час), скидається в 0 одразу
-   * після успішного harvest(). Це НЕ загальний баланс користувача.
+   * Скільки $HASH накопичено й ще НЕ зібрано. Це не окрема змінна з власною
+   * "базою", а щокадрова функція від user_gpus і поточного часу — тому після
+   * (пере)монтування екрана вона завжди збігається з тим, що нарахує сервер.
    */
   unclaimedHash: number;
-  /** true, коли досягнуто MAX_UNCLAIMED_SECONDS і лічильник більше не росте. */
+  /** true, коли хоч одна жива картка впирається в кап накопичення. */
   isAtCap: boolean;
   isHarvesting: boolean;
   harvestError: string | null;
-  /** Оптимістично заморожує лічильник і відправляє /api/farm/harvest. */
+  /** Блокує кнопку, заморожує лічильник на час запиту й відправляє /api/farm/harvest. */
   harvest: () => Promise<void>;
 }
 
 /**
  * Zero-lag Mining Engine.
  *
- * unclaimed = baselineUnclaimed + min(now, capDeadline - baselineClientMs) * hashPerSecond.
+ * unclaimed = Σ по картках min(elapsed * hash_per_second * amount, headroom),
+ * elapsed = (Date.now() + clockOffset - last_harvest_at), обмежений 12 годинами
+ * (calcUnclaimedHash — дзеркало harvest_user_hash).
  *
- * Рахується локально на requestAnimationFrame без жодних запитів до БД —
- * baselineUnclaimed щоразу приходить від викликача, порахований зі свіжих
- * server_time/last_harvest_at (а не встановлюється рівним нулю при кожному
- * монтуванні) — інакше після довгої відсутності лічильник почав би рахувати
- * з нуля, а на harvest() стрибнув би на реальну (більшу) суму, щойно
- * пораховану сервером, що й було першопричиною бага "хаотичного стрибка".
+ * Жодного локального "baseline": раніше він жив у useRef і скидався на 0 лише в
+ * межах одного монтування, тож після переходу на іншу вкладку й назад
+ * компонент рахував зі СТАРИХ last_harvest_at і повертав уже зібрану суму. Тепер
+ * стан — тільки user_gpus у глобальному сховищі, яке оновлює відповідь сервера.
  *
- * capDeadline — той самий принцип застосований до 12-годинного капа
- * накопичення: якщо не капати ЖИВИЙ тік так само, як капається серверний
- * розрахунок, лічильник міг би "перерости" суму, яку harvest() реально
- * нарахує (той самий клас бага) у сценарії "вкладка лишилась відкритою
- * довше 12 годин без харвесту".
+ * Тікер — requestAnimationFrame; знімається в cleanup ефекту (розмонтування
+ * або зміна вхідних даних), тож витоків немає. У фоновій вкладці rAF
+ * призупиняється сам, а при поверненні перший же кадр рахує від Date.now().
  */
 export function useMiningEngine({
-  initialUnclaimedHash,
-  capRemainingSecondsAtServerTime,
-  totalHashPerSecond,
-  serverTime,
+  userGpus,
+  gpuTemplates,
+  clockOffsetMs,
   initData,
   onHarvestSuccess,
+  onHarvestFailure,
 }: UseMiningEngineOptions): UseMiningEngineResult {
-  const baselineUnclaimedRef = useRef(initialUnclaimedHash);
-  const baselineClientMsRef = useRef(Date.now());
-  // null = немає GPU/капа не досягти найближчим часом релевантно — тікати без обмеження.
-  const capClientDeadlineMsRef = useRef<number | null>(null);
-  const hashPerSecondRef = useRef(totalHashPerSecond);
-  const frameRef = useRef<number | null>(null);
+  const templateByLevel = useMemo(() => new Map(gpuTemplates.map((tmpl) => [tmpl.level, tmpl])), [gpuTemplates]);
 
-  const [unclaimedHash, setUnclaimedHash] = useState(initialUnclaimedHash);
-  const [isAtCap, setIsAtCap] = useState(false);
+  // Початкове значення рахуємо одразу — без спалаху 0 / застарілого числа на
+  // першому кадрі після монтування.
+  const [snapshot, setSnapshot] = useState(() =>
+    calcUnclaimedHash(userGpus, templateByLevel, Date.now() + clockOffsetMs),
+  );
   const [isHarvesting, setIsHarvesting] = useState(false);
   const [harvestError, setHarvestError] = useState<string | null>(null);
 
-  // "Зараз", обрізане капом — якщо дедлайн уже минув, повертає сам дедлайн
-  // (а не поточний момент), тож будь-яке elapsed-віднімання від нього більше
-  // не росте.
-  const cappedNowMs = useCallback(() => {
-    const now = Date.now();
-    return capClientDeadlineMsRef.current !== null ? Math.min(now, capClientDeadlineMsRef.current) : now;
-  }, []);
-
-  const tick = useCallback(() => {
-    const nowMs = Date.now();
-    const cappedNow = capClientDeadlineMsRef.current !== null ? Math.min(nowMs, capClientDeadlineMsRef.current) : nowMs;
-    const elapsedSeconds = Math.max((cappedNow - baselineClientMsRef.current) / 1000, 0);
-    setUnclaimedHash(baselineUnclaimedRef.current + elapsedSeconds * hashPerSecondRef.current);
-
-    const capped = capClientDeadlineMsRef.current !== null && nowMs >= capClientDeadlineMsRef.current;
-    setIsAtCap((prev) => (prev === capped ? prev : capped));
-
-    frameRef.current = requestAnimationFrame(tick);
-  }, []);
+  // ref, а не лише state: два кліки в межах одного тіку рендера обидва бачили б
+  // isHarvesting === false із замикання й відправили б два запити.
+  const harvestingRef = useRef(false);
+  // Масив user_gpus, який ВЖЕ замінений відповіддю збору: тік зі старого
+  // замикання (rAF між setState і комітом) не має права повернути стару суму.
+  const supersededGpusRef = useRef<readonly UserGpu[] | null>(null);
 
   useEffect(() => {
-    frameRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+    let frame = 0;
+
+    const tick = () => {
+      if (!harvestingRef.current && supersededGpusRef.current !== userGpus) {
+        const next = calcUnclaimedHash(userGpus, templateByLevel, Date.now() + clockOffsetMs);
+        // 4 знаки після коми — саме стільки показує UI; не перерендерюємо ферму
+        // на кожен кадр, якщо видиме число не змінилось.
+        setSnapshot((prev) =>
+          prev.isAtCap === next.isAtCap && Math.round(prev.unclaimed * 1e4) === Math.round(next.unclaimed * 1e4)
+            ? prev
+            : next,
+        );
+      }
+      frame = requestAnimationFrame(tick);
     };
-  }, [tick]);
 
-  const setBaseline = useCallback(
-    (unclaimed: number, serverTimeIso: string, capRemainingSeconds: number | null) => {
-      // serverTimeIso сам собою не потрібен у розрахунку "тепер" — важлива лише
-      // клієнтська точка старту відліку, синхронізована в момент отримання
-      // цього значення (баланс годинників клієнт/сервер тут не змішуються).
-      void serverTimeIso;
-      const now = Date.now();
-      baselineUnclaimedRef.current = unclaimed;
-      baselineClientMsRef.current = now;
-      capClientDeadlineMsRef.current = capRemainingSeconds === null ? null : now + capRemainingSeconds * 1000;
-      setUnclaimedHash(unclaimed);
-      setIsAtCap(capRemainingSeconds !== null && capRemainingSeconds <= 0);
-    },
-    [],
-  );
-
-  const setHashPerSecond = useCallback(
-    (value: number) => {
-      const elapsedSeconds = Math.max((cappedNowMs() - baselineClientMsRef.current) / 1000, 0);
-      baselineUnclaimedRef.current += elapsedSeconds * hashPerSecondRef.current;
-      baselineClientMsRef.current = Date.now();
-      hashPerSecondRef.current = value;
-    },
-    [cappedNowMs],
-  );
-
-  // Ініціалізація/ресинк точки відліку при зміні вхідних даних з сервера
-  // (напр. після повторного /api/user/sync).
-  useEffect(() => {
-    setBaseline(initialUnclaimedHash, serverTime, capRemainingSecondsAtServerTime);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialUnclaimedHash, serverTime, capRemainingSecondsAtServerTime]);
-
-  // ВАЖЛИВО: змінювати ставку лише через setHashPerSecond (ребейзить baseline),
-  // а не прямим присвоєнням hashPerSecondRef.current — інакше на наступному тіку
-  // нова ставка заднім числом застосується до ВЖЕ минулого проміжку часу і
-  // лічильник "стрибне" вгору/вниз (напр. після купівлі GPU на іншому екрані).
-  useEffect(() => {
-    setHashPerSecond(totalHashPerSecond);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalHashPerSecond]);
+    tick();
+    return () => cancelAnimationFrame(frame);
+  }, [userGpus, templateByLevel, clockOffsetMs]);
 
   const harvest = useCallback(async () => {
-    if (isHarvesting) return;
-
+    if (harvestingRef.current) return;
+    harvestingRef.current = true;
     setIsHarvesting(true);
     setHarvestError(null);
 
-    // Оптимістичний UI: одразу заморожуємо поточне незабране значення
-    // (rate -> 0), щоб лічильник не "стрибав" під час запиту.
-    const optimisticUnclaimed =
-      baselineUnclaimedRef.current +
-      Math.max((cappedNowMs() - baselineClientMsRef.current) / 1000, 0) * hashPerSecondRef.current;
-    const previousRate = hashPerSecondRef.current;
-
-    baselineUnclaimedRef.current = optimisticUnclaimed;
-    baselineClientMsRef.current = Date.now();
-    hashPerSecondRef.current = 0;
-    setUnclaimedHash(optimisticUnclaimed);
+    // Лічильник на час запиту просто заморожений (тік пропускається) — він
+    // НЕ обнуляється: якщо збір не вдасться, користувач не "втрачає" суму.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), HARVEST_TIMEOUT_MS);
 
     try {
       const res = await fetch("/api/farm/harvest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ initData }),
+        signal: controller.signal,
       });
 
       if (!res.ok) {
@@ -190,20 +134,28 @@ export function useMiningEngine({
       }
 
       const data = (await res.json()) as HarvestResponse;
-      hashPerSecondRef.current = previousRate;
-      // Сервер щойно перевів усе незабране в hash_balance і скинув
-      // last_harvest_at на цей момент для кожної картки — нова точка
-      // відліку рівно 0, а не data.hash_balance (це і був баг), і повний
-      // 12-годинний бюджет капа знову доступний.
-      setBaseline(0, data.server_time, MAX_UNCLAIMED_SECONDS);
-      onHarvestSuccess?.(data);
+
+      // Лічильник одразу стає тим, що випливає з ВІДПОВІДІ сервера (≈ 0), і
+      // старий масив user_gpus більше не тікає, поки новий не дійде в стейт.
+      supersededGpusRef.current = userGpus;
+      setSnapshot(calcUnclaimedHash(data.user_gpus, templateByLevel, Date.parse(data.server_time)));
+      onHarvestSuccess(data);
     } catch (err) {
-      hashPerSecondRef.current = previousRate;
-      setHarvestError(err instanceof Error ? err.message : "unknown harvest error");
+      const isTimeout = err instanceof DOMException && err.name === "AbortError";
+      setHarvestError(
+        isTimeout
+          ? "request timed out — server took too long to respond"
+          : err instanceof Error
+            ? err.message
+            : "unknown harvest error",
+      );
+      onHarvestFailure?.();
     } finally {
+      clearTimeout(timeoutId);
+      harvestingRef.current = false;
       setIsHarvesting(false);
     }
-  }, [initData, isHarvesting, cappedNowMs, setBaseline, onHarvestSuccess]);
+  }, [initData, userGpus, templateByLevel, onHarvestSuccess, onHarvestFailure]);
 
-  return { unclaimedHash, isAtCap, isHarvesting, harvestError, harvest };
+  return { unclaimedHash: snapshot.unclaimed, isAtCap: snapshot.isAtCap, isHarvesting, harvestError, harvest };
 }
