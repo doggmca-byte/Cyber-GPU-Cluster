@@ -28,3 +28,7 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# broadcast state (local only)
+scripts/.anniversary-sent.log
+scripts/assets/
