@@ -108,6 +108,8 @@ const id: TranslationDictionary = {
     reviveOnFarm: "Bangkitkan di Farm untuk membuka pembelian",
     promo: {
       banner: (percent) => `-${percent}% untuk rig terpilih`,
+      anniversaryBanner: (percent) => `🎉 1 Bulan Cyber GPU Cluster! Diskon ${percent}% untuk semua perangkat`,
+      endsIn: (days, time) => `Promo berakhir dalam: ${days} hr ${time}`,
     },
     cycles: {
       title: (name) => `Siklus: ${name}`,

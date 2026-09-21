@@ -59,6 +59,13 @@ export function promoMsLeft(promo: PromoState | null, nowMs: number): number {
   return Math.max(new Date(promo.ends_at).getTime() - nowMs, 0);
 }
 
+/** Зворотний відлік по частинах: повні доби + HH:MM:SS залишку (години 00–23). */
+export function splitCountdown(msLeft: number): { days: number; time: string } {
+  const totalSeconds = Math.max(Math.floor(msLeft / 1000), 0);
+  const days = Math.floor(totalSeconds / 86400);
+  return { days, time: formatCountdown((totalSeconds % 86400) * 1000) };
+}
+
 /** HH:MM:SS для зворотного відліку (години не обмежені 24). */
 export function formatCountdown(msLeft: number): string {
   const totalSeconds = Math.max(Math.floor(msLeft / 1000), 0);

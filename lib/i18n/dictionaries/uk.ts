@@ -108,6 +108,8 @@ const uk: TranslationDictionary = {
     reviveOnFarm: "Оживи на Фермі, щоб знову купувати",
     promo: {
       banner: (percent) => `-${percent}% на обрані риги`,
+      anniversaryBanner: (percent) => `🎉 1 Місяць Cyber GPU Cluster! Знижка ${percent}% на все обладнання`,
+      endsIn: (days, time) => `До кінця акції: ${days} дн. ${time}`,
     },
     cycles: {
       title: (name) => `Цикли: ${name}`,

@@ -113,6 +113,8 @@ const en = {
     reviveOnFarm: "Revive on Farm to unlock buying",
     promo: {
       banner: (percent: number) => `-${percent}% on selected rigs`,
+      anniversaryBanner: (percent: number) => `🎉 1 Month of Cyber GPU Cluster! ${percent}% off all hardware`,
+      endsIn: (days: number, time: string) => `Promo ends in: ${days}d ${time}`,
     },
     cycles: {
       title: (name: string) => `${name} Cycles`,

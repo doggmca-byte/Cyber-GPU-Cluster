@@ -14,8 +14,10 @@ import {
   formatCountdown,
   isLevelDiscounted,
   promoMsLeft,
+  splitCountdown,
   type PromoState,
 } from "@/lib/promo/promo";
+import { isAnniversaryPromo } from "@/lib/promo/anniversary";
 import type { BuyGpuResponse, GpuTemplate, SyncResponse } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 
@@ -43,41 +45,49 @@ export function MarketScreen() {
   if (state.status === "no-telegram") return <NoTelegramNotice />;
   if (state.status === "error") return <SyncErrorNotice message={state.message} />;
 
-  return <MarketScreenReady data={state.data} initData={state.initData} />;
+  return <MarketScreenReady data={state.data} initData={state.initData} clockOffsetMs={state.clockOffsetMs} />;
 }
 
 /**
- * "Зараз" за шкалою СЕРВЕРА: беремо server_time з /api/user/sync і додаємо
- * час, що минув на клієнті з моменту отримання відповіді. Так зворотний
- * відлік і зникнення знижки не залежать від системного годинника пристрою
- * (а списання все одно рахує buy_gpu за now() у БД).
+ * "Зараз" за шкалою СЕРВЕРА: годинник пристрою + поправка clockOffsetMs
+ * (різниця "сервер - пристрій" з UserDataProvider, оновлюється з кожної
+ * відповіді бекенду). Так зворотний відлік і зникнення знижки не залежать від
+ * системного годинника пристрою — і, на відміну від відліку від server_time
+ * на момент монтування, не "відстають" після повернення на вкладку Маркет
+ * (списання все одно рахує buy_gpu за now() у БД). Інтервал знімається при
+ * розмонтуванні.
  */
-function useServerNow(serverTime: string): number {
-  const [baseline] = useState(() => ({
-    serverMs: new Date(serverTime).getTime(),
-    clientMs: Date.now(),
-  }));
-  const [nowMs, setNowMs] = useState(() => baseline.serverMs);
+function useServerNow(clockOffsetMs: number): number {
+  const [nowMs, setNowMs] = useState(() => Date.now() + clockOffsetMs);
 
   useEffect(() => {
-    const tick = () => setNowMs(baseline.serverMs + (Date.now() - baseline.clientMs));
+    const tick = () => setNowMs(Date.now() + clockOffsetMs);
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [baseline]);
+  }, [clockOffsetMs]);
 
   return nowMs;
 }
 
-function MarketScreenReady({ data, initData }: { data: SyncResponse; initData: string }) {
+function MarketScreenReady({
+  data,
+  initData,
+  clockOffsetMs,
+}: {
+  data: SyncResponse;
+  initData: string;
+  clockOffsetMs: number;
+}) {
   const { t, language } = useTranslation();
   const { applyGpuPurchase } = useUserData();
-  const { profile, user_gpus, gpu_templates, promo, server_time } = data;
+  const { profile, user_gpus, gpu_templates, promo } = data;
 
   // Тік раз на секунду — коли час акції спливає, msLeft стає 0, і всі бейджі
   // та ціни реактивно повертаються до базових БЕЗ перезавантаження сторінки.
-  const nowMs = useServerNow(server_time);
+  const nowMs = useServerNow(clockOffsetMs);
   const msLeft = promoMsLeft(promo, nowMs);
+  const countdown = splitCountdown(msLeft);
 
   const amountByLevel = new Map(user_gpus.map((g) => [g.gpu_level, g.amount]));
   const deadByLevel = new Map(user_gpus.map((g) => [g.gpu_level, g.is_dead]));
@@ -133,7 +143,20 @@ function MarketScreenReady({ data, initData }: { data: SyncResponse; initData: s
         </span>
       </div>
 
-      {msLeft > 0 && promo && (
+      {msLeft > 0 && promo && isAnniversaryPromo(promo) && (
+        // Святкова неонова плашка юбілейної акції. Два рядки (текст + відлік),
+        // а не один, — довгий локалізований заголовок не обрізається на
+        // вузьких екранах, а tabular-nums тримає ширину відліку сталою.
+        <div className="relative overflow-hidden rounded-2xl border border-neon-gold/40 bg-gradient-to-r from-neon-purple/20 via-neon-gold/15 to-neon-cyan/20 px-3.5 py-3 shadow-[0_0_1px_rgba(251,191,36,0.8),0_0_24px_rgba(251,191,36,0.25)]">
+          <p className="text-xs font-bold text-neon-gold">{t.market.promo.anniversaryBanner(promo.discount_percent)}</p>
+          <p className="mt-1.5 flex items-center gap-1.5 font-mono text-[11px] font-semibold tabular-nums text-white/90">
+            <Timer size={12} className="shrink-0 text-neon-gold" />
+            {t.market.promo.endsIn(countdown.days, countdown.time)}
+          </p>
+        </div>
+      )}
+
+      {msLeft > 0 && promo && !isAnniversaryPromo(promo) && (
         <div className="flex items-center justify-between gap-2 rounded-2xl border border-neon-gold/30 bg-neon-gold/10 px-3 py-2">
           <span className="min-w-0 truncate text-[11px] font-semibold text-neon-gold">
             {t.market.promo.banner(promo.discount_percent)}
@@ -293,9 +316,11 @@ function GpuCard({
           ) : discounted ? (
             <span className="flex items-center gap-1.5">
               <span className="text-background/60 line-through">
-                {formatNumber(language, template.cost_ton, { maximumFractionDigits: 3 })}
+                {formatNumber(language, template.cost_ton, { minimumFractionDigits: 2, maximumFractionDigits: 3 })}
               </span>
-              {t.market.buy(formatNumber(language, price, { maximumFractionDigits: 3 }))}
+              {/* До 4 знаків: 15% від 0.25 / 0.75 дає 0.2125 / 0.6375 — бекенд
+                  списує цю суму точно, тож на кнопці показуємо її без округлення. */}
+              {t.market.buy(formatNumber(language, price, { minimumFractionDigits: 2, maximumFractionDigits: 4 }))}
             </span>
           ) : (
             t.market.buy(formatNumber(language, template.cost_ton, { maximumFractionDigits: 2 }))

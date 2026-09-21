@@ -108,6 +108,8 @@ const ar: TranslationDictionary = {
     reviveOnFarm: "أحيِ في المزرعة لفتح الشراء",
     promo: {
       banner: (percent) => `خصم ${percent}% على أجهزة مختارة`,
+      anniversaryBanner: (percent) => `🎉 شهر واحد من Cyber GPU Cluster! خصم ${percent}% على جميع المعدات`,
+      endsIn: (days, time) => `ينتهي العرض بعد: ${days} يوم ${time}`,
     },
     cycles: {
       title: (name) => `دورات: ${name}`,

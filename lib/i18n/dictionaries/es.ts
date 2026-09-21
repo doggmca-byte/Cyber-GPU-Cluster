@@ -109,6 +109,8 @@ const es: TranslationDictionary = {
     reviveOnFarm: "Reanima en la Granja para desbloquear la compra",
     promo: {
       banner: (percent) => `-${percent}% en equipos seleccionados`,
+      anniversaryBanner: (percent) => `🎉 ¡1 mes de Cyber GPU Cluster! ${percent}% de descuento en todo el equipo`,
+      endsIn: (days, time) => `La promo termina en: ${days} d ${time}`,
     },
     cycles: {
       title: (name) => `Ciclos: ${name}`,
