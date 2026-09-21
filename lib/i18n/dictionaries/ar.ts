@@ -22,8 +22,8 @@ const ar: TranslationDictionary = {
     label: "الدعم",
   },
   notifications: {
-    productionPaused: (hashBalance) =>
-      `⛏️ توقّف GPU Cluster الخاص بك عن التعدين — لم يتم جمع HASH منذ أكثر من 12 ساعة.\n\nالرصيد الحالي: ${hashBalance} HASH. افتح التطبيق واضغط على «جمع HASH» لمواصلة الربح.`,
+    productionPaused: () =>
+      "مساحة تخزين المزرعة ممتلئة! ادخل إلى Cyber GPU Cluster لجمع $HASH ومتابعة التعدين!",
     specialTasksAnnouncement:
       "🎁 مهام خاصة جديدة متاحة الآن! أضف الوسم الخاص بنا إلى اسمك أو رابط الإحالة الخاص بك إلى البايو واحتفظ به عبر 6 مراحل (15 دقيقة ← 30 يومًا) — اربح حتى 0.232 TON لكل مهمة. افتح التطبيق ← المهام ← ⭐ خاصة للبدء.",
     openAppButton: "افتح Cyber GPU Cluster",

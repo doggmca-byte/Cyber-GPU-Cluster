@@ -22,8 +22,8 @@ const tr: TranslationDictionary = {
     label: "Destek",
   },
   notifications: {
-    productionPaused: (hashBalance) =>
-      `⛏️ GPU Cluster'ın madenciliği durdurdu — 12 saatten fazladır HASH toplanmadı.\n\nGüncel bakiye: ${hashBalance} HASH. Kazanmaya devam etmek için uygulamayı aç ve "HASH Topla"ya dokun.`,
+    productionPaused: () =>
+      "Çiftlik deposu doldu! $HASH toplamak ve madenciliğe devam etmek için Cyber GPU Cluster'a giriş yapın.",
     specialTasksAnnouncement:
       "🎁 Yeni Özel Görevler yayında! Adına etiketimizi veya Bio'na referans linkini ekle ve 6 aşama boyunca koru (15 dk → 30 gün) — görev başına 0.232 TON'a kadar kazan. Uygulamayı aç → Görevler → ⭐ Özel'e dokun ve başla.",
     openAppButton: "Cyber GPU Cluster'ı Aç",

@@ -22,8 +22,8 @@ const kk: TranslationDictionary = {
     label: "Қолдау",
   },
   notifications: {
-    productionPaused: (hashBalance) =>
-      `⛏️ Сенің GPU Cluster-ің тоқтады — 12 сағаттан астам HASH жиналмады.\n\nАғымдағы баланс: ${hashBalance} HASH. Қолданбаны аш және табыс табуды жалғастыру үшін «HASH жинау» түймесін бас.`,
+    productionPaused: () =>
+      "Ферма қоймасы толды! $HASH жинап, майнингті жалғастыру үшін Cyber GPU Cluster-ге кіріңіз.",
     specialTasksAnnouncement:
       "🎁 Жаңа Арнайы тапсырмалар пайда болды! Атыңа біздің тегті немесе Bio-ға реферал сілтемеңді қосып, 6 кезең бойы сақта (15 мин → 30 күн) — тапсырма үшін 0.232 TON-ға дейін ал. Қолданбаны аш → Тапсырмалар → ⭐ Арнайы, бастау үшін.",
     openAppButton: "Cyber GPU Cluster ашу",
