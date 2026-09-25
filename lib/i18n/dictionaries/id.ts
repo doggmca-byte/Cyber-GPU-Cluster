@@ -485,7 +485,6 @@ const id: TranslationDictionary = {
       twoButtons: "Ketuk minimal 2 tombol iklan yang berbeda.",
       stay5s: "Tetap di halaman tujuan minimal 5 detik.",
     },
-    adStartingIn: (seconds) => `⏱️ Iklan dimulai dalam ${seconds} detik...`,
     adInProgress: "⏱️ Menampilkan iklan...",
     cancel: "Batal",
     claimButton: (amount) => `Verifikasi / Ambil ${amount} TON`,

@@ -490,7 +490,6 @@ const en = {
       twoButtons: "Tap at least 2 different ad buttons.",
       stay5s: "Stay on the target page for at least 5 seconds.",
     },
-    adStartingIn: (seconds: number) => `⏱️ Ad starting in ${seconds}...`,
     adInProgress: "⏱️ Showing ad...",
     cancel: "Cancel",
     claimButton: (amount: string) => `Verify / Claim ${amount} TON`,

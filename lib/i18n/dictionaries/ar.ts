@@ -484,7 +484,6 @@ const ar: TranslationDictionary = {
       twoButtons: "اضغط على زرّين إعلانيين مختلفين على الأقل.",
       stay5s: "ابقَ في الصفحة المستهدفة لمدة 5 ثوانٍ على الأقل.",
     },
-    adStartingIn: (seconds) => `⏱️ سيبدأ الإعلان خلال ${seconds} ثانية...`,
     adInProgress: "⏱️ يتم عرض الإعلان...",
     cancel: "إلغاء",
     claimButton: (amount) => `تحقّق / احصل على ${amount} TON`,

@@ -485,7 +485,6 @@ const uk: TranslationDictionary = {
       twoButtons: "Натисніть мінімум на 2 різні рекламні кнопки.",
       stay5s: "Залишайтеся на цільовій сторінці мінімум 5 секунд.",
     },
-    adStartingIn: (seconds) => `⏱️ Реклама запуститься через ${seconds} сек...`,
     adInProgress: "⏱️ Показуємо рекламу...",
     cancel: "Відміна",
     claimButton: (amount) => `Перевірити / Забрати ${amount} TON`,

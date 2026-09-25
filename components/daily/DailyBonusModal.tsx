@@ -16,12 +16,6 @@ import {
 import type { DailyBonusClaimResponse, DailyBonusStatusResponse } from "@/types/api";
 import { postJsonWithRetry } from "@/lib/api/postJsonWithRetry";
 
-// Скільки секунд показуємо чекліст-заглушку перед автоматичним запуском
-// реклами. Сервер (/api/daily-bonus/claim) усе одно перевіряє
-// ad_watch_seconds >= DAILY_BONUS_MIN_AD_WATCH_SECONDS (5с) — цей відлік
-// чесно покриває той поріг, тож ad_watch_seconds шлемо як цю ж константу.
-const AD_COUNTDOWN_SECONDS = 5;
-
 type ModalState =
   | { phase: "loading" }
   | { phase: "error"; message: string }
@@ -30,8 +24,8 @@ type ModalState =
   | { phase: "claimed"; rewardAmount: number };
 
 /**
- * Автоматичний флоу без ручного чекліста: короткий відлік → rewarded-показ →
- * клейм. Rewarded-показ — ЛИШЕ Rewarded Interstitial (повноцінний внутрішній
+ * Автоматичний флоу без ручного чекліста: одразу rewarded-показ → клейм.
+ * Rewarded-показ — ЛИШЕ Rewarded Interstitial (повноцінний внутрішній
  * банер/відео, закривається хрестиком прямо в Telegram WebApp) через
  * showRewardedAdRotatingWithProvider (lib/ads/rewardedAd.ts), що чергує
  * GigaPub / Monetag / AdsGram від виклику до виклику, з автоматичним
@@ -194,8 +188,8 @@ function CooldownView({
 }
 
 // Три пункти чекліста показуємо як уже підтверджені (зелений check) — це
-// вимоги, які покриває сам автоматичний флоу (обов'язковий 5-секундний
-// відлік + реальний rewarded-показ), а не інтерактивний прогрес користувача.
+// вимоги, які покриває сам факт реального rewarded-показу, а не
+// інтерактивний прогрес користувача.
 function ConfirmedChecklistItem({ icon: Icon, label }: { icon: typeof PlayCircle; label: string }) {
   return (
     <div className="flex items-center gap-2.5 rounded-2xl bg-neon-green/10 px-3 py-2">
@@ -219,7 +213,6 @@ function AutoAdView({
 }) {
   const { t } = useTranslation();
 
-  const [countdown, setCountdown] = useState(AD_COUNTDOWN_SECONDS);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
@@ -243,10 +236,10 @@ function AutoAdView({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         initData,
-        // Реальний ручний чекліст (кліки/сесія) прибрано — обов'язковий
-        // AD_COUNTDOWN_SECONDS-відлік і сам факт rewarded-показу тепер
-        // сильніший сигнал, ніж попередні "2+ кнопки/5+ секунд". Шлемо
-        // мінімально необхідні за контрактом /api/daily-bonus/claim значення.
+        // Реальний ручний чекліст (кліки/сесія) прибрано — сам факт
+        // rewarded-показу тепер сильніший сигнал, ніж попередні "2+ кнопки/5+
+        // секунд". Шлемо мінімально необхідні за контрактом
+        // /api/daily-bonus/claim значення.
         ad_interactions: DAILY_BONUS_MIN_AD_INTERACTIONS,
         ad_watch_seconds: DAILY_BONUS_MIN_AD_WATCH_SECONDS,
       }),
@@ -328,18 +321,12 @@ function AutoAdView({
     t.dailyBonus.stillProcessing,
   ]);
 
-  // Відлік 5 → 0, раз/секунду; по завершенню — рівно один автоматичний запуск.
+  // Реклама запускається одразу при монтуванні — без штучної затримки.
   useEffect(() => {
-    if (countdown <= 0) return;
-    const timeout = setTimeout(() => setCountdown((s) => s - 1), 1000);
-    return () => clearTimeout(timeout);
-  }, [countdown]);
-
-  useEffect(() => {
-    if (countdown > 0 || startedRef.current) return;
+    if (startedRef.current) return;
     startedRef.current = true;
     void runAdAndClaim();
-  }, [countdown, runAdAndClaim]);
+  }, [runAdAndClaim]);
 
   return (
     <div className="flex flex-col gap-3.5">
@@ -355,8 +342,8 @@ function AutoAdView({
       </div>
 
       <div className="flex items-center justify-center gap-2 rounded-2xl bg-neon-cyan/10 px-4 py-2.5 text-center text-xs font-semibold text-neon-cyan">
-        <Clock size={14} className={countdown > 0 ? "shrink-0 animate-pulse" : "shrink-0 animate-spin"} />
-        {countdown > 0 ? t.dailyBonus.adStartingIn(countdown) : isConfirming ? t.dailyBonus.confirming : t.dailyBonus.adInProgress}
+        <Clock size={14} className="shrink-0 animate-spin" />
+        {isConfirming ? t.dailyBonus.confirming : t.dailyBonus.adInProgress}
       </div>
 
       {claimError && <p className="text-center text-[11px] text-red-400">{claimError}</p>}

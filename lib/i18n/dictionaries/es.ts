@@ -486,7 +486,6 @@ const es: TranslationDictionary = {
       twoButtons: "Toca al menos 2 botones de anuncio diferentes.",
       stay5s: "Permanece en la página de destino al menos 5 segundos.",
     },
-    adStartingIn: (seconds) => `⏱️ El anuncio comienza en ${seconds} seg...`,
     adInProgress: "⏱️ Mostrando anuncio...",
     cancel: "Cancelar",
     claimButton: (amount) => `Verificar / Reclamar ${amount} TON`,

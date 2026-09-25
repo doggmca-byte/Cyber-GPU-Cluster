@@ -485,7 +485,6 @@ const kk: TranslationDictionary = {
       twoButtons: "Кемінде 2 түрлі жарнама түймесін бас.",
       stay5s: "Мақсатты бетте кемінде 5 секунд болу.",
     },
-    adStartingIn: (seconds) => `⏱️ Жарнама ${seconds} секундтан кейін басталады...`,
     adInProgress: "⏱️ Жарнама көрсетілуде...",
     cancel: "Бас тарту",
     claimButton: (amount) => `Тексеру / ${amount} TON алу`,

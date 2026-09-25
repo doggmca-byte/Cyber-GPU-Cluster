@@ -485,7 +485,6 @@ const tr: TranslationDictionary = {
       twoButtons: "En az 2 farklı reklam butonuna dokun.",
       stay5s: "Hedef sayfada en az 5 saniye kal.",
     },
-    adStartingIn: (seconds) => `⏱️ Reklam ${seconds} sn içinde başlıyor...`,
     adInProgress: "⏱️ Reklam gösteriliyor...",
     cancel: "İptal",
     claimButton: (amount) => `Doğrula / ${amount} TON Al`,
