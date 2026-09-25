@@ -368,6 +368,10 @@ const kk: TranslationDictionary = {
         title: "TheiTerra",
         description: "TheiTerra-ны ашып, профиль жасаңыз.",
       },
+      gram_generator_enter: {
+        title: "Gram Generator",
+        description: "Gram Generator-ды ашып, байқап көріңіз.",
+      },
       minerias_channel: {
         title: "MINERIAS Y BOT",
         description: "MINERIAS Y BOT арнасына жазылыңыз.",

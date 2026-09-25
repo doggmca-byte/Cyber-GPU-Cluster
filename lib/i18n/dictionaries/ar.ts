@@ -367,6 +367,10 @@ const ar: TranslationDictionary = {
         title: "TheiTerra",
         description: "افتح TheiTerra وأنشئ ملفك الشخصي.",
       },
+      gram_generator_enter: {
+        title: "Gram Generator",
+        description: "افتح Gram Generator وجربه.",
+      },
       minerias_channel: {
         title: "MINERIAS Y BOT",
         description: "اشترك في قناة MINERIAS Y BOT.",

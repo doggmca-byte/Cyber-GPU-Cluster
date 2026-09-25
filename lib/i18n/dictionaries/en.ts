@@ -373,6 +373,10 @@ const en = {
         title: "TheiTerra",
         description: "Open TheiTerra and create your profile.",
       },
+      gram_generator_enter: {
+        title: "Gram Generator",
+        description: "Open Gram Generator and give it a try.",
+      },
       minerias_channel: {
         title: "MINERIAS Y BOT",
         description: "Subscribe to the MINERIAS Y BOT channel.",

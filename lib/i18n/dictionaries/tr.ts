@@ -368,6 +368,10 @@ const tr: TranslationDictionary = {
         title: "TheiTerra",
         description: "TheiTerra'yı aç ve profilini oluştur.",
       },
+      gram_generator_enter: {
+        title: "Gram Generator",
+        description: "Gram Generator'ı aç ve dene.",
+      },
       minerias_channel: {
         title: "MINERIAS Y BOT",
         description: "MINERIAS Y BOT kanalına abone ol.",

@@ -368,6 +368,10 @@ const ru: TranslationDictionary = {
         title: "TheiTerra",
         description: "Открой TheiTerra и создай профиль.",
       },
+      gram_generator_enter: {
+        title: "Gram Generator",
+        description: "Открой Gram Generator и попробуй его.",
+      },
       minerias_channel: {
         title: "MINERIAS Y BOT",
         description: "Подпишись на канал MINERIAS Y BOT.",

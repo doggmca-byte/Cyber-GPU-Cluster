@@ -368,6 +368,10 @@ const id: TranslationDictionary = {
         title: "TheiTerra",
         description: "Buka TheiTerra dan buat profilmu.",
       },
+      gram_generator_enter: {
+        title: "Gram Generator",
+        description: "Buka Gram Generator dan coba.",
+      },
       minerias_channel: {
         title: "MINERIAS Y BOT",
         description: "Berlangganan channel MINERIAS Y BOT.",
