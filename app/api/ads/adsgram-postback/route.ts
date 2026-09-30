@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 // від Monetag тут немає власного request/event id від провайдера — єдине, що
 // вони дають назад, це [userId] (telegramId) — тож дедуплікуємо по
 // user_id+provider у короткому часовому вікні, а не по унікальному токену.
-const DEDUPE_WINDOW_SECONDS = 20;
+const DEDUPE_WINDOW_SECONDS = 6;
 
 /**
  * S2S postback від сервера AdsGram (Reward URL з дашборду ad-блоку типу

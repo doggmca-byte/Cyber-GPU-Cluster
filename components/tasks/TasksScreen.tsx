@@ -457,7 +457,7 @@ function TasksScreenReady({ initData }: { initData: string }) {
 // (record_partner_ad_watch), тож живе окремою карткою над списком завдань
 // вкладки "Партнери", а не в task_templates/user_tasks (там термінальний
 // claimed один раз назавжди).
-const PARTNER_AD_POLL_ATTEMPTS = 8;
+const PARTNER_AD_POLL_ATTEMPTS = 14;
 const PARTNER_AD_POLL_DELAY_MS = 2000;
 
 // AdsGram і TADS, на відміну від Monetag, не видають нам токен спроби
@@ -587,7 +587,10 @@ function PartnerAdsCard({ initData }: { initData: string }) {
 
       // slot === "adsgram": немає токена спроби наперед — підтвердження через
       // порівняння лічильника partner_ads_watched_today "до" й "після" показу.
-      const baselineWatchedToday = profile.partner_ads_watched_today;
+      // Береться з урахуванням дати скидання: у профілі може лишатись
+      // вчорашнє значення, а сервер уже скинув лічильник, і тоді
+      // "після" (1) ніколи не перевищило б "до" (напр. 20).
+      const baselineWatchedToday = watchedToday;
       const adsgramOutcome = await showAdsgramRewardedAdDetailed();
       if (adsgramOutcome !== "shown") {
         // "Реклами немає" — наступні кліки на 15 хвилин підуть в інші мережі,
