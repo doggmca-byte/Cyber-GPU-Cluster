@@ -372,6 +372,10 @@ const uk: TranslationDictionary = {
         title: "Gram Generator",
         description: "Відкрий Gram Generator і спробуй його.",
       },
+      slaylands_wave_50: {
+        title: "SlayLands",
+        description: "Дійди до 50-ї хвилі в SlayLands.",
+      },
       minerias_channel: {
         title: "MINERIAS Y BOT",
         description: "Підпишись на канал MINERIAS Y BOT.",

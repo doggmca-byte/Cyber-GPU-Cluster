@@ -377,6 +377,10 @@ const en = {
         title: "Gram Generator",
         description: "Open Gram Generator and give it a try.",
       },
+      slaylands_wave_50: {
+        title: "SlayLands",
+        description: "Reach wave 50 in SlayLands.",
+      },
       minerias_channel: {
         title: "MINERIAS Y BOT",
         description: "Subscribe to the MINERIAS Y BOT channel.",

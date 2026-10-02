@@ -373,6 +373,10 @@ const es: TranslationDictionary = {
         title: "Gram Generator",
         description: "Abre Gram Generator y pruébalo.",
       },
+      slaylands_wave_50: {
+        title: "SlayLands",
+        description: "Llega a la oleada 50 en SlayLands.",
+      },
       minerias_channel: {
         title: "MINERIAS Y BOT",
         description: "Suscríbete al canal MINERIAS Y BOT.",

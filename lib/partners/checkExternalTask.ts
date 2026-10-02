@@ -107,7 +107,11 @@ export async function checkPartnerApiTask(config: PartnerApiCheckConfig, telegra
     const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000), headers });
     if (!res.ok) return false;
 
-    const body = (await res.json()) as PartnerCheckApiResponse;
+    const body = (await res.json()) as PartnerCheckApiResponse | boolean;
+
+    // Голе булеве тіло (SlayLands: `true` / `false`) — без обгортки і без
+    // success_path. Строга рівність true, як і для булевого success_path.
+    if (typeof body === "boolean") return body;
 
     if (config.success_path) {
       const value = getByPath(body, config.success_path);

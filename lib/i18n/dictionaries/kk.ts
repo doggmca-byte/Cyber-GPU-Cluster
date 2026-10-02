@@ -372,6 +372,10 @@ const kk: TranslationDictionary = {
         title: "Gram Generator",
         description: "Gram Generator-ды ашып, байқап көріңіз.",
       },
+      slaylands_wave_50: {
+        title: "SlayLands",
+        description: "SlayLands-та 50-толқынға жет.",
+      },
       minerias_channel: {
         title: "MINERIAS Y BOT",
         description: "MINERIAS Y BOT арнасына жазылыңыз.",

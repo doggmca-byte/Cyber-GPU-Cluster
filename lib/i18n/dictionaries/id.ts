@@ -372,6 +372,10 @@ const id: TranslationDictionary = {
         title: "Gram Generator",
         description: "Buka Gram Generator dan coba.",
       },
+      slaylands_wave_50: {
+        title: "SlayLands",
+        description: "Capai gelombang 50 di SlayLands.",
+      },
       minerias_channel: {
         title: "MINERIAS Y BOT",
         description: "Berlangganan channel MINERIAS Y BOT.",

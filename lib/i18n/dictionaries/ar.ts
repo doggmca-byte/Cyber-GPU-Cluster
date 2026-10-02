@@ -371,6 +371,10 @@ const ar: TranslationDictionary = {
         title: "Gram Generator",
         description: "افتح Gram Generator وجربه.",
       },
+      slaylands_wave_50: {
+        title: "SlayLands",
+        description: "اوصل إلى الموجة 50 في SlayLands.",
+      },
       minerias_channel: {
         title: "MINERIAS Y BOT",
         description: "اشترك في قناة MINERIAS Y BOT.",
