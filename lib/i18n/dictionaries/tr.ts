@@ -11,6 +11,15 @@ const tr: TranslationDictionary = {
     ton: "TON",
     hash: "HASH",
   },
+  captcha: {
+    title: "Bulmacayı çöz",
+    subtitle: "Parçayı şekli ve deseniyle eşleşen alana sürükle",
+    refresh: "Yenile",
+    verifying: "Doğrulanıyor...",
+    wrong: "Yanlış yer. Yeni bir bulmaca dene.",
+    tooMany: "Çok fazla deneme. Birkaç dakika sonra tekrar dene.",
+    loadFailed: "Bulmaca yüklenemedi.",
+  },
   nav: {
     wallet: "Cüzdan",
     exchange: "Takas",

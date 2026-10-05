@@ -11,6 +11,15 @@ const id: TranslationDictionary = {
     ton: "TON",
     hash: "HASH",
   },
+  captcha: {
+    title: "Selesaikan puzzle",
+    subtitle: "Seret kepingan ke area yang cocok dengan bentuk dan polanya",
+    refresh: "Segarkan",
+    verifying: "Memverifikasi...",
+    wrong: "Tempat salah. Coba puzzle baru.",
+    tooMany: "Terlalu banyak percobaan. Coba lagi beberapa menit lagi.",
+    loadFailed: "Gagal memuat puzzle.",
+  },
   nav: {
     wallet: "Dompet",
     exchange: "Tukar",

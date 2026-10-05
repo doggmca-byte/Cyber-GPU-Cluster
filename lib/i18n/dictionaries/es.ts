@@ -11,6 +11,15 @@ const es: TranslationDictionary = {
     ton: "TON",
     hash: "HASH",
   },
+  captcha: {
+    title: "Resuelve el puzle",
+    subtitle: "Arrastra el fragmento al área que coincida con su forma y patrón",
+    refresh: "Actualizar",
+    verifying: "Verificando...",
+    wrong: "Lugar incorrecto. Prueba un puzle nuevo.",
+    tooMany: "Demasiados intentos. Inténtalo de nuevo en unos minutos.",
+    loadFailed: "No se pudo cargar el puzle.",
+  },
   nav: {
     wallet: "Billetera",
     exchange: "Cambio",

@@ -11,6 +11,15 @@ const uk: TranslationDictionary = {
     ton: "TON",
     hash: "HASH",
   },
+  captcha: {
+    title: "Зберіть пазл",
+    subtitle: "Сумістіть форму й візерунок уламка з відповідною ділянкою",
+    refresh: "Оновити",
+    verifying: "Перевірка...",
+    wrong: "Не та ділянка. Спробуйте новий пазл.",
+    tooMany: "Забагато спроб. Спробуйте ще раз за кілька хвилин.",
+    loadFailed: "Не вдалося завантажити пазл.",
+  },
   nav: {
     wallet: "Гаманець",
     exchange: "Обмін",

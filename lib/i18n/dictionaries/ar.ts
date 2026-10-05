@@ -11,6 +11,15 @@ const ar: TranslationDictionary = {
     ton: "TON",
     hash: "HASH",
   },
+  captcha: {
+    title: "أكمل اللغز",
+    subtitle: "اسحب القطعة إلى المنطقة التي تطابق شكلها ونقشها",
+    refresh: "تحديث",
+    verifying: "جارٍ التحقق...",
+    wrong: "المكان غير صحيح. جرّب لغزاً جديداً.",
+    tooMany: "محاولات كثيرة جداً. حاول مرة أخرى بعد دقائق.",
+    loadFailed: "تعذّر تحميل اللغز.",
+  },
   nav: {
     wallet: "المحفظة",
     exchange: "التبادل",

@@ -6,6 +6,7 @@ import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { readJsonBody } from "@/lib/api/request";
 import { requireProfileByTelegramId } from "@/lib/api/profile";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
+import { isCaptchaFresh } from "@/lib/captcha/policy";
 import type { WithdrawResponse } from "@/types/api";
 
 export const runtime = "nodejs";
@@ -51,6 +52,12 @@ export async function POST(request: Request) {
     const { user } = verifyInitData(body.initData, getTelegramBotToken());
     const admin = createAdminClient();
     const profile = await requireProfileByTelegramId(admin, user.id);
+
+    // Анти-бот: вивід лише після свіжого проходження пазл-капчі (24 год). Перевірка
+    // на сервері, щоб її не можна було обійти прямим викликом API.
+    if (!isCaptchaFresh(profile.captcha_verified_at)) {
+      throw new ApiError(403, "captcha_required");
+    }
 
     // Амбасадорський онбординговий мінімум (30 активних рефералів) і підозра
     // на накрутку рефералів НЕ блокують саму заявку і НЕ знімають

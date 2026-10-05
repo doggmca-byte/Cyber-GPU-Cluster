@@ -14,6 +14,15 @@ const en = {
     ton: "TON",
     hash: "HASH",
   },
+  captcha: {
+    title: "Solve the puzzle",
+    subtitle: "Drag the fragment onto the area that matches its shape and pattern",
+    refresh: "Refresh",
+    verifying: "Verifying...",
+    wrong: "Wrong place. Try a new puzzle.",
+    tooMany: "Too many attempts. Please try again in a few minutes.",
+    loadFailed: "Could not load the puzzle.",
+  },
   nav: {
     wallet: "Wallet",
     exchange: "Exchange",

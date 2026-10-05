@@ -58,6 +58,44 @@ export type Database = {
           },
         ]
       }
+      captcha_challenges: {
+        Row: {
+          answer_x: number
+          created_at: string
+          expires_at: string
+          id: string
+          solved: boolean
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          answer_x: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          solved?: boolean
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          answer_x?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          solved?: boolean
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "captcha_challenges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gpu_templates: {
         Row: {
           cost_ton: number
@@ -208,6 +246,7 @@ export type Database = {
           ads_quota_reset_date: string
           ads_watched_since_withdraw: number
           bot_block_reason: string | null
+          captcha_verified_at: string | null
           created_at: string
           first_name: string | null
           game_balance: number
@@ -236,6 +275,7 @@ export type Database = {
           ads_quota_reset_date?: string
           ads_watched_since_withdraw?: number
           bot_block_reason?: string | null
+          captcha_verified_at?: string | null
           created_at?: string
           first_name?: string | null
           game_balance?: number
@@ -264,6 +304,7 @@ export type Database = {
           ads_quota_reset_date?: string
           ads_watched_since_withdraw?: number
           bot_block_reason?: string | null
+          captcha_verified_at?: string | null
           created_at?: string
           first_name?: string | null
           game_balance?: number

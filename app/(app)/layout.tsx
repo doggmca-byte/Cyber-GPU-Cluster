@@ -5,6 +5,7 @@ import { VersionWatcher } from "@/components/VersionWatcher";
 import { IntroLoader } from "@/components/IntroLoader";
 import { UserDataProvider } from "@/components/providers/UserDataProvider";
 import { TonConnectProvider } from "@/components/providers/TonConnectProvider";
+import { CaptchaGate } from "@/components/captcha/CaptchaGate";
 import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
 
 // Чрозм Telegram Mini App: мова, ready()/expand(), TON Connect, спільний стан
@@ -26,6 +27,7 @@ export default function AppLayout({
               (Header/main/BottomNav) монтується одразу під ним, а не після
               зникнення спланша — жодного layout shift/flicker при фейді. */}
           <IntroLoader />
+          <CaptchaGate />
 
           <div className="relative mx-auto flex min-h-dvh max-w-lg flex-col">
             <Header />
