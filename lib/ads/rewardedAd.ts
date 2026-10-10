@@ -19,15 +19,15 @@ export type VerifiedFlow = "daily_bonus" | "withdraw";
  * дохід; а розвести мережі по flows означає, що Monetag більше не з'їдає
  * жодного платного партнерського перегляду.
  *
- * Квота виводу — ті самі мережі, що й партнерська кнопка: GigaPub, а якщо
- * в нього немає реклами — AdsGram. Порядок не випадковий: Reward URL AdsGram
- * один на весь застосунок і завжди зараховує ПАРТНЕРСЬКИЙ перегляд, тож
- * кожен показ AdsGram тут додає гравцю ще й партнерську нагороду. Ставимо
- * його другим, щоб це траплялось лише тоді, коли GigaPub нічого не віддав.
+ * Квота виводу — ЛИШЕ Monetag, бо лише його показ підтверджується S2S-постбеком
+ * (/api/ads/monetag-postback). GigaPub і AdsGram не мають серверного
+ * підтвердження, тож їхній "перегляд" був просто викликом POST, який кожен
+ * міг надіслати напряму скільки завгодно разів, не дивлячись жодної реклами —
+ * і так накручувалась квота та лічильник 20 реклам перед виводом.
  */
 const FLOW_ORDER: Record<VerifiedFlow, readonly RewardedProvider[]> = {
   daily_bonus: ["monetag"],
-  withdraw: ["gigapub", "adsgram"],
+  withdraw: ["monetag"],
 };
 
 // Чия черга йти першим — зберігаємо в localStorage, а не в змінній модуля,
@@ -112,8 +112,10 @@ export async function showRewardedAdForVerifiedFlow(
   for (const provider of FLOW_ORDER[flow]) {
     if (provider === "monetag") {
       const ymid = await getMonetagYmid();
-      // Без токена показ усе одно робимо — просто нарахування піде клієнтською
-      // довірою, як було до появи S2S-верифікації.
+      // Квота виводу без токена спроби не нараховується взагалі (нічим
+      // підтвердити) — тож і рекламу не показуємо марно. Щоденний бонус
+      // показ без токена лишає: там нарахування і так не залежить від ymid.
+      if (!ymid && flow === "withdraw") continue;
       if (await showRewardedAd(ymid ?? undefined)) return { watched: true, provider, ymid };
       continue;
     }

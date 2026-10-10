@@ -6,7 +6,6 @@ import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { showRewardedAdForVerifiedFlow } from "@/lib/ads/rewardedAd";
 import { startVerifiedAttempt, pollVerifiedAttempt } from "@/lib/ads/verifiedAdWatch";
-import type { AdWatchResponse } from "@/types/api";
 
 /**
  * "Ads for Cashout" лічильник (MIN_ADS_BEFORE_WITHDRAW/20) і швидка кнопка
@@ -14,13 +13,10 @@ import type { AdWatchResponse } from "@/types/api";
  * (GigaPub/Monetag/AdsGram, lib/ads/rewardedAd.ts) — лише Rewarded
  * Interstitial, без переходу в зовнішній браузер.
  *
- * Monetag-показ реально підтверджується через S2S postback
+ * Показ реально підтверджується через S2S postback Monetag
  * (app/api/ads/monetag-postback, purpose: 'withdraw_ad_watch') перед тим,
- * як інкрементувати ads_watched_since_withdraw — той самий принцип, що й
- * PartnerAdsCard (TasksScreen.tsx). GigaPub і AdsGram лишаються на
- * клієнтській довірі: у GigaPub взагалі немає S2S-механізму (підтверджено
- * їхньою документацією), а AdsGram Reward URL жорстко прив'язаний до
- * purpose 'partner_ad_watch' і не може підтвердити цю дію.
+ * як інкрементувати ads_watched_since_withdraw. Клієнтської довіри тут немає:
+ * "перегляд" без підтвердження сервером не зараховується.
  */
 export function WatchAdButton({ initData }: { initData: string }) {
   const { t } = useTranslation();
@@ -49,24 +45,8 @@ export function WatchAdButton({ initData }: { initData: string }) {
       }
 
       if (shown.provider !== "monetag" || !shown.ymid) {
-        // GigaPub не має S2S postback, а Monetag без токена спроби підтвердити
-        // нічим — в обох випадках нарахування йде клієнтською довірою.
-        const res = await fetch("/api/ads/watch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData }),
-        });
-
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(body?.error ?? `ad watch failed with status ${res.status}`);
-        }
-
-        const result = (await res.json()) as AdWatchResponse;
-        patchProfile({
-          ads_watched_since_withdraw: result.ads_watched_since_withdraw,
-          withdrawal_quota: result.withdrawal_quota,
-        });
+        // Без підтвердженої спроби Monetag нічого не нараховуємо.
+        setError(t.watchAd.notCounted);
         return;
       }
 
