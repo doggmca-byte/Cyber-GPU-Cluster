@@ -163,9 +163,38 @@ function deactivateBlock(blockId: string): void {
   }
 }
 
-function isWrongBlockTypeError(err: unknown): boolean {
-  const message = err instanceof Error ? err.message : (err as { message?: unknown } | null)?.message;
-  return typeof message === "string" && WRONG_BLOCK_TYPE_RE.test(message);
+// SDK реджектить show() об'єктом { state, description, error, done }, а власні
+// помилки — Error з message: текст помилки може лежати в будь-якому з полів.
+function errorText(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  const r = (err ?? {}) as { message?: unknown; description?: unknown };
+  if (typeof r.description === "string") return r.description;
+  if (typeof r.message === "string") return r.message;
+  return typeof err === "string" ? err : "";
+}
+
+/** "int" / "task", якщо помилка каже, що блок не Reward; інакше null. */
+function wrongBlockType(err: unknown): "int" | "task" | null {
+  const text = errorText(err);
+  // Спершу реальний тип блоку ("has block type = ..."), бо в тому самому
+  // повідомленні згадується ще й хибний префікс, який ми передали.
+  const actual = /has block type = "(Interstitial|Task)"/i.exec(text);
+  if (actual) return actual[1].toLowerCase() === "task" ? "task" : "int";
+  const expected = /should starts with (int|task)-/i.exec(text);
+  if (expected) return expected[1].toLowerCase() === "task" ? "task" : "int";
+  return null;
+}
+
+/** Один раз на пристрій для блоку — сповіщаємо сервер (лише лог), щоб знати id. */
+function reportWrongBlockType(blockId: string, type: "int" | "task"): void {
+  try {
+    void fetch(`/api/ads/adsgram-block-report/${encodeURIComponent(blockId)}/${type}`, {
+      method: "GET",
+      keepalive: true,
+    }).catch(() => undefined);
+  } catch {
+    // діагностика не має впливати на показ
+  }
 }
 
 async function showOneBlock(blockId: string): Promise<AdsgramOutcome> {
@@ -177,8 +206,10 @@ async function showOneBlock(blockId: string): Promise<AdsgramOutcome> {
   try {
     return classify(await controller.show());
   } catch (err) {
-    if (isWrongBlockTypeError(err)) {
+    const wrongType = wrongBlockType(err);
+    if (wrongType) {
       deactivateBlock(blockId);
+      reportWrongBlockType(blockId, wrongType);
       return "no_fill";
     }
     // SDK реджектить проміс і об'єктом результату, і власною помилкою сервера.
