@@ -118,17 +118,27 @@ function classify(result: unknown): AdsgramOutcome {
   return "not_completed";
 }
 
-// Блок у кабінеті AdsGram може бути типу Interstitial: тоді SDK вимагає id з
-// префіксом "int-" і без нього показує гравцю алерт "BlockId that you pass
-// should starts with int-". Тип відомий лише з відповіді бекенду, тож при
-// першій такій помилці запам'ятовуємо блок (на пристрої) і далі передаємо
-// його з префіксом.
-const INT_BLOCKS_STORAGE_KEY = "cgc_adsgram_int_blocks";
-const INT_PREFIX_ERROR_RE = /should starts with int-/i;
+// Нам потрібні лише Reward-блоки (нагорода приходить через Reward URL).
+// Блок у кабінеті AdsGram типу Interstitial/Task SDK відхиляє з алертом
+// "BlockId that you pass should starts with int-/task-". Такі блоки не
+// видаляємо зі списку, а вимикаємо: пам'ятаємо на пристрої (localStorage) і
+// більше не показуємо з них. Назавжди вимкнути блок без першого алерта можна
+// змінною NEXT_PUBLIC_ADSGRAM_INACTIVE_BLOCK_IDS (id через кому).
+const INACTIVE_BLOCKS_STORAGE_KEY = "cgc_adsgram_inactive_blocks";
+const WRONG_BLOCK_TYPE_RE = /should starts with (int|task)-|has block type = "(Interstitial|Task)"/i;
 
-function loadIntBlocks(): Set<string> {
+const ENV_INACTIVE_BLOCK_IDS = new Set(
+  (process.env.NEXT_PUBLIC_ADSGRAM_INACTIVE_BLOCK_IDS ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0),
+);
+
+const sessionInactiveBlocks = new Set<string>();
+
+function loadInactiveBlocks(): Set<string> {
   try {
-    const raw = window.localStorage.getItem(INT_BLOCKS_STORAGE_KEY);
+    const raw = window.localStorage.getItem(INACTIVE_BLOCKS_STORAGE_KEY);
     const parsed = raw ? (JSON.parse(raw) as unknown) : [];
     return new Set(Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : []);
   } catch {
@@ -136,39 +146,40 @@ function loadIntBlocks(): Set<string> {
   }
 }
 
-function rememberIntBlock(blockId: string): void {
+function isBlockInactive(blockId: string): boolean {
+  if (ENV_INACTIVE_BLOCK_IDS.has(blockId) || sessionInactiveBlocks.has(blockId)) return true;
+  if (typeof window === "undefined") return false;
+  return loadInactiveBlocks().has(blockId);
+}
+
+function deactivateBlock(blockId: string): void {
+  sessionInactiveBlocks.add(blockId);
   try {
-    const set = loadIntBlocks();
+    const set = loadInactiveBlocks();
     set.add(blockId);
-    window.localStorage.setItem(INT_BLOCKS_STORAGE_KEY, JSON.stringify([...set]));
+    window.localStorage.setItem(INACTIVE_BLOCKS_STORAGE_KEY, JSON.stringify([...set]));
   } catch {
-    // ignore — просто не запам'ятаємо між сесіями
+    // ignore — вимкнений лише до перезавантаження
   }
 }
 
-const sessionIntBlocks = new Set<string>();
-
-function effectiveBlockId(blockId: string): string {
-  if (typeof window === "undefined") return blockId;
-  return sessionIntBlocks.has(blockId) || loadIntBlocks().has(blockId) ? `int-${blockId}` : blockId;
-}
-
-function isIntPrefixError(err: unknown): boolean {
+function isWrongBlockTypeError(err: unknown): boolean {
   const message = err instanceof Error ? err.message : (err as { message?: unknown } | null)?.message;
-  return typeof message === "string" && INT_PREFIX_ERROR_RE.test(message);
+  return typeof message === "string" && WRONG_BLOCK_TYPE_RE.test(message);
 }
 
-async function showOneBlock(blockId: string, allowPrefixRetry = true): Promise<AdsgramOutcome> {
-  const controller = getController(effectiveBlockId(blockId));
+async function showOneBlock(blockId: string): Promise<AdsgramOutcome> {
+  if (isBlockInactive(blockId)) return "no_fill";
+
+  const controller = getController(blockId);
   if (!controller) return "no_fill";
 
   try {
     return classify(await controller.show());
   } catch (err) {
-    if (allowPrefixRetry && isIntPrefixError(err)) {
-      sessionIntBlocks.add(blockId);
-      rememberIntBlock(blockId);
-      return showOneBlock(blockId, false);
+    if (isWrongBlockTypeError(err)) {
+      deactivateBlock(blockId);
+      return "no_fill";
     }
     // SDK реджектить проміс і об'єктом результату, і власною помилкою сервера.
     return classify(err);
