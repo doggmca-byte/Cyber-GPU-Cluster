@@ -21,6 +21,13 @@ interface SyncRequestBody {
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
+// не частіше за цей інтервал оновлюємо last_seen_at/сесію (record_session)
+const SESSION_PING_MIN_MS = 10 * 60 * 1000;
+
+// кеш активної акції в пам'яті інстансу: змінюється раз на дні, а читався на кожен вхід
+const PROMO_TTL_MS = 30 * 1000;
+let promoCache: { value: PromoState | null; loadedAt: number } | null = null;
+
 // очікуваний формат start_param для реферального посилання: ref_<telegram_id>
 const REFERRAL_PARAM_RE = /^ref_(\d+)$/;
 
@@ -65,7 +72,9 @@ export async function POST(request: Request) {
       // повернулась у сповіщення. Без цього кроку WriteAccessPrompt був
       // косметичним: користувач тиснув "Дозволити", а бекенд про це не
       // дізнавався ніколи і тримав його виключеним назавжди.
-      if (user.allows_write_to_pm) {
+      // Викликаємо лише якщо позначка справді є (рівно та сама умова, що й
+      // усередині clear_bot_block) — інакше це порожній виклик на кожен вхід.
+      if (user.allows_write_to_pm && (profile.is_bot_blocked || profile.bot_block_reason !== null)) {
         const { error: clearError } = await admin.rpc("clear_bot_block", { p_user_id: profile.id });
         if (clearError) {
           console.error(`clear_bot_block failed for ${profile.id}: ${clearError.message}`);
@@ -74,9 +83,14 @@ export async function POST(request: Request) {
 
       // Лог сесії: один рядок на відкриття застосунку (вікно 30 хв усередині
       // record_session) + last_seen_at.
-      const { error: sessionError } = await admin.rpc("record_session", { p_user_id: profile.id });
-      if (sessionError) {
-        console.error(`record_session failed for ${profile.id}: ${sessionError.message}`);
+      // Якщо людину бачили менше ніж 10 хв тому, запис сесії вже є й нового
+      // не буде (вікно сесії — 30 хв), тож зайвий виклик пропускаємо.
+      const lastSeenMs = profile.last_seen_at ? Date.parse(profile.last_seen_at) : 0;
+      if (!lastSeenMs || Date.now() - lastSeenMs >= SESSION_PING_MIN_MS) {
+        const { error: sessionError } = await admin.rpc("record_session", { p_user_id: profile.id });
+        if (sessionError) {
+          console.error(`record_session failed for ${profile.id}: ${sessionError.message}`);
+        }
       }
 
       // Скан свіжих депозитів. Замок claim_job пускає рівно один скан на
@@ -91,10 +105,21 @@ export async function POST(request: Request) {
     // тому з жорстким запобіжником: 1.5 с, і йдемо далі без акції. Помилку
     // ковтаємо: банер знижки — косметика поверх маркету, вона не має права
     // зламати весь sync і залишити гравця без даних.
-    const { data: promoRows } = await admin
-      .rpc("active_promo")
-      .abortSignal(AbortSignal.timeout(1500));
-    const promo: PromoState | null = promoRows && promoRows.length > 0 ? promoRows[0] : null;
+    let promo: PromoState | null;
+    if (promoCache && Date.now() - promoCache.loadedAt < PROMO_TTL_MS) {
+      promo = promoCache.value;
+    } else {
+      const { data: promoRows, error: promoError } = await admin
+        .rpc("active_promo")
+        .abortSignal(AbortSignal.timeout(1500));
+      if (promoError) {
+        // збій читання не повинен показувати "акції немає" — тримаємо останнє відоме значення
+        promo = promoCache?.value ?? null;
+      } else {
+        promo = promoRows && promoRows.length > 0 ? promoRows[0] : null;
+        promoCache = { value: promo, loadedAt: Date.now() };
+      }
+    }
 
     const response: SyncResponse = {
       profile,

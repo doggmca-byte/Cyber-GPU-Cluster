@@ -4,10 +4,37 @@ import { verifyInitData, getTelegramBotToken } from "@/lib/telegram/verifyInitDa
 import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { readJsonBody } from "@/lib/api/request";
 import { requireProfileByTelegramId } from "@/lib/api/profile";
+import type { Database } from "@/types/database.types";
 import type { TaskActionType, TaskCategory, TaskItem, TaskRewardType, TasksResponse } from "@/types/api";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+type TaskTemplateRow = Database["public"]["Tables"]["task_templates"]["Row"];
+
+// Каталог завдань змінюється міграцією/адмінкою раз на дні, а читався на кожне
+// відкриття екрана. Тримаємо в пам'яті інстансу на хвилину.
+const TEMPLATES_TTL_MS = 60 * 1000;
+let templatesCache: { rows: TaskTemplateRow[]; loadedAt: number } | null = null;
+
+async function loadActiveTaskTemplates(admin: ReturnType<typeof createAdminClient>): Promise<TaskTemplateRow[]> {
+  if (templatesCache && Date.now() - templatesCache.loadedAt < TEMPLATES_TTL_MS) return templatesCache.rows;
+
+  const { data, error } = await admin
+    .from("task_templates")
+    .select("*")
+    .eq("is_active", true)
+    .order("category", { ascending: true })
+    .order("sort_order", { ascending: true });
+
+  if (error || !data) {
+    if (templatesCache) return templatesCache.rows;
+    throw new ApiError(500, `failed to load task templates: ${error?.message ?? "no data"}`);
+  }
+
+  templatesCache = { rows: data, loadedAt: Date.now() };
+  return data;
+}
 
 interface TasksRequestBody {
   initData?: string;
@@ -45,16 +72,7 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const profile = await requireProfileByTelegramId(admin, user.id);
 
-    const { data: templates, error: templatesError } = await admin
-      .from("task_templates")
-      .select("*")
-      .eq("is_active", true)
-      .order("category", { ascending: true })
-      .order("sort_order", { ascending: true });
-
-    if (templatesError) {
-      throw new ApiError(500, `failed to load task templates: ${templatesError.message}`);
-    }
+    const templates = await loadActiveTaskTemplates(admin);
 
     const { data: userTasks, error: userTasksError } = await admin
       .from("user_tasks")

@@ -44,12 +44,15 @@ export async function POST(request: Request) {
       throw new ApiError(429, "too_many_attempts");
     }
 
-    // Прибираємо старі виклики цього користувача (таблиця не росте).
-    await admin
-      .from("captcha_challenges")
-      .delete()
-      .eq("user_id", profile.id)
-      .lt("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+    // Прибираємо старі виклики цього користувача (таблиця не росте) — лише з
+    // першого пазла у вікні, а не з кожного: це зайвий запит на кожне оновлення.
+    if ((recent?.length ?? 0) === 0) {
+      await admin
+        .from("captcha_challenges")
+        .delete()
+        .eq("user_id", profile.id)
+        .lt("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+    }
 
     const rendered = renderCaptcha();
     const { data: row, error: insertError } = await admin
