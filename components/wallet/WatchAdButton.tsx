@@ -5,6 +5,7 @@ import { Loader2, PlayCircle } from "lucide-react";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { showRewardedAdForVerifiedFlow } from "@/lib/ads/rewardedAd";
+import type { AdWatchResponse } from "@/types/api";
 import { startVerifiedAttempt, pollVerifiedAttempt } from "@/lib/ads/verifiedAdWatch";
 
 /**
@@ -44,9 +45,30 @@ export function WatchAdButton({ initData }: { initData: string }) {
         return;
       }
 
-      if (shown.provider !== "monetag" || !shown.ymid) {
-        // Без підтвердженої спроби Monetag нічого не нараховуємо.
+      if (!shown.ymid) {
         setError(t.watchAd.notCounted);
+        return;
+      }
+
+      if (shown.provider !== "monetag") {
+        // GigaPub/AdsGram не мають S2S-підтвердження — сервер зараховує показ
+        // за відкритою ДО показу спробою (мін. час, пауза, добовий ліміт).
+        const res = await fetch("/api/ads/watch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ initData, attempt_id: shown.ymid }),
+        });
+
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(body?.error ?? `ad watch failed with status ${res.status}`);
+        }
+
+        const result = (await res.json()) as AdWatchResponse;
+        patchProfile({
+          ads_watched_since_withdraw: result.ads_watched_since_withdraw,
+          withdrawal_quota: result.withdrawal_quota,
+        });
         return;
       }
 
