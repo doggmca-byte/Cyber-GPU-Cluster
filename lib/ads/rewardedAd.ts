@@ -19,15 +19,15 @@ export type VerifiedFlow = "daily_bonus" | "withdraw";
  * дохід; а розвести мережі по flows означає, що Monetag більше не з'їдає
  * жодного платного партнерського перегляду.
  *
- * Квота виводу — Monetag першим (його показ підтверджується S2S-постбеком), а
- * якщо в нього немає реклами — GigaPub, потім AdsGram. Для запасних мереж
- * серверного підтвердження немає, тож їх зараховує /api/ads/watch лише за
- * попередньо відкритою спробою (мінімальний час між стартом і зарахуванням,
- * пауза між показами, добовий ліміт) — див. цей роут.
+ * Квота виводу — AdsGram першим, GigaPub лише якщо в AdsGram немає реклами.
+ * Monetag у цьому ланцюжку НЕ бере участі (запасна мережа за рішенням
+ * власника). Серверного S2S-підтвердження для цих мереж немає, тож показ
+ * зараховує /api/ads/watch лише за попередньо відкритою спробою (мінімальний
+ * час між стартом і зарахуванням, пауза між показами, добовий ліміт).
  */
 const FLOW_ORDER: Record<VerifiedFlow, readonly RewardedProvider[]> = {
   daily_bonus: ["monetag"],
-  withdraw: ["monetag", "gigapub", "adsgram"],
+  withdraw: ["adsgram", "gigapub"],
 };
 
 // Чия черга йти першим — зберігаємо в localStorage, а не в змінній модуля,
@@ -107,24 +107,28 @@ export interface VerifiedFlowAdResult {
  */
 export async function showRewardedAdForVerifiedFlow(
   flow: VerifiedFlow,
-  getMonetagYmid: () => Promise<string | null>,
+  openAttempt: () => Promise<string | null>,
 ): Promise<VerifiedFlowAdResult> {
-  // id відкритої спроби: Monetag передає його в SDK, запасні мережі — у /api/ads/watch.
-  let attemptId: string | null = null;
+  // Квота виводу: спроба відкривається ДО показу в будь-якому разі — без неї
+  // сервер не зарахує показ, тож і рекламу показувати марно.
+  if (flow === "withdraw") {
+    const attemptId = await openAttempt();
+    if (!attemptId) return { watched: false, provider: null, ymid: null };
+
+    for (const provider of FLOW_ORDER.withdraw) {
+      if (await showByProvider(provider)) return { watched: true, provider, ymid: attemptId };
+    }
+    return { watched: false, provider: null, ymid: null };
+  }
 
   for (const provider of FLOW_ORDER[flow]) {
     if (provider === "monetag") {
-      const ymid = await getMonetagYmid();
-      attemptId = ymid;
-      // Квота виводу без токена спроби не нараховується взагалі (нічим
-      // підтвердити) — тож і рекламу не показуємо марно. Щоденний бонус
-      // показ без токена лишає: там нарахування і так не залежить від ymid.
-      if (!ymid && flow === "withdraw") return { watched: false, provider: null, ymid: null };
+      const ymid = await openAttempt();
       if (await showRewardedAd(ymid ?? undefined)) return { watched: true, provider, ymid };
       continue;
     }
 
-    if (await showByProvider(provider)) return { watched: true, provider, ymid: attemptId };
+    if (await showByProvider(provider)) return { watched: true, provider, ymid: null };
   }
 
   return { watched: false, provider: null, ymid: null };
