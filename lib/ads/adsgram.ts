@@ -118,13 +118,58 @@ function classify(result: unknown): AdsgramOutcome {
   return "not_completed";
 }
 
-async function showOneBlock(blockId: string): Promise<AdsgramOutcome> {
-  const controller = getController(blockId);
+// Блок у кабінеті AdsGram може бути типу Interstitial: тоді SDK вимагає id з
+// префіксом "int-" і без нього показує гравцю алерт "BlockId that you pass
+// should starts with int-". Тип відомий лише з відповіді бекенду, тож при
+// першій такій помилці запам'ятовуємо блок (на пристрої) і далі передаємо
+// його з префіксом.
+const INT_BLOCKS_STORAGE_KEY = "cgc_adsgram_int_blocks";
+const INT_PREFIX_ERROR_RE = /should starts with int-/i;
+
+function loadIntBlocks(): Set<string> {
+  try {
+    const raw = window.localStorage.getItem(INT_BLOCKS_STORAGE_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+    return new Set(Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function rememberIntBlock(blockId: string): void {
+  try {
+    const set = loadIntBlocks();
+    set.add(blockId);
+    window.localStorage.setItem(INT_BLOCKS_STORAGE_KEY, JSON.stringify([...set]));
+  } catch {
+    // ignore — просто не запам'ятаємо між сесіями
+  }
+}
+
+const sessionIntBlocks = new Set<string>();
+
+function effectiveBlockId(blockId: string): string {
+  if (typeof window === "undefined") return blockId;
+  return sessionIntBlocks.has(blockId) || loadIntBlocks().has(blockId) ? `int-${blockId}` : blockId;
+}
+
+function isIntPrefixError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : (err as { message?: unknown } | null)?.message;
+  return typeof message === "string" && INT_PREFIX_ERROR_RE.test(message);
+}
+
+async function showOneBlock(blockId: string, allowPrefixRetry = true): Promise<AdsgramOutcome> {
+  const controller = getController(effectiveBlockId(blockId));
   if (!controller) return "no_fill";
 
   try {
     return classify(await controller.show());
   } catch (err) {
+    if (allowPrefixRetry && isIntPrefixError(err)) {
+      sessionIntBlocks.add(blockId);
+      rememberIntBlock(blockId);
+      return showOneBlock(blockId, false);
+    }
     // SDK реджектить проміс і об'єктом результату, і власною помилкою сервера.
     return classify(err);
   }
