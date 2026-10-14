@@ -33,9 +33,9 @@ export type PartnerAdSlot = "gigapub" | "adsgram";
  * радила натиснути банер нижче, і кожне таке натискання минало без реклами.
  * TADS живе окремою карткою (TadsBannerCard) і з кнопкою не пов'язаний.
  */
-const PARTNER_AD_ORDER: readonly PartnerAdSlot[] = ["gigapub", "adsgram"];
-// v4: позиція у старому ключі рахувалась по трьох слотах.
-const ROTATION_STORAGE_KEY = "cgc_partner_ad_rotation_v4";
+// Пріоритет, а не ротація: AdsGram першим, GigaPub — коли в AdsGram немає реклами
+// (тоді AdsGram на NO_FILL_COOLDOWN_MS пропускається, див. нижче).
+const PARTNER_AD_ORDER: readonly PartnerAdSlot[] = ["adsgram", "gigapub"];
 
 /**
  * Скільки пропускати мережу, яка щойно відповіла "реклами немає".
@@ -77,27 +77,9 @@ function isCoolingDown(slot: PartnerAdSlot, state: Partial<Record<PartnerAdSlot,
 export function nextPartnerAdSlot(): PartnerAdSlot {
   if (typeof window === "undefined") return PARTNER_AD_ORDER[0];
 
-  let index = 0;
-  try {
-    index = Number(window.localStorage.getItem(ROTATION_STORAGE_KEY)) || 0;
-  } catch {
-    // localStorage недоступний — просто не персистимо позицію між сесіями.
-  }
-
-  // Беремо першу мережу по колу, що не на паузі. Якщо на паузі всі —
-  // повертаємо звичайну чергу: краще спробувати, ніж не показати нічого.
+  // Перша за пріоритетом мережа, що не на паузі. Якщо на паузі всі —
+  // беремо найвищу за пріоритетом: краще спробувати, ніж не показати нічого.
   const noFill = readNoFill();
-  let offset = 0;
-  while (offset < PARTNER_AD_ORDER.length && isCoolingDown(PARTNER_AD_ORDER[(index + offset) % PARTNER_AD_ORDER.length], noFill)) {
-    offset += 1;
-  }
-  if (offset === PARTNER_AD_ORDER.length) offset = 0;
-
-  try {
-    window.localStorage.setItem(ROTATION_STORAGE_KEY, String(index + offset + 1));
-  } catch {
-    // ignore
-  }
-
-  return PARTNER_AD_ORDER[(index + offset) % PARTNER_AD_ORDER.length];
+  const available = PARTNER_AD_ORDER.find((slot) => !isCoolingDown(slot, noFill));
+  return available ?? PARTNER_AD_ORDER[0];
 }
