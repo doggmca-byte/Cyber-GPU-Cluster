@@ -8,6 +8,33 @@ import { showRewardedAdForVerifiedFlow } from "@/lib/ads/rewardedAd";
 import type { AdWatchResponse } from "@/types/api";
 import { startVerifiedAttempt, pollVerifiedAttempt } from "@/lib/ads/verifiedAdWatch";
 
+// /api/ads/watch відповідає 429 + retry_after_ms, якщо реклама закінчилась
+// раніше за мінімальний час спроби або пауза після попереднього показу ще не
+// минула. Спроба при цьому НЕ спожита — чекаємо й шлемо її ж ще раз.
+const MAX_COUNT_RETRIES = 3;
+const MAX_RETRY_WAIT_MS = 25_000;
+
+class AdCountError extends Error {}
+
+async function countWatchedAd(initData: string, attemptId: string): Promise<AdWatchResponse> {
+  for (let retry = 0; ; retry++) {
+    const res = await fetch("/api/ads/watch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData, attempt_id: attemptId }),
+    });
+    if (res.ok) return (await res.json()) as AdWatchResponse;
+
+    const body = (await res.json().catch(() => null)) as { error?: string; retry_after_ms?: number } | null;
+    const waitMs = body?.retry_after_ms;
+    if (res.status === 429 && typeof waitMs === "number" && retry < MAX_COUNT_RETRIES) {
+      await new Promise((resolve) => setTimeout(resolve, Math.min(waitMs, MAX_RETRY_WAIT_MS) + 500));
+      continue;
+    }
+    throw new AdCountError(body?.error ?? `status ${res.status}`);
+  }
+}
+
 /**
  * "Ads for Cashout" лічильник (MIN_ADS_BEFORE_WITHDRAW/20) і швидка кнопка
  * бонусної реклами. Показує рекламу через showRewardedAdRotatingWithProvider
@@ -53,18 +80,8 @@ export function WatchAdButton({ initData }: { initData: string }) {
       if (shown.provider !== "monetag") {
         // GigaPub/AdsGram не мають S2S-підтвердження — сервер зараховує показ
         // за відкритою ДО показу спробою (мін. час, пауза, добовий ліміт).
-        const res = await fetch("/api/ads/watch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData, attempt_id: shown.ymid }),
-        });
-
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(body?.error ?? `ad watch failed with status ${res.status}`);
-        }
-
-        const result = (await res.json()) as AdWatchResponse;
+        setIsConfirming(true);
+        const result = await countWatchedAd(initData, shown.ymid);
         patchProfile({
           ads_watched_since_withdraw: result.ads_watched_since_withdraw,
           withdrawal_quota: result.withdrawal_quota,
@@ -86,7 +103,11 @@ export function WatchAdButton({ initData }: { initData: string }) {
         setError(t.watchAd.stillProcessing);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.common.unknownError);
+      if (err instanceof AdCountError) {
+        setError(err.message === "daily_ad_limit_reached" ? t.watchAd.dailyLimit : t.watchAd.notCounted);
+      } else {
+        setError(err instanceof Error ? err.message : t.common.unknownError);
+      }
     } finally {
       setIsWatching(false);
       setIsConfirming(false);

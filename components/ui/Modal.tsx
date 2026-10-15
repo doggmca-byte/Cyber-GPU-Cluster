@@ -31,7 +31,10 @@ export function Modal({ title, onClose, children }: ModalProps) {
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
 
-      <div className="glass-card relative z-10 w-full max-w-lg rounded-b-none border-b-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      {/* max-h + власний скрол: на низьких екранах / з відкритою клавіатурою
+          вміст (напр., модалка виводу з блоком реклами) інакше вилазив за
+          верхній край без можливості до нього докрутити. */}
+      <div className="glass-card relative z-10 max-h-dvh w-full max-w-lg overflow-y-auto overscroll-contain rounded-b-none border-b-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="mb-3.5 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-white">{title}</h2>
           <button

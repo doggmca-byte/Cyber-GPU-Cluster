@@ -8,6 +8,7 @@ import { WatchAdButton } from "@/components/wallet/WatchAdButton";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
+import { normalizeDecimalInput, parseDecimalInput } from "@/lib/i18n/parseDecimal";
 import {
   MIN_ADS_BEFORE_WITHDRAW,
   MIN_DEPOSIT_TON,
@@ -55,7 +56,7 @@ export function WithdrawModal({
     }
   }, [connectedAddress, addressTouched]);
 
-  const requested = Number(amount);
+  const requested = parseDecimalInput(amount);
   const hasValidNumber = Number.isFinite(requested) && requested > 0;
   const addressOk = address.trim().length > 0 && isValidTonAddress(address);
 
@@ -95,6 +96,30 @@ export function WithdrawModal({
     !policy.depositRequired &&
     addressOk;
 
+  // "Макс" — найбільша сума, яку сервер зараз прийме (баланс, квота, тір),
+  // округлена вниз до 4 знаків, щоб не перевищити баланс через округлення.
+  const maxFill =
+    Math.floor(
+      Math.min(profile.withdrawable_balance, profile.withdrawal_quota, maxForThisRequest) * 10_000 + 1e-6,
+    ) / 10_000;
+  const canFillMax = !alreadyRequestedToday && !policy.depositRequired && maxFill >= WITHDRAW_MIN_TON;
+
+  // Відомі відмови request_withdrawal / роуту — локалізованим текстом замість
+  // сирого англійського повідомлення з БД.
+  const describeWithdrawError = (raw: string): string => {
+    if (raw === "captcha_required") return t.wallet.withdraw.captchaRequired;
+    if (raw.startsWith("only 1 withdrawal request")) return t.wallet.withdraw.oneRequestPerDay;
+    if (raw.startsWith("a minimum deposit of")) {
+      return t.wallet.withdraw.depositRequired(formatNumber(language, MIN_DEPOSIT_TON));
+    }
+    if (raw.startsWith("insufficient withdrawable_balance")) return t.wallet.withdraw.insufficientBalance;
+    if (raw.startsWith("insufficient withdrawal_quota")) return t.wallet.withdraw.insufficientQuota;
+    if (raw.startsWith("watch at least")) {
+      return t.wallet.withdraw.watchAdsPrompt(profile.ads_watched_since_withdraw, MIN_ADS_BEFORE_WITHDRAW);
+    }
+    return raw;
+  };
+
   const fee = hasValidNumber ? withdrawFee(requested) : 0;
   const net = hasValidNumber ? requested - fee : 0;
   const feePercentLabel = formatNumber(language, WITHDRAW_FEE_BPS / 100, { maximumFractionDigits: 0 });
@@ -115,7 +140,12 @@ export function WithdrawModal({
 
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(body?.error ?? `withdraw failed with status ${res.status}`);
+        if (body?.error === "captcha_required") {
+          // Сервер вважає верифікацію протухлою (напр., годинник телефона
+          // розходиться з сервером) — показуємо пазл знову, а не глухий кут.
+          patchProfile({ captcha_verified_at: null });
+        }
+        throw new Error(describeWithdrawError(body?.error ?? `withdraw failed with status ${res.status}`));
       }
 
       const result = (await res.json()) as WithdrawResponse;
@@ -219,15 +249,29 @@ export function WithdrawModal({
       )}
 
       <label className="mt-2.5 block text-[11px] text-slate-500">{t.wallet.withdraw.amountLabel}</label>
-      <input
-        type="number"
-        inputMode="decimal"
-        placeholder={t.wallet.withdraw.amountPlaceholder}
-        value={amount}
-        disabled={alreadyRequestedToday || policy.depositRequired}
-        onChange={(e) => setAmount(e.target.value)}
-        className="mt-1 w-full rounded-2xl border border-white/5 bg-[#0b0e14] px-3 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-neon-cyan/40 disabled:opacity-40"
-      />
+      {/* type="text", не "number": див. lib/i18n/parseDecimal.ts — з комою в
+          ролі роздільника type="number" віддавав порожнє значення. */}
+      <div className="relative mt-1">
+        <input
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          placeholder={t.wallet.withdraw.amountPlaceholder}
+          value={amount}
+          disabled={alreadyRequestedToday || policy.depositRequired}
+          onChange={(e) => setAmount(normalizeDecimalInput(e.target.value))}
+          className={`w-full rounded-2xl border border-white/5 bg-[#0b0e14] px-3 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-neon-cyan/40 disabled:opacity-40 ${canFillMax ? "pr-14" : ""}`}
+        />
+        {canFillMax && (
+          <button
+            type="button"
+            onClick={() => setAmount(String(maxFill))}
+            className="absolute inset-y-0 right-1.5 my-auto h-6 rounded-xl bg-neon-cyan/10 px-2.5 text-[10px] font-semibold text-neon-cyan transition active:scale-[0.97]"
+          >
+            {t.wallet.withdraw.maxButton}
+          </button>
+        )}
+      </div>
       {/* Ліміти мін/макс не мають сенсу, поки вивід узагалі заблоковано до
           депозиту — інакше поруч із червоним "потрібен депозит" висіла б
           суперечлива підказка "максимум зараз 0,1 TON". */}

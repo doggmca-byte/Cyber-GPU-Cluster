@@ -5,6 +5,7 @@ import { Zap, Wallet as WalletIcon, ArrowDown } from "lucide-react";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
+import { normalizeDecimalInput, parseDecimalInput } from "@/lib/i18n/parseDecimal";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import {
   HASH_TO_TON_RATE,
@@ -182,7 +183,7 @@ function ConvertBackCard({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const tonAmount = Number(amount);
+  const tonAmount = parseDecimalInput(amount);
   const isValidAmount = Number.isFinite(tonAmount) && tonAmount >= MIN_CONVERT_BACK_TON;
 
   const submit = async () => {
@@ -246,11 +247,12 @@ function ConvertBackCard({
       </div>
 
       <input
-        type="number"
+        type="text"
         inputMode="decimal"
+        autoComplete="off"
         placeholder={t.exchange.convertBack.amountPlaceholder(minConvertLabel)}
         value={amount}
-        onChange={(e) => setAmount(e.target.value)}
+        onChange={(e) => setAmount(normalizeDecimalInput(e.target.value))}
         className="mt-2.5 w-full rounded-2xl border border-white/5 bg-[#0b0e14] px-3 py-2 text-xs text-white outline-none transition placeholder:text-slate-600 focus:border-neon-purple/40"
       />
       {amount !== "" && Number.isFinite(tonAmount) && tonAmount > 0 && !isValidAmount && (

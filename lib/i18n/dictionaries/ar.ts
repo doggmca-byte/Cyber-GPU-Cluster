@@ -237,6 +237,8 @@ const ar: TranslationDictionary = {
         `أول سحب بدون إيداع هو ${amount} TON بالضبط. بعد ذلك يتطلب السحب شحنًا بحد أدنى ${minDeposit} TON.`,
       submit: "سحب",
       submitting: "جارٍ إرسال الطلب...",
+      maxButton: "الأقصى",
+      captchaRequired: "حلّ اللغز مرة أخرى (للتحقق من أنك لست روبوتًا)، ثم أرسل الطلب من جديد.",
       success: (amount, addressShort) =>
         `تم إنشاء الطلب. سيُدفع لك ${amount} TON إلى ${addressShort} (الحالة: قيد المراجعة).`,
     },
@@ -264,6 +266,7 @@ const ar: TranslationDictionary = {
     confirming: "جارٍ تأكيد المشاهدة...",
     notCounted: "لم تُحتسب المشاهدة — حاول مرة أخرى.",
     stillProcessing: "لا تزال قيد المعالجة — تحقق من رصيدك بعد قليل.",
+    dailyLimit: "تم بلوغ الحد اليومي للإعلانات — حاول مرة أخرى لاحقًا.",
   },
   errorPage: {
     title: "حدث خطأ ما",

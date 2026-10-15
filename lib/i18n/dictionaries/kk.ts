@@ -237,6 +237,8 @@ const kk: TranslationDictionary = {
         `Депозитсіз бірінші шығарып алу — дәл ${amount} TON. Одан кейін шығару үшін кемінде ${minDeposit} TON толтыру қажет.`,
       submit: "Шығару",
       submitting: "Өтінім жіберілуде...",
+      maxButton: "Макс",
+      captchaRequired: "Пазлды қайта шеш (бот емес екеніңді растау), содан кейін өтінімді қайта жібер.",
       success: (amount, addressShort) =>
         `Өтінім жасалды. ${addressShort} мекенжайына ${amount} TON төленеді (статус: тексерілуде).`,
     },
@@ -264,6 +266,7 @@ const kk: TranslationDictionary = {
     confirming: "Көрсетілімді растап жатырмыз...",
     notCounted: "Көрсетілім есептелмеді — қайта көр.",
     stillProcessing: "Әлі өңделуде — балансты сәл кейін тексер.",
+    dailyLimit: "Тәуліктік жарнама лимитіне жеттің — кейінірек қайталап көр.",
   },
   errorPage: {
     title: "Бірдеңе дұрыс болмады",

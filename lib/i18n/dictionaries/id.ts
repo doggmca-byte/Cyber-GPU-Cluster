@@ -237,6 +237,8 @@ const id: TranslationDictionary = {
         `Penarikan pertamamu tanpa deposit tepat ${amount} TON. Setelah itu penarikan butuh deposit minimal ${minDeposit} TON.`,
       submit: "Tarik",
       submitting: "Mengirim permintaan...",
+      maxButton: "Maks",
+      captchaRequired: "Selesaikan puzzle lagi (verifikasi anti-bot), lalu kirim ulang permintaan.",
       success: (amount, addressShort) =>
         `Permintaan dibuat. Kamu akan menerima ${amount} TON ke ${addressShort} (status: menunggu proses).`,
     },
@@ -264,6 +266,7 @@ const id: TranslationDictionary = {
     confirming: "Mengonfirmasi tontonanmu...",
     notCounted: "Tontonan tidak dihitung — coba lagi.",
     stillProcessing: "Masih diproses — cek saldomu sebentar lagi.",
+    dailyLimit: "Batas iklan harian tercapai — coba lagi nanti.",
   },
   errorPage: {
     title: "Terjadi kesalahan",

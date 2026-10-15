@@ -237,6 +237,8 @@ const tr: TranslationDictionary = {
         `Depozitosuz ilk çekimin tam olarak ${amount} TON. Sonrasında çekim için en az ${minDeposit} TON yükleme gerekir.`,
       submit: "Çek",
       submitting: "Talep gönderiliyor...",
+      maxButton: "Maks",
+      captchaRequired: "Bulmacayı tekrar çöz (bot doğrulaması), ardından talebi yeniden gönder.",
       success: (amount, addressShort) =>
         `Talep oluşturuldu. ${addressShort} adresine ${amount} TON ödenecek (durum: inceleniyor).`,
     },
@@ -264,6 +266,7 @@ const tr: TranslationDictionary = {
     confirming: "İzlemen onaylanıyor...",
     notCounted: "İzleme sayılmadı — tekrar dene.",
     stillProcessing: "Hâlâ işleniyor — bakiyeni biraz sonra kontrol et.",
+    dailyLimit: "Günlük reklam sınırına ulaşıldı — daha sonra tekrar dene.",
   },
   errorPage: {
     title: "Bir şeyler ters gitti",

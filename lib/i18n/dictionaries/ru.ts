@@ -237,6 +237,8 @@ const ru: TranslationDictionary = {
         `Первый вывод без депозита — ровно ${amount} TON. Дальше для вывода нужно пополнение минимум на ${minDeposit} TON.`,
       submit: "Вывести",
       submitting: "Отправляем заявку...",
+      maxButton: "Макс",
+      captchaRequired: "Пройди пазл ещё раз (проверка на бота), затем отправь заявку снова.",
       success: (amount, addressShort) =>
         `Заявка создана. К выплате ${amount} TON на ${addressShort} (статус: ожидает обработки).`,
     },
@@ -264,6 +266,7 @@ const ru: TranslationDictionary = {
     confirming: "Подтверждаем просмотр...",
     notCounted: "Просмотр не засчитан — попробуй ещё раз.",
     stillProcessing: "Ещё обрабатывается — проверь баланс чуть позже.",
+    dailyLimit: "Достигнут суточный лимит рекламы — попробуй позже.",
   },
   errorPage: {
     title: "Что-то пошло не так",

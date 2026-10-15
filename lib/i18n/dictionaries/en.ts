@@ -242,6 +242,8 @@ const en = {
         `Your first withdrawal without a deposit is exactly ${amount} TON. After that, withdrawals require a top-up of at least ${minDeposit} TON.`,
       submit: "Withdraw",
       submitting: "Submitting request...",
+      maxButton: "Max",
+      captchaRequired: "Solve the puzzle again (anti-bot check), then submit the request again.",
       success: (amount: string, addressShort: string) =>
         `Request created. You'll receive ${amount} TON at ${addressShort} (status: pending review).`,
     },
@@ -269,6 +271,7 @@ const en = {
     confirming: "Confirming your view...",
     notCounted: "View wasn't counted — try again.",
     stillProcessing: "Still processing — check your balance again shortly.",
+    dailyLimit: "Daily ad limit reached — try again later.",
   },
   errorPage: {
     title: "Something went wrong",

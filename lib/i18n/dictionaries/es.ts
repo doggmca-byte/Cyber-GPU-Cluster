@@ -238,6 +238,8 @@ const es: TranslationDictionary = {
         `Tu primer retiro sin depósito es exactamente ${amount} TON. Después, retirar requiere una recarga de al menos ${minDeposit} TON.`,
       submit: "Retirar",
       submitting: "Enviando solicitud...",
+      maxButton: "Máx",
+      captchaRequired: "Resuelve el puzle otra vez (verificación anti-bot) y vuelve a enviar la solicitud.",
       success: (amount, addressShort) =>
         `Solicitud creada. Recibirás ${amount} TON en ${addressShort} (estado: pendiente de revisión).`,
     },
@@ -265,6 +267,7 @@ const es: TranslationDictionary = {
     confirming: "Confirmando tu visualización...",
     notCounted: "La vista no se contabilizó — inténtalo de nuevo.",
     stillProcessing: "Aún se está procesando — revisa tu saldo en un momento.",
+    dailyLimit: "Has alcanzado el límite diario de anuncios — inténtalo más tarde.",
   },
   errorPage: {
     title: "Algo salió mal",

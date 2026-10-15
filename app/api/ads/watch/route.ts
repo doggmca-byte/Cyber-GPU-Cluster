@@ -24,6 +24,11 @@ interface AdWatchRequestBody {
   attempt_id?: string;
 }
 
+/** 429 "ще рано" — спроба не спожита, ту саму можна надіслати після паузи. */
+function retryLater(error: "too_fast" | "too_early", retryAfterMs: number): NextResponse {
+  return NextResponse.json({ error, retry_after_ms: Math.max(0, Math.ceil(retryAfterMs)) }, { status: 429 });
+}
+
 /**
  * Зарахування реклами для квоти виводу від мереж БЕЗ серверного підтвердження
  * (GigaPub, AdsGram) — Monetag зараховується окремо через S2S-постбек.
@@ -60,8 +65,13 @@ export async function POST(request: Request) {
     if (recentError) throw new ApiError(500, `failed to load ad history: ${recentError.message}`);
 
     if ((recent?.length ?? 0) >= MAX_ADS_PER_DAY) throw new ApiError(429, "daily_ad_limit_reached");
+    // Пауза ще не минула — показ реальний, тож не "палимо" його: спроба лишається
+    // pending, а клієнт (WatchAdButton) чекає retry_after_ms і шле ту саму спробу
+    // знову. Раніше 429 був остаточним і гравець просто втрачав переглянуту рекламу.
     const lastAt = recent?.[0]?.confirmed_at ? Date.parse(recent[0].confirmed_at) : 0;
-    if (lastAt && now - lastAt < MIN_GAP_BETWEEN_ADS_MS) throw new ApiError(429, "too_fast");
+    if (lastAt && now - lastAt < MIN_GAP_BETWEEN_ADS_MS) {
+      return retryLater("too_fast", MIN_GAP_BETWEEN_ADS_MS - (now - lastAt));
+    }
 
     // Атомарно "споживаємо" спробу: один показ — одне зарахування.
     const { data: claimed, error: claimError } = await admin
@@ -76,7 +86,22 @@ export async function POST(request: Request) {
       .select("id")
       .maybeSingle();
     if (claimError) throw new ApiError(500, `failed to claim attempt: ${claimError.message}`);
-    if (!claimed) throw new ApiError(400, "attempt_invalid");
+    if (!claimed) {
+      // Найчастіша причина в проді — коротка реклама (7–9 с), що завершилась
+      // раніше за MIN_ATTEMPT_AGE_MS. Така спроба валідна, просто "молода" —
+      // кажемо клієнту, скільки почекати, замість остаточного attempt_invalid.
+      const { data: attempt } = await admin
+        .from("ad_verification_attempts")
+        .select("created_at")
+        .eq("id", body.attempt_id)
+        .eq("user_id", profile.id)
+        .eq("purpose", "withdraw_ad_watch")
+        .eq("status", "pending")
+        .maybeSingle();
+      const age = attempt ? now - Date.parse(attempt.created_at) : NaN;
+      if (age >= 0 && age < MIN_ATTEMPT_AGE_MS) return retryLater("too_early", MIN_ATTEMPT_AGE_MS - age);
+      throw new ApiError(400, "attempt_invalid");
+    }
 
     const { data, error } = await admin.rpc("record_ad_watch", { p_user_id: profile.id }).single();
     if (error) throw rpcErrorToApiError(error);

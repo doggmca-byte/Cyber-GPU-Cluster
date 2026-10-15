@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
+import { normalizeDecimalInput, parseDecimalInput } from "@/lib/i18n/parseDecimal";
 import { buildCommentPayload, buildDepositMemo } from "@/lib/ton/comment";
 import { MIN_DEPOSIT_TON } from "@/lib/constants/economy";
 import type { DepositCheckResponse } from "@/types/api";
@@ -110,20 +111,21 @@ export function DepositModal({
 
   const memo = buildDepositMemo(telegramId);
 
-  const customAmountNumber = Number(customAmount.replace(",", "."));
+  const customAmountNumber = parseDecimalInput(customAmount);
   const customAmountValid =
-    customAmount.trim().length > 0 && Number.isFinite(customAmountNumber) && customAmountNumber >= MIN_DEPOSIT_TON;
-  const customAmountInvalid = customAmount.trim().length > 0 && !customAmountValid;
+    customAmount.length > 0 && Number.isFinite(customAmountNumber) && customAmountNumber >= MIN_DEPOSIT_TON;
+  const customAmountInvalid = customAmount.length > 0 && !customAmountValid;
 
   const selectPreset = (preset: number) => {
     setCustomAmount("");
     setSelected(preset);
   };
 
-  const onCustomAmountChange = (value: string) => {
+  const onCustomAmountChange = (raw: string) => {
+    const value = normalizeDecimalInput(raw);
     setCustomAmount(value);
-    const parsed = Number(value.replace(",", "."));
-    setSelected(value.trim().length > 0 && Number.isFinite(parsed) && parsed >= MIN_DEPOSIT_TON ? parsed : null);
+    const parsed = parseDecimalInput(value);
+    setSelected(Number.isFinite(parsed) && parsed >= MIN_DEPOSIT_TON ? parsed : null);
   };
 
   const applyCredited = useCallback(
@@ -276,8 +278,9 @@ export function DepositModal({
                 {t.wallet.deposit.customAmountLabel(formatNumber(language, MIN_DEPOSIT_TON))}
               </label>
               <input
-                type="number"
+                type="text"
                 inputMode="decimal"
+                autoComplete="off"
                 placeholder={t.wallet.deposit.customAmountPlaceholder}
                 value={customAmount}
                 disabled={isBusy}
