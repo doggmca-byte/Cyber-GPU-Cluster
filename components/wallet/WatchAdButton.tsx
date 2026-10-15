@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useReducer, useSyncExternalStore } from "react";
 import { Loader2, PlayCircle } from "lucide-react";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
@@ -35,6 +35,53 @@ async function countWatchedAd(initData: string, attemptId: string): Promise<AdWa
   }
 }
 
+// Один показ реклами для виводу на весь застосунок — стан живе в модулі, а не
+// в компоненті. Раніше, якщо модалку виводу закрити посеред реклами й
+// відкрити знову, новий екземпляр кнопки запускав ДРУГИЙ показ паралельно з
+// першим: SDK не завершував обидва, друга спроба лишалась pending, і
+// переглянута реклама пропадала (badbogdan, 15.10). Тепер новий екземпляр
+// підхоплює поточний показ і показує його стан.
+type AdFlowPhase = "idle" | "watching" | "confirming";
+
+interface AdFlowState {
+  id: number;
+  phase: AdFlowPhase;
+  startedAt: number;
+  error: string | null;
+}
+
+// Показ, на який SDK так і не відповів за цей час, більше не блокує кнопку.
+const STALE_FLOW_MS = 4 * 60 * 1000;
+
+let adFlow: AdFlowState = { id: 0, phase: "idle", startedAt: 0, error: null };
+const adFlowListeners = new Set<() => void>();
+
+function setAdFlow(next: AdFlowState) {
+  adFlow = next;
+  adFlowListeners.forEach((listener) => listener());
+}
+
+/** Оновлює стан лише поточного показу — застарілий (stale) його не перетирає. */
+function updateAdFlow(id: number, patch: Partial<Omit<AdFlowState, "id">>) {
+  if (id !== adFlow.id) return;
+  setAdFlow({ ...adFlow, ...patch });
+}
+
+function subscribeAdFlow(listener: () => void) {
+  adFlowListeners.add(listener);
+  return () => {
+    adFlowListeners.delete(listener);
+  };
+}
+
+function getAdFlow() {
+  return adFlow;
+}
+
+function isAdFlowBusy(state: AdFlowState): boolean {
+  return state.phase !== "idle" && Date.now() - state.startedAt < STALE_FLOW_MS;
+}
+
 /**
  * "Ads for Cashout" лічильник (MIN_ADS_BEFORE_WITHDRAW/20) і швидка кнопка
  * бонусної реклами. Показує рекламу через showRewardedAdRotatingWithProvider
@@ -49,16 +96,32 @@ async function countWatchedAd(initData: string, attemptId: string): Promise<AdWa
 export function WatchAdButton({ initData }: { initData: string }) {
   const { t } = useTranslation();
   const { patchProfile } = useUserData();
-  const [isWatching, setIsWatching] = useState(false);
-  const [isConfirming, setIsConfirming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const flow = useSyncExternalStore(subscribeAdFlow, getAdFlow, getAdFlow);
+  const isWatching = isAdFlowBusy(flow);
+  const isConfirming = isWatching && flow.phase === "confirming";
+  const error = isWatching ? null : flow.error;
+
+  // Свіжий екземпляр (модалку щойно відкрили) не показує помилку минулого
+  // показу — як і раніше, коли стан жив у компоненті.
+  useEffect(() => {
+    if (!isAdFlowBusy(adFlow) && adFlow.error) setAdFlow({ ...adFlow, error: null });
+  }, []);
+
+  // Коли показ "зависне" довше за STALE_FLOW_MS — перемальовуємо, щоб кнопка ожила.
+  const [, rerender] = useReducer((n: number) => n + 1, 0);
+  useEffect(() => {
+    if (!isWatching) return;
+    const timer = setTimeout(rerender, Math.max(0, flow.startedAt + STALE_FLOW_MS - Date.now()) + 50);
+    return () => clearTimeout(timer);
+  }, [isWatching, flow.startedAt]);
 
   const watch = async () => {
-    if (isWatching) return;
+    // Перевірка по стану модуля, а не по рендеру: ловить і подвійний тап.
+    if (isAdFlowBusy(adFlow)) return;
 
-    setIsWatching(true);
-    setIsConfirming(false);
-    setError(null);
+    const id = adFlow.id + 1;
+    setAdFlow({ id, phase: "watching", startedAt: Date.now(), error: null });
+    const setError = (message: string) => updateAdFlow(id, { error: message });
 
     try {
       // Спроба Monetag відкривається лише якщо черга реально дійде до
@@ -80,7 +143,7 @@ export function WatchAdButton({ initData }: { initData: string }) {
       if (shown.provider !== "monetag") {
         // GigaPub/AdsGram не мають S2S-підтвердження — сервер зараховує показ
         // за відкритою ДО показу спробою (мін. час, пауза, добовий ліміт).
-        setIsConfirming(true);
+        updateAdFlow(id, { phase: "confirming" });
         const result = await countWatchedAd(initData, shown.ymid);
         patchProfile({
           ads_watched_since_withdraw: result.ads_watched_since_withdraw,
@@ -89,7 +152,7 @@ export function WatchAdButton({ initData }: { initData: string }) {
         return;
       }
 
-      setIsConfirming(true);
+      updateAdFlow(id, { phase: "confirming" });
       const outcome = await pollVerifiedAttempt(initData, shown.ymid);
 
       if (outcome.kind === "confirmed") {
@@ -109,8 +172,7 @@ export function WatchAdButton({ initData }: { initData: string }) {
         setError(err instanceof Error ? err.message : t.common.unknownError);
       }
     } finally {
-      setIsWatching(false);
-      setIsConfirming(false);
+      updateAdFlow(id, { phase: "idle" });
     }
   };
 
