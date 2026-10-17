@@ -7,8 +7,15 @@ import { AmbassadorsPanel } from "@/components/admin/AmbassadorsPanel";
 import { AmbassadorStatsPanel } from "@/components/admin/AmbassadorStatsPanel";
 import { ManualGrantsPanel } from "@/components/admin/ManualGrantsPanel";
 import { SessionsPanel } from "@/components/admin/SessionsPanel";
+import { TopReferrersPanel } from "@/components/admin/TopReferrersPanel";
 
 type AdminTab = "withdrawals" | "sessions" | "ambassadors" | "stats" | "grants";
+type StatsView = "ambassadors" | "top-referrers";
+
+const STATS_VIEWS: Array<{ id: StatsView; label: string }> = [
+  { id: "ambassadors", label: "Амбасадори" },
+  { id: "top-referrers", label: "Топ рефоводів" },
+];
 
 const TABS: Array<{ id: AdminTab; label: string; icon: typeof Wallet }> = [
   { id: "withdrawals", label: "Виведення", icon: Wallet },
@@ -70,8 +77,35 @@ export function AdminShell({
       {tab === "withdrawals" && <WithdrawalsPanel onSessionExpired={onSessionExpired} />}
       {tab === "sessions" && <SessionsPanel onSessionExpired={onSessionExpired} />}
       {tab === "ambassadors" && <AmbassadorsPanel onSessionExpired={onSessionExpired} />}
-      {tab === "stats" && <AmbassadorStatsPanel onSessionExpired={onSessionExpired} />}
+      {tab === "stats" && <StatsTab onSessionExpired={onSessionExpired} />}
       {tab === "grants" && <ManualGrantsPanel onSessionExpired={onSessionExpired} />}
+    </div>
+  );
+}
+
+/** Вкладка "Статистика": підвкладки "Амбасадори" і "Топ рефоводів". */
+function StatsTab({ onSessionExpired }: { onSessionExpired: () => void }) {
+  const [view, setView] = useState<StatsView>("ambassadors");
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex rounded-xl bg-white/5 p-1">
+        {STATS_VIEWS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setView(id)}
+            className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              id === view ? "bg-neon-cyan/10 text-neon-cyan" : "text-white/50 hover:text-white/80"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {view === "ambassadors" && <AmbassadorStatsPanel onSessionExpired={onSessionExpired} />}
+      {view === "top-referrers" && <TopReferrersPanel onSessionExpired={onSessionExpired} />}
     </div>
   );
 }

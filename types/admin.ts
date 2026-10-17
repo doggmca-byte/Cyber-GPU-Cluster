@@ -86,6 +86,36 @@ export interface AdminAmbassadorStatsResponse {
 }
 
 /**
+ * Вкладка "Статистика" → "Топ рефоводів": усі гравці (не лише амбасадори),
+ * відсортовані за сумою реальних депозитів (type='deposit') їхніх рефералів
+ * за обраний період.
+ */
+export type AdminTopReferrersPeriod = "7d" | "30d" | "all";
+
+export interface AdminTopReferrerItem {
+  telegram_id: number;
+  username: string | null;
+  first_name: string | null;
+  is_ambassador: boolean;
+  /** Скільки різних рефералів зробили депозит за період. */
+  depositors_count: number;
+  deposits_count: number;
+  total_deposit_ton: number;
+  /** Скільки рефовод отримав deposit_revshare-комісії за той самий період. */
+  revshare_earned_ton: number;
+  last_deposit_at: string;
+}
+
+export interface AdminTopReferrersResponse {
+  period: AdminTopReferrersPeriod;
+  /** Сума всіх депозитів за період (включно з гравцями без реферера) — для частки топу. */
+  total_deposit_ton: number;
+  /** Сума депозитів гравців, що прийшли без реферера. */
+  organic_deposit_ton: number;
+  items: AdminTopReferrerItem[];
+}
+
+/**
  * Вкладка "Сесії" — реальний DAU з логу user_sessions (по одному рядку на
  * відкриття застосунку, вікно сесії 30 хв). На відміну від оцінок за
  * транзакціями/рекламою, сюди потрапляє і той, хто зайшов лише зібрати HASH.
