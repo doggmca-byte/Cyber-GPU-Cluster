@@ -486,6 +486,7 @@ const ar: TranslationDictionary = {
       title: "بانر ممول",
       description: "اضغط على البانر أدناه واربح TON.",
       noAdsAvailable: "لا توجد بانرات ممولة متاحة حاليًا.",
+      cooldown: (time: string) => `المهمة التالية بعد ${time}`,
     },
   },
   dailyBonus: {

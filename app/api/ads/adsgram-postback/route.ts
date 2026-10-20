@@ -6,6 +6,7 @@ import { rpcErrorToApiError } from "@/lib/api/rpc";
 import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
 import { partnerAdLimitError } from "@/lib/ads/partnerAdLimit";
 import { creditSponsorReward } from "@/lib/ads/sponsorReward";
+import { SPONSOR_TASK_COOLDOWN_SECONDS } from "@/lib/constants/economy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,8 +19,9 @@ export const dynamic = "force-dynamic";
 const DEDUPE_WINDOW_SECONDS = 6;
 
 // Блок типу Task (Reward URL з &type=task, components/tasks/TasksScreen.tsx,
-// AdsgramTaskCard): нагорода через creditSponsorReward — без денного ліміту й
-// без лічильника партнерської реклами; скільки завдань дати, вирішує AdsGram.
+// AdsgramTaskBody): нагорода через creditSponsorReward — без денного ліміту й
+// без лічильника партнерської реклами, але не частіше ніж раз на
+// SPONSOR_TASK_COOLDOWN_SECONDS (AdsGram повторно шле Reward URL за те саме завдання).
 const TASK_EVENT_TYPE = "task";
 
 /**
@@ -71,7 +73,10 @@ export async function GET(request: Request) {
     );
     const isAdmin = isTelegramAdmin(telegramId);
 
-    const dedupeSince = new Date(Date.now() - DEDUPE_WINDOW_SECONDS * 1000).toISOString();
+    // Для Task вікно = кулдаун між нагородами (SPONSOR_TASK_COOLDOWN_SECONDS),
+    // воно ж покриває і ретраї AdsGram.
+    const windowSeconds = isTask ? SPONSOR_TASK_COOLDOWN_SECONDS : DEDUPE_WINDOW_SECONDS;
+    const dedupeSince = new Date(Date.now() - windowSeconds * 1000).toISOString();
     let dedupeQuery = admin
       .from("ad_verification_attempts")
       .select("id")
@@ -85,6 +90,18 @@ export async function GET(request: Request) {
     const { data: recentConfirmed, error: recentError } = await dedupeQuery.limit(1).maybeSingle();
 
     if (recentError) throw new ApiError(500, `failed to check dedupe window: ${recentError.message}`);
+    if (recentConfirmed && isTask) {
+      // Завдання раніше кулдауну — не нараховуємо, лишаємо слід для аудиту.
+      await admin.from("ad_verification_attempts").insert({
+        user_id: profile.id,
+        purpose: "partner_ad_watch",
+        provider: "adsgram",
+        status: "rejected",
+        reported_telegram_id: telegramId,
+        reported_reward_event_type: eventType,
+      });
+      return NextResponse.json({ ok: true, status: "rejected", reason: "cooldown" });
+    }
     if (recentConfirmed) {
       return NextResponse.json({ ok: true, status: "confirmed", deduped: true });
     }

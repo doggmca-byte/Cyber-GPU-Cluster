@@ -486,6 +486,7 @@ const id: TranslationDictionary = {
       title: "Banner bersponsor",
       description: "Ketuk banner di bawah dan dapatkan TON.",
       noAdsAvailable: "Belum ada banner bersponsor yang tersedia saat ini.",
+      cooldown: (time: string) => `Tugas berikutnya dalam ${time}`,
     },
   },
   dailyBonus: {

@@ -138,6 +138,12 @@ export const REFERRAL_EXCHANGE_COMMISSION_STEP_HASH = 1000;
 // "реальних депозитів рефералів" (Адмінка → "Статистика амбасадорів").
 export const ADMIN_GRANT_TARGET_BALANCE = "game_balance" as const;
 
+// Кулдаун між нагородами за завдання AdsGram Task (app/api/ads/adsgram-postback,
+// SponsorSlot у TasksScreen). AdsGram повторно смикає Reward URL за вже
+// виконане завдання (20.10: 212 постбеків на 11 кліків) — денного ліміту немає,
+// але частіше ніж раз на кулдаун не нараховуємо.
+export const SPONSOR_TASK_COOLDOWN_SECONDS = 120;
+
 // claim_daily_bonus
 export const DAILY_BONUS_REWARD_TON = 0.001;
 // Мінімальна "взаємодія з рекламою" перед клеймом (Adsgram/Monetag-заглушка,

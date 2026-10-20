@@ -38,6 +38,7 @@ import type {
 } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 import { postJsonWithRetry } from "@/lib/api/postJsonWithRetry";
+import { SPONSOR_TASK_COOLDOWN_SECONDS } from "@/lib/constants/economy";
 
 // Дзеркалить константи в record_partner_ad_watch
 // (supabase/migrations/20261020120000_partner_ads_limit_20_and_task_rewards.sql) —
@@ -895,7 +896,8 @@ type SponsorReward = ReturnType<typeof useSponsorRewardConfirm>;
  */
 function SponsorSlot({ initData }: { initData: string }) {
   const { t } = useTranslation();
-  const sponsor = useSponsorRewardConfirm(initData);
+  const cooldown = useSponsorCooldown();
+  const sponsor = useSponsorRewardConfirm(initData, cooldown.start);
   const [adsgramAvailable, setAdsgramAvailable] = useState(Boolean(ADSGRAM_TASK_BLOCK_ID));
 
   if (!sponsor.ready) return null;
@@ -903,7 +905,9 @@ function SponsorSlot({ initData }: { initData: string }) {
   return (
     <div className="glass-card p-3.5">
       <SponsorCardHeader />
-      {adsgramAvailable ? (
+      {cooldown.remainingSeconds > 0 ? (
+        <SponsorPlaceholder label={t.tasks.tadsAd.cooldown(formatCountdown(cooldown.remainingSeconds))} />
+      ) : adsgramAvailable ? (
         <AdsgramTaskBody sponsor={sponsor} onUnavailable={() => setAdsgramAvailable(false)} />
       ) : (
         <SponsorPlaceholder label={t.tasks.tadsAd.noAdsAvailable} />
@@ -913,8 +917,57 @@ function SponsorSlot({ initData }: { initData: string }) {
   );
 }
 
+const SPONSOR_COOLDOWN_STORAGE_KEY = "cgc_sponsor_task_cooldown_until";
+
+function formatCountdown(totalSeconds: number): string {
+  return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, "0")}`;
+}
+
+/**
+ * Кулдаун між завданнями AdsGram (SPONSOR_TASK_COOLDOWN_SECONDS) — дзеркало
+ * серверного (app/api/ads/adsgram-postback): поки він іде, завдання не
+ * показуємо, бо постбек у цей час однаково не нарахує. Кінець кулдауну — у
+ * localStorage, щоб не скидався повторним відкриттям вкладки.
+ */
+function useSponsorCooldown() {
+  const [until, setUntil] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    try {
+      const stored = Number(localStorage.getItem(SPONSOR_COOLDOWN_STORAGE_KEY));
+      if (Number.isFinite(stored) && stored > Date.now()) setUntil(stored);
+    } catch {
+      // сховище недоступне — кулдаун лише в пам'яті, сервер однаково його тримає.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (until <= Date.now()) return;
+    const timer = setInterval(() => {
+      const current = Date.now();
+      setNow(current);
+      if (current >= until) clearInterval(timer);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [until]);
+
+  const start = useCallback(() => {
+    const next = Date.now() + SPONSOR_TASK_COOLDOWN_SECONDS * 1000;
+    try {
+      localStorage.setItem(SPONSOR_COOLDOWN_STORAGE_KEY, String(next));
+    } catch {
+      // див. вище.
+    }
+    setNow(Date.now());
+    setUntil(next);
+  }, []);
+
+  return { remainingSeconds: Math.max(0, Math.ceil((until - now) / 1000)), start };
+}
+
 /** Спільне підтвердження нагороди для обох спонсорських провайдерів. */
-function useSponsorRewardConfirm(initData: string) {
+function useSponsorRewardConfirm(initData: string, onConfirmed: () => void) {
   const { t } = useTranslation();
   const { state, patchProfile } = useUserData();
   const [confirming, setConfirming] = useState(false);
@@ -940,12 +993,13 @@ function useSponsorRewardConfirm(initData: string) {
       if (!mountedRef.current) return;
       if (outcome.kind === "confirmed") {
         patchProfile({ withdrawable_balance: outcome.profile.withdrawable_balance });
+        onConfirmed();
       } else {
         setError(t.tasks.partnerAds.stillProcessing);
       }
       setConfirming(false);
     });
-  }, [initData, patchProfile, t]);
+  }, [initData, patchProfile, t, onConfirmed]);
 
   return { ready: state.status === "ready", confirming, error, confirm, mountedRef };
 }

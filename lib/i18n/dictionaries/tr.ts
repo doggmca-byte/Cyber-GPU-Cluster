@@ -486,6 +486,7 @@ const tr: TranslationDictionary = {
       title: "Sponsorlu banner",
       description: "Aşağıdaki bannera dokun ve TON kazan.",
       noAdsAvailable: "Şu anda kullanılabilir sponsorlu banner yok.",
+      cooldown: (time: string) => `Sonraki görev ${time} sonra`,
     },
   },
   dailyBonus: {

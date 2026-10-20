@@ -492,6 +492,7 @@ const en = {
       title: "Sponsored banner",
       description: "Tap the banner below and earn TON.",
       noAdsAvailable: "No sponsored banners available right now.",
+      cooldown: (time: string) => `Next task in ${time}`,
     },
   },
   dailyBonus: {

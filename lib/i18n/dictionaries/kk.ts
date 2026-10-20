@@ -486,6 +486,7 @@ const kk: TranslationDictionary = {
       title: "Демеушілік баннер",
       description: "Төмендегі баннерге бас та TON ал.",
       noAdsAvailable: "Қазір қолжетімді демеушілік баннер жоқ.",
+      cooldown: (time: string) => `Келесі тапсырма ${time} кейін`,
     },
   },
   dailyBonus: {

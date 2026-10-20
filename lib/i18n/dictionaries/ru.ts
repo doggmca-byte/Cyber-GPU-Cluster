@@ -491,6 +491,7 @@ const ru: TranslationDictionary = {
       title: "Спонсорский баннер",
       description: "Нажми на баннер ниже и получи TON.",
       noAdsAvailable: "Сейчас нет доступных спонсорских баннеров.",
+      cooldown: (time: string) => `Следующее задание через ${time}`,
     },
   },
   dailyBonus: {

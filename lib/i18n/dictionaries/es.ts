@@ -488,6 +488,7 @@ const es: TranslationDictionary = {
       title: "Banner patrocinado",
       description: "Toca el banner de abajo y gana TON.",
       noAdsAvailable: "No hay banners patrocinados disponibles ahora mismo.",
+      cooldown: (time: string) => `Siguiente tarea en ${time}`,
     },
   },
   dailyBonus: {
