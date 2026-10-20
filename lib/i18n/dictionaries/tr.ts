@@ -117,7 +117,7 @@ const tr: TranslationDictionary = {
     reviveOnFarm: "Satın almanın kilidini açmak için Çiftlik'te canlandır",
     promo: {
       banner: (percent) => `Seçili rig'lerde -${percent}%`,
-      anniversaryBanner: (percent) => `🎉 Cyber GPU Cluster 1 Aylık! Tüm ekipmanlarda %${percent} indirim`,
+      anniversaryBanner: (percent, months) => `🎉 Cyber GPU Cluster ${months} Aylık! Tüm ekipmanlarda %${percent} indirim`,
       endsIn: (days, time) => `Kampanyanın bitmesine: ${days} gün ${time}`,
     },
     cycles: {

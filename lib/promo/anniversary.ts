@@ -1,22 +1,32 @@
 import { isPromoActive, type PromoState } from "./promo";
 
 /**
- * Юбилейна акція "1 місяць Cyber GPU Cluster" (-15% на все обладнання, 7 діб).
+ * Ювілейні акції Cyber GPU Cluster ("1 місяць" — -15% на 7 діб, "2 місяці" —
+ * -15% на 1 добу, ...).
  *
  * Параметри акції (знижка, старт, кінець, список рівнів) живуть у БД —
- * promo_campaigns, міграція 20260921120000_anniversary_promo.sql, — а не тут:
- * час вирішує сервер (now()), тож підкручений годинник пристрою нічого не
- * дає, а після ends_at buy_gpu сам списує повну ціну. Клієнт лише впізнає
- * цю акцію за slug, щоб показати святкову плашку.
+ * promo_campaigns, міграції 20260921120000_anniversary_promo.sql,
+ * 20261020000000_anniversary_2_months_promo.sql, — а не тут: час вирішує
+ * сервер (now()), тож підкручений годинник пристрою нічого не дає, а після
+ * ends_at buy_gpu сам списує повну ціну. Клієнт лише впізнає ювілейну акцію
+ * за slug, щоб показати святкову плашку з потрібною кількістю місяців.
  */
-export const ANNIVERSARY_PROMO_SLUG = "anniversary_1_month";
+const ANNIVERSARY_MONTHS_BY_SLUG: Record<string, number> = {
+  anniversary_1_month: 1,
+  anniversary_2_months: 2,
+};
+
+/** Скільки місяців святкує ця акція; null — якщо це не ювілейна акція. */
+export function anniversaryMonths(promo: PromoState | null): number | null {
+  return (promo && ANNIVERSARY_MONTHS_BY_SLUG[promo.slug]) ?? null;
+}
 
 export function isAnniversaryPromo(promo: PromoState | null): boolean {
-  return promo?.slug === ANNIVERSARY_PROMO_SLUG;
+  return anniversaryMonths(promo) !== null;
 }
 
 /**
- * Чи діє юбілейна акція на момент nowMs. nowMs — за шкалою часу СЕРВЕРА
+ * Чи діє ювілейна акція на момент nowMs. nowMs — за шкалою часу СЕРВЕРА
  * (Date.now() + clockOffsetMs з UserDataProvider), вікно бере з promo.
  */
 export function isAnniversaryActive(promo: PromoState | null, nowMs: number): boolean {

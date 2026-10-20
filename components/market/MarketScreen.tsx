@@ -17,7 +17,7 @@ import {
   splitCountdown,
   type PromoState,
 } from "@/lib/promo/promo";
-import { isAnniversaryPromo } from "@/lib/promo/anniversary";
+import { anniversaryMonths, isAnniversaryPromo } from "@/lib/promo/anniversary";
 import type { BuyGpuResponse, GpuTemplate, SyncResponse } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 
@@ -148,7 +148,7 @@ function MarketScreenReady({
         // а не один, — довгий локалізований заголовок не обрізається на
         // вузьких екранах, а tabular-nums тримає ширину відліку сталою.
         <div className="relative overflow-hidden rounded-2xl border border-neon-gold/40 bg-gradient-to-r from-neon-purple/20 via-neon-gold/15 to-neon-cyan/20 px-3.5 py-3 shadow-[0_0_1px_rgba(251,191,36,0.8),0_0_24px_rgba(251,191,36,0.25)]">
-          <p className="text-xs font-bold text-neon-gold">{t.market.promo.anniversaryBanner(promo.discount_percent)}</p>
+          <p className="text-xs font-bold text-neon-gold">{t.market.promo.anniversaryBanner(promo.discount_percent, anniversaryMonths(promo) ?? 1)}</p>
           <p className="mt-1.5 flex items-center gap-1.5 font-mono text-[11px] font-semibold tabular-nums text-white/90">
             <Timer size={12} className="shrink-0 text-neon-gold" />
             {t.market.promo.endsIn(countdown.days, countdown.time)}

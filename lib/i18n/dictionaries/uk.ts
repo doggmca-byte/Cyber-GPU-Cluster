@@ -117,7 +117,12 @@ const uk: TranslationDictionary = {
     reviveOnFarm: "Оживи на Фермі, щоб знову купувати",
     promo: {
       banner: (percent) => `-${percent}% на обрані риги`,
-      anniversaryBanner: (percent) => `🎉 1 Місяць Cyber GPU Cluster! Знижка ${percent}% на все обладнання`,
+      anniversaryBanner: (percent, months) => {
+        const m10 = months % 10;
+        const m100 = months % 100;
+        const word = m10 === 1 && m100 !== 11 ? "Місяць" : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? "Місяці" : "Місяців";
+        return `🎉 ${months} ${word} Cyber GPU Cluster! Знижка ${percent}% на все обладнання`;
+      },
       endsIn: (days, time) => `До кінця акції: ${days} дн. ${time}`,
     },
     cycles: {
