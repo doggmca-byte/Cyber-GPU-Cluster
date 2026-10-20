@@ -4,6 +4,7 @@ import { findProfileByTelegramId } from "@/lib/api/profile";
 import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
 import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
+import { partnerAdLimitError } from "@/lib/ads/partnerAdLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -88,10 +89,11 @@ async function handleTadsPostback(request: Request) {
       return NextResponse.json({ ok: true, status: "confirmed", deduped: true });
     }
 
-    const { error: rpcError } = await admin.rpc("record_partner_ad_watch", {
-      p_user_id: profile.id,
-      p_bypass_limit: isTelegramAdmin(telegramId),
-    });
+    const bypassLimit = isTelegramAdmin(telegramId);
+    const limitError = await partnerAdLimitError(admin, profile.id, bypassLimit);
+    const { error: rpcError } = limitError
+      ? { error: limitError }
+      : await admin.rpc("record_partner_ad_watch", { p_user_id: profile.id, p_bypass_limit: bypassLimit });
 
     if (rpcError) {
       if (rpcError.code === "P0001") {

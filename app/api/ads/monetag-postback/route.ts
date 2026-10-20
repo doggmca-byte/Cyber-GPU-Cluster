@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
 import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
+import { partnerAdLimitError } from "@/lib/ads/partnerAdLimit";
 import { DAILY_BONUS_REWARD_TON } from "@/lib/constants/economy";
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
@@ -32,6 +33,8 @@ async function creditForPurpose(
     return { error };
   }
   // partner_ad_watch (єдине інше значення, дозволене CHECK-обмеженням purpose)
+  const limitError = await partnerAdLimitError(admin, userId, bypassLimit);
+  if (limitError) return { error: limitError };
   const { error } = await admin.rpc("record_partner_ad_watch", {
     p_user_id: userId,
     p_bypass_limit: bypassLimit,

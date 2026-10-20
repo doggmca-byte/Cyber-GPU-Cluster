@@ -6,6 +6,7 @@ import { readJsonBody } from "@/lib/api/request";
 import { requireProfileByTelegramId } from "@/lib/api/profile";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
 import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
+import { partnerAdLimitError, PARTNER_AD_DAILY_LIMIT } from "@/lib/ads/partnerAdLimit";
 import type { PartnerAdWatchResponse } from "@/types/api";
 
 export const runtime = "nodejs";
@@ -39,8 +40,12 @@ export async function POST(request: Request) {
     // список ніколи не потрапляє в базу/клієнт) дивиться рекламу в
     // "Партнери" без обмеження денним лімітом — усе інше нарахування
     // лишається тим самим.
+    const bypassLimit = isTelegramAdmin(user.id);
+    const limitError = await partnerAdLimitError(admin, profile.id, bypassLimit);
+    if (limitError) throw rpcErrorToApiError(limitError);
+
     const { data, error } = await admin
-      .rpc("record_partner_ad_watch", { p_user_id: profile.id, p_bypass_limit: isTelegramAdmin(user.id) })
+      .rpc("record_partner_ad_watch", { p_user_id: profile.id, p_bypass_limit: bypassLimit })
       .single();
 
     if (error) throw rpcErrorToApiError(error);
@@ -48,7 +53,7 @@ export async function POST(request: Request) {
 
     const response: PartnerAdWatchResponse = {
       partner_ads_watched_today: data.partner_ads_watched_today,
-      daily_limit: data.daily_limit,
+      daily_limit: Math.min(data.daily_limit, PARTNER_AD_DAILY_LIMIT),
       reward_amount: data.reward_amount,
       withdrawable_balance: data.withdrawable_balance,
       server_time: new Date().toISOString(),
