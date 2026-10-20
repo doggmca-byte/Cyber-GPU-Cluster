@@ -38,7 +38,6 @@ import type {
 } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 import { postJsonWithRetry } from "@/lib/api/postJsonWithRetry";
-import { mountTadsAd, tadsContainerId, TADS_WIDGET_ID } from "@/lib/ads/tads";
 
 // Дзеркалить константи в record_partner_ad_watch
 // (supabase/migrations/20261020120000_partner_ads_limit_20_and_task_rewards.sql) —
@@ -888,31 +887,27 @@ async function pollSponsorReward(initData: string, baselineBalance: number): Pro
   return { kind: "timeout" };
 }
 
-type SponsorProvider = "adsgram" | "tads" | "none";
 type SponsorReward = ReturnType<typeof useSponsorRewardConfirm>;
 
 /**
- * Спонсорський слот у вкладці "Партнери": ЗАВЖДИ спершу AdsGram Task; лише
- * коли AdsGram не має (більше) завдань для гравця — onBannerNotFound/onError/
- * onTooLongSession — слот перемикається на банер TADS. Після виконання
- * завдання AdsGram сам підвантажує наступне, тож гравець проходить усі
- * доступні завдання AdsGram, і тільки потім бачить TADS. Картка видима
- * завжди: поки реклама вантажиться або коли її немає в жодного провайдера,
- * замість реклами — некликабельна заглушка.
+ * Спонсорський слот у вкладці "Партнери" використовує лише AdsGram Task.
+ * Якщо AdsGram не має доступного завдання, картка показує заглушку.
  */
 function SponsorSlot({ initData }: { initData: string }) {
   const { t } = useTranslation();
   const sponsor = useSponsorRewardConfirm(initData);
-  const [provider, setProvider] = useState<SponsorProvider>(ADSGRAM_TASK_BLOCK_ID ? "adsgram" : "tads");
+  const [adsgramAvailable, setAdsgramAvailable] = useState(Boolean(ADSGRAM_TASK_BLOCK_ID));
 
   if (!sponsor.ready) return null;
 
   return (
     <div className="glass-card p-3.5">
       <SponsorCardHeader />
-      {provider === "adsgram" && <AdsgramTaskBody sponsor={sponsor} onUnavailable={() => setProvider("tads")} />}
-      {provider === "tads" && <TadsBannerBody sponsor={sponsor} onUnavailable={() => setProvider("none")} />}
-      {provider === "none" && <SponsorPlaceholder label={t.tasks.tadsAd.noAdsAvailable} />}
+      {adsgramAvailable ? (
+        <AdsgramTaskBody sponsor={sponsor} onUnavailable={() => setAdsgramAvailable(false)} />
+      ) : (
+        <SponsorPlaceholder label={t.tasks.tadsAd.noAdsAvailable} />
+      )}
       <SponsorStatus confirming={sponsor.confirming} error={sponsor.error} />
     </div>
   );
@@ -1070,38 +1065,6 @@ function AdsgramTaskBody({ sponsor, onUnavailable }: { sponsor: SponsorReward; o
           {t.tasks.action.claimed}
         </div>
       </adsgram-task>
-    </div>
-  );
-}
-
-/**
- * Запасний спонсор — банер TADS (lib/ads/tads.ts), коли в AdsGram немає
- * завдань. Нагорода на клік підтверджується S2S-вебхуком
- * /api/ads/tads-postback (creditSponsorReward — та сама сума, що й AdsGram
- * Task, без денного ліміту). Контейнер SDK — назавжди порожній з боку React,
- * інакше ре-рендер стирав би вставлену SDK розмітку.
- */
-function TadsBannerBody({ sponsor, onUnavailable }: { sponsor: SponsorReward; onUnavailable: () => void }) {
-  const { confirm, mountedRef } = sponsor;
-  const hasMountedAdRef = useRef(false);
-  const onUnavailableRef = useRef(onUnavailable);
-  onUnavailableRef.current = onUnavailable;
-
-  useEffect(() => {
-    if (hasMountedAdRef.current) return;
-    hasMountedAdRef.current = true;
-    const mounted = mountTadsAd({
-      onClickReward: confirm,
-      onAdsNotFound: () => {
-        if (mountedRef.current) onUnavailableRef.current();
-      },
-    });
-    if (!mounted) onUnavailableRef.current();
-  }, [confirm, mountedRef]);
-
-  return (
-    <div className="relative mt-2.5 min-h-[50px]">
-      <div id={TADS_WIDGET_ID ? tadsContainerId(TADS_WIDGET_ID) : undefined} />
     </div>
   );
 }
