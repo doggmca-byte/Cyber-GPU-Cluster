@@ -24,7 +24,6 @@ import { showGigaRewardedAd } from "@/lib/ads/gigapub";
 import { showAdsgramRewardedAdDetailed } from "@/lib/ads/adsgram";
 import { markPartnerAdNoFill, nextPartnerAdSlot } from "@/lib/ads/partnerAdRotation";
 import type { VerifiedPollResult } from "@/lib/ads/verifiedAdWatch";
-import { mountTadsAd, tadsContainerId, TADS_WIDGET_ID } from "@/lib/ads/tads";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
 import { SupportButton } from "@/components/layout/SupportButton";
 import { SpecialTasks } from "@/components/SpecialTasks";
@@ -41,12 +40,12 @@ import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 import { postJsonWithRetry } from "@/lib/api/postJsonWithRetry";
 
 // Дзеркалить константи в record_partner_ad_watch
-// (supabase/migrations/20260904090000_raise_partner_ad_daily_limit_to_30.sql) —
+// (supabase/migrations/20261020120000_partner_ads_limit_20_and_task_rewards.sql) —
 // лише для відображення (сервер — єдине джерело правди для фактичного
 // нарахування й ліміту, тут це тільки початкове значення до першого
 // перегляду за сесію).
 const PARTNER_AD_REWARD_TON = 0.001;
-const PARTNER_AD_DAILY_LIMIT = 30;
+const PARTNER_AD_DAILY_LIMIT = 20;
 
 const CATEGORY_ORDER: TaskCategory[] = ["in_game", "general", "partners", "wallet", "friends", "special"];
 
@@ -421,7 +420,7 @@ function TasksScreenReady({ initData }: { initData: string }) {
         {activeCategory === "partners" && (
           <>
             <PartnerAdsCard initData={initData} />
-            <TadsBannerCard initData={initData} />
+            <AdsgramTaskCard initData={initData} />
           </>
         )}
         {activeCategory === "special" && <SpecialTasks initData={initData} />}
@@ -657,152 +656,6 @@ function PartnerAdsCard({ initData }: { initData: string }) {
   );
 }
 
-/**
- * Четвертий "провайдер" реклами — TADS (lib/ads/tads.ts), АРХІТЕКТУРНО інший
- * за PartnerAdsCard вище: не модалка "натисни й дивись", а постійний
- * банер-контейнер, куди SDK сам вмонтовує рекламу; нагорода — на клік
- * (onClickReward), підтверджений S2S-вебхуком (app/api/ads/tads-postback),
- * той самий record_partner_ad_watch і той самий денний ліміт/лічильник, що
- * й у PartnerAdsCard (одна спільна квота на всі джерела реклами).
- *
- * Якщо NEXT_PUBLIC_TADS_WIDGET_ID не задано — mountTadsAd() поверне false,
- * картка одразу йде в стан "no_ads" (по суті прихована для юзера — не
- * рендеримо порожній контейнер-заглушку).
- */
-function TadsBannerCard({ initData }: { initData: string }) {
-  const { t, language } = useTranslation();
-  const { state, patchProfile } = useUserData();
-  const [status, setStatus] = useState<"loading" | "ready" | "confirming" | "no_ads">("loading");
-  const [error, setError] = useState<string | null>(null);
-
-  // Усі хуки нижче МАЮТЬ викликатись безумовно на кожному рендері (Rules of
-  // Hooks) — тому жодного "if (...) return null" до цього місця: похідні
-  // значення з state.status==="ready" рахуємо через null-фолбек, а не через
-  // ранній вихід, інакше кількість викликаних хуків різнилась би між
-  // рендерами "ще не готово" / "готово" і React впав би з помилкою.
-  const readyProfile = state.status === "ready" ? state.data.profile : null;
-  const readyIsAdmin = state.status === "ready" ? state.data.is_admin : false;
-
-  const today = new Date().toISOString().slice(0, 10);
-  const watchedToday =
-    readyProfile && readyProfile.partner_ads_reset_date === today ? readyProfile.partner_ads_watched_today : 0;
-  const limitReached = readyProfile ? !readyIsAdmin && watchedToday >= PARTNER_AD_DAILY_LIMIT : false;
-
-  // Завжди свіже значення лічильника для onClickReward нижче (замикання
-  // створюється ОДИН раз при монтуванні реклами, watchedToday на той момент
-  // міг застаріти, якщо юзер тим часом подивився рекламу з ІНШОГО джерела
-  // на цій же вкладці) — читаємо через ref у момент кліку, а не з
-  // застарілого значення в замиканні.
-  const latestWatchedTodayRef = useRef(watchedToday);
-  latestWatchedTodayRef.current = watchedToday;
-
-  const mountedRef = useRef(true);
-  useEffect(() => () => {
-    mountedRef.current = false;
-  }, []);
-
-  // TADS SDK монтується РІВНО ОДИН раз (не при кожній зміні профілю — інакше
-  // showRewardedAdRotating-подібне повторне init() на той самий контейнер
-  // при щонайменшій зміні profile.* деінде в застосунку) — гард через ref,
-  // не через залежності ефекту.
-  const hasMountedAdRef = useRef(false);
-
-  useEffect(() => {
-    if (!readyProfile || hasMountedAdRef.current) return;
-
-    if (limitReached) {
-      setStatus("no_ads");
-      return;
-    }
-
-    hasMountedAdRef.current = true;
-
-    const onClickReward = () => {
-      if (!mountedRef.current) return;
-      setError(null);
-      setStatus("confirming");
-
-      void pollPartnerAdWatchConfirmation(initData, latestWatchedTodayRef.current).then((outcome) => {
-        if (!mountedRef.current) return;
-
-        if (outcome.kind === "confirmed") {
-          patchProfile({
-            partner_ads_watched_today: outcome.profile.partner_ads_watched_today,
-            partner_ads_reset_date: outcome.profile.partner_ads_reset_date,
-            withdrawable_balance: outcome.profile.withdrawable_balance,
-          });
-          setStatus("ready");
-        } else if (outcome.kind === "rejected") {
-          setError(t.tasks.partnerAds.notCounted);
-          setStatus("ready");
-        } else {
-          setError(t.tasks.partnerAds.stillProcessing);
-          setStatus("ready");
-        }
-      });
-    };
-
-    const onAdsNotFound = () => {
-      if (mountedRef.current) setStatus("no_ads");
-    };
-
-    const mounted = mountTadsAd({ onClickReward, onAdsNotFound });
-    setStatus(mounted ? "ready" : "no_ads");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readyProfile, limitReached]);
-
-  if (state.status !== "ready" || status === "no_ads") return null;
-
-  return (
-    <div className="glass-card p-3.5">
-      <div className="flex items-start gap-2.5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neon-purple/10 text-neon-purple">
-          <Handshake size={16} />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold text-white">{t.tasks.tadsAd.title}</p>
-          <p className="mt-0.5 text-[11px] text-slate-500">{t.tasks.tadsAd.description}</p>
-
-          <div className="mt-1.5 flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold text-neon-green">
-              {t.tasks.reward.ton(formatNumber(language, PARTNER_AD_REWARD_TON, { maximumFractionDigits: 3 }))}
-            </span>
-            <span className="text-[10px] font-medium text-slate-500">
-              {t.tasks.partnerAds.progress(watchedToday, PARTNER_AD_DAILY_LIMIT)}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/*
-        Контейнер нижче — окремий, НАЗАВЖДИ порожній з боку React (жодних
-        дочірніх елементів у JSX!) — TADS SDK монтує рекламу туди напряму
-        через DOM API. Якби спінери "loading"/"confirming" були дочірніми
-        ЦЬОГО ж вузла, React стирав би вставлений SDK-розмітку на кожному
-        ре-рендері (зміна status/error). Тому оверлей — сусідній елемент,
-        абсолютно спозиційований поверх, а не всередині.
-      */}
-      <div className="relative mt-2.5 min-h-[50px]">
-        <div id={TADS_WIDGET_ID ? tadsContainerId(TADS_WIDGET_ID) : undefined} />
-        {status === "loading" && (
-          <div className="absolute inset-0 flex items-center justify-center gap-2 bg-background-card py-3 text-[11px] text-slate-500">
-            <Loader2 size={13} className="animate-spin" />
-            {t.tasks.partnerAds.loading}
-          </div>
-        )}
-        {status === "confirming" && (
-          <div className="absolute inset-0 flex items-center justify-center gap-2 bg-background-card py-3 text-[11px] text-neon-gold">
-            <Loader2 size={13} className="animate-spin" />
-            {t.tasks.partnerAds.confirming}
-          </div>
-        )}
-      </div>
-
-      {error && <p className="mt-2 text-center text-[11px] text-red-400">{error}</p>}
-    </div>
-  );
-}
 
 function TaskRow({
   task,
@@ -994,5 +847,126 @@ function TaskActionButton({
       {busyAction === "verify" && <Loader2 size={13} className="animate-spin" />}
       {busyAction === "verify" ? t.tasks.action.verifying : t.tasks.action.verify}
     </button>
+  );
+}
+
+// Блок AdsGram типу Task (кабінет AdsGram -> Block type: Task). Id з кабінету
+// виду "task-1234" або просто "1234" — префікс додаємо самі.
+const ADSGRAM_TASK_BLOCK_ID = (() => {
+  const raw = process.env.NEXT_PUBLIC_ADSGRAM_TASK_BLOCK_ID?.trim();
+  if (!raw) return null;
+  return raw.startsWith("task-") ? raw : `task-${raw}`;
+})();
+
+/**
+ * Спонсорське завдання AdsGram (замість банера TADS). Віджет <adsgram-task>
+ * сам показує завдання партнера; коли гравець його виконав, AdsGram смикає
+ * Reward URL -> /api/ads/adsgram-postback?type=task, де нараховується та сама
+ * нагорода, що й за партнерську рекламу (record_partner_ad_watch), але не
+ * більше ADSGRAM_TASK_DAILY_LIMIT разів на добу саме з цього блоку. Подія
+ * "reward" на клієнті — лише сигнал почати опитувати сервер.
+ */
+function AdsgramTaskCard({ initData }: { initData: string }) {
+  const { t, language } = useTranslation();
+  const { state, patchProfile } = useUserData();
+  const [status, setStatus] = useState<"ready" | "confirming" | "no_ads">("ready");
+  const [error, setError] = useState<string | null>(null);
+  const taskRef = useRef<HTMLElement | null>(null);
+
+  const readyProfile = state.status === "ready" ? state.data.profile : null;
+  const readyIsAdmin = state.status === "ready" ? state.data.is_admin : false;
+  const today = new Date().toISOString().slice(0, 10);
+  const watchedToday =
+    readyProfile && readyProfile.partner_ads_reset_date === today ? readyProfile.partner_ads_watched_today : 0;
+  const limitReached = readyProfile ? !readyIsAdmin && watchedToday >= PARTNER_AD_DAILY_LIMIT : false;
+
+  const latestWatchedTodayRef = useRef(watchedToday);
+  latestWatchedTodayRef.current = watchedToday;
+
+  const mountedRef = useRef(true);
+  useEffect(() => () => {
+    mountedRef.current = false;
+  }, []);
+
+  useEffect(() => {
+    const el = taskRef.current;
+    if (!el) return;
+
+    const onReward = () => {
+      if (!mountedRef.current) return;
+      setError(null);
+      setStatus("confirming");
+      void pollPartnerAdWatchConfirmation(initData, latestWatchedTodayRef.current).then((outcome) => {
+        if (!mountedRef.current) return;
+        if (outcome.kind === "confirmed") {
+          patchProfile({
+            partner_ads_watched_today: outcome.profile.partner_ads_watched_today,
+            partner_ads_reset_date: outcome.profile.partner_ads_reset_date,
+            withdrawable_balance: outcome.profile.withdrawable_balance,
+          });
+        } else {
+          setError(outcome.kind === "rejected" ? t.tasks.partnerAds.notCounted : t.tasks.partnerAds.stillProcessing);
+        }
+        setStatus("ready");
+      });
+    };
+    const onNotFound = () => {
+      if (mountedRef.current) setStatus("no_ads");
+    };
+
+    el.addEventListener("reward", onReward);
+    el.addEventListener("onBannerNotFound", onNotFound);
+    el.addEventListener("onError", onNotFound);
+    return () => {
+      el.removeEventListener("reward", onReward);
+      el.removeEventListener("onBannerNotFound", onNotFound);
+      el.removeEventListener("onError", onNotFound);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initData, limitReached, status === "no_ads"]);
+
+  if (!ADSGRAM_TASK_BLOCK_ID || state.status !== "ready" || limitReached || status === "no_ads") return null;
+
+  const reward = t.tasks.reward.ton(formatNumber(language, PARTNER_AD_REWARD_TON, { maximumFractionDigits: 3 }));
+
+  return (
+    <div className="glass-card p-3.5">
+      <div className="flex items-start gap-2.5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neon-purple/10 text-neon-purple">
+          <Handshake size={16} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold text-white">{t.tasks.tadsAd.title}</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">{t.tasks.tadsAd.description}</p>
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold text-neon-green">{reward}</span>
+            <span className="text-[10px] font-medium text-slate-500">
+              {t.tasks.partnerAds.progress(watchedToday, PARTNER_AD_DAILY_LIMIT)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <adsgram-task ref={taskRef} data-block-id={ADSGRAM_TASK_BLOCK_ID} className="mt-2.5 block">
+        <span slot="reward" className="text-[11px] font-semibold text-neon-green">{reward}</span>
+        <div slot="button" className="rounded-xl bg-neon-purple px-3 py-1.5 text-center text-[11px] font-bold text-background">
+          {t.tasks.action.start}
+        </div>
+        <div slot="claim" className="rounded-xl bg-neon-green px-3 py-1.5 text-center text-[11px] font-bold text-background">
+          {t.tasks.action.claim}
+        </div>
+        <div slot="done" className="rounded-xl bg-white/5 px-3 py-1.5 text-center text-[11px] font-semibold text-slate-400">
+          {t.tasks.action.claimed}
+        </div>
+      </adsgram-task>
+
+      {status === "confirming" && (
+        <p className="mt-2 flex items-center gap-2 text-[11px] text-neon-gold">
+          <Loader2 size={13} className="animate-spin" />
+          {t.tasks.partnerAds.confirming}
+        </p>
+      )}
+      {error && <p className="mt-2 text-[11px] text-red-400">{error}</p>}
+    </div>
   );
 }

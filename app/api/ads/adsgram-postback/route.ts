@@ -15,6 +15,13 @@ export const dynamic = "force-dynamic";
 // user_id+provider у короткому часовому вікні, а не по унікальному токену.
 const DEDUPE_WINDOW_SECONDS = 6;
 
+// Блок типу Task (Reward URL з &type=task, components/tasks/TasksScreen.tsx,
+// AdsgramTaskCard): нагорода та сама, що й за перегляд, але не більше цієї
+// кількості зарахувань на гравця за UTC-добу саме з цього блоку. Понад ліміт
+// відповідаємо 200 (AdsGram вважає виконання доставленим), але не нараховуємо.
+const TASK_DAILY_LIMIT = 10;
+const TASK_EVENT_TYPE = "task";
+
 /**
  * S2S postback від сервера AdsGram (Reward URL з дашборду ad-блоку типу
  * "Reward") — на відміну від Monetag тут НЕМАЄ окремого кроку
@@ -53,20 +60,51 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: true, status: "unknown_user" });
     }
 
+    const isTask = url.searchParams.get("type") === TASK_EVENT_TYPE;
+    const eventType = isTask ? TASK_EVENT_TYPE : null;
+    const isAdmin = isTelegramAdmin(telegramId);
+
     const dedupeSince = new Date(Date.now() - DEDUPE_WINDOW_SECONDS * 1000).toISOString();
-    const { data: recentConfirmed, error: recentError } = await admin
+    let dedupeQuery = admin
       .from("ad_verification_attempts")
       .select("id")
       .eq("user_id", profile.id)
       .eq("provider", "adsgram")
       .eq("status", "confirmed")
-      .gte("confirmed_at", dedupeSince)
-      .limit(1)
-      .maybeSingle();
+      .gte("confirmed_at", dedupeSince);
+    dedupeQuery = isTask
+      ? dedupeQuery.eq("reported_reward_event_type", TASK_EVENT_TYPE)
+      : dedupeQuery.or(`reported_reward_event_type.is.null,reported_reward_event_type.neq.${TASK_EVENT_TYPE}`);
+    const { data: recentConfirmed, error: recentError } = await dedupeQuery.limit(1).maybeSingle();
 
     if (recentError) throw new ApiError(500, `failed to check dedupe window: ${recentError.message}`);
     if (recentConfirmed) {
       return NextResponse.json({ ok: true, status: "confirmed", deduped: true });
+    }
+
+    if (isTask && !isAdmin) {
+      const utcMidnight = new Date();
+      utcMidnight.setUTCHours(0, 0, 0, 0);
+      const { count, error: countError } = await admin
+        .from("ad_verification_attempts")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", profile.id)
+        .eq("provider", "adsgram")
+        .eq("reported_reward_event_type", TASK_EVENT_TYPE)
+        .eq("status", "confirmed")
+        .gte("confirmed_at", utcMidnight.toISOString());
+      if (countError) throw new ApiError(500, `failed to count task completions: ${countError.message}`);
+      if ((count ?? 0) >= TASK_DAILY_LIMIT) {
+        await admin.from("ad_verification_attempts").insert({
+          user_id: profile.id,
+          purpose: "partner_ad_watch",
+          provider: "adsgram",
+          status: "rejected",
+          reported_telegram_id: telegramId,
+          reported_reward_event_type: TASK_EVENT_TYPE,
+        });
+        return NextResponse.json({ ok: true, status: "rejected", reason: "daily task limit reached" });
+      }
     }
 
     // Адмін дивиться без обмеження денним лімітом — telegramId тут уже той
@@ -74,7 +112,7 @@ export async function GET(request: Request) {
     // джерело правди для авторизаційного рішення не потребує окремого запиту.
     const { error: rpcError } = await admin.rpc("record_partner_ad_watch", {
       p_user_id: profile.id,
-      p_bypass_limit: isTelegramAdmin(telegramId),
+      p_bypass_limit: isAdmin,
     });
 
     if (rpcError) {
@@ -87,6 +125,7 @@ export async function GET(request: Request) {
           provider: "adsgram",
           status: "rejected",
           reported_telegram_id: telegramId,
+          reported_reward_event_type: eventType,
         });
         return NextResponse.json({ ok: true, status: "rejected", reason: rpcError.message });
       }
@@ -99,6 +138,7 @@ export async function GET(request: Request) {
       provider: "adsgram",
       status: "confirmed",
       reported_telegram_id: telegramId,
+      reported_reward_event_type: eventType,
       confirmed_at: new Date().toISOString(),
     });
 
