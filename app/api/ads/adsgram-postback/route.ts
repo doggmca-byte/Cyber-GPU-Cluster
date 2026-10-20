@@ -62,6 +62,13 @@ export async function GET(request: Request) {
 
     const isTask = url.searchParams.get("type") === TASK_EVENT_TYPE;
     const eventType = isTask ? TASK_EVENT_TYPE : null;
+
+    // Діагностика: AdsGram передає в Reward URL лише [userId], тож блок, з якого
+    // прийшов постбек, видно тільки з нашої мітки &block=<id>, дописаної в
+    // Reward URL кожного блоку в кабінеті. Один рядок у runtime-логах Vercel.
+    console.info(
+      `[adsgram-postback] block=${url.searchParams.get("block") ?? "-"} type=${eventType ?? "reward"} tg=${telegramId}`,
+    );
     const isAdmin = isTelegramAdmin(telegramId);
 
     const dedupeSince = new Date(Date.now() - DEDUPE_WINDOW_SECONDS * 1000).toISOString();
