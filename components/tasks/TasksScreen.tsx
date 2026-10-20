@@ -852,6 +852,8 @@ function TaskActionButton({
 
 // Блок AdsGram типу Task (кабінет AdsGram -> Block type: Task). Id з кабінету
 // виду "task-1234" або просто "1234" — префікс додаємо самі.
+const ADSGRAM_TASK_REVEAL_MS = 2500;
+
 const ADSGRAM_TASK_BLOCK_ID = (() => {
   const raw = process.env.NEXT_PUBLIC_ADSGRAM_TASK_BLOCK_ID?.trim();
   if (!raw) return null;
@@ -869,7 +871,12 @@ const ADSGRAM_TASK_BLOCK_ID = (() => {
 function AdsgramTaskCard({ initData }: { initData: string }) {
   const { t, language } = useTranslation();
   const { state, patchProfile } = useUserData();
-  const [status, setStatus] = useState<"ready" | "confirming" | "no_ads">("ready");
+  // "loading" — віджет змонтований, але картка прихована: поки AdsGram
+  // вантажить завдання, SDK малює сірий скелет, і якщо завдання немає
+  // (onBannerNotFound), гравець бачив би неклікабельну заглушку, що зникає.
+  // Окремої події "завантажено" SDK не має — показуємо картку, якщо за
+  // ADSGRAM_TASK_REVEAL_MS не прийшло "не знайдено".
+  const [status, setStatus] = useState<"loading" | "ready" | "confirming" | "no_ads">("loading");
   const [error, setError] = useState<string | null>(null);
   const taskRef = useRef<HTMLElement | null>(null);
 
@@ -914,10 +921,15 @@ function AdsgramTaskCard({ initData }: { initData: string }) {
       if (mountedRef.current) setStatus("no_ads");
     };
 
+    const revealTimer = setTimeout(() => {
+      if (mountedRef.current) setStatus((s) => (s === "loading" ? "ready" : s));
+    }, ADSGRAM_TASK_REVEAL_MS);
+
     el.addEventListener("reward", onReward);
     el.addEventListener("onBannerNotFound", onNotFound);
     el.addEventListener("onError", onNotFound);
     return () => {
+      clearTimeout(revealTimer);
       el.removeEventListener("reward", onReward);
       el.removeEventListener("onBannerNotFound", onNotFound);
       el.removeEventListener("onError", onNotFound);
@@ -930,7 +942,7 @@ function AdsgramTaskCard({ initData }: { initData: string }) {
   const reward = t.tasks.reward.ton(formatNumber(language, PARTNER_AD_REWARD_TON, { maximumFractionDigits: 3 }));
 
   return (
-    <div className="glass-card p-3.5">
+    <div className={status === "loading" ? "hidden" : "glass-card p-3.5"}>
       <div className="flex items-start gap-2.5">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neon-purple/10 text-neon-purple">
           <Handshake size={16} />
