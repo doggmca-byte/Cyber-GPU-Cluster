@@ -144,6 +144,13 @@ export const ADMIN_GRANT_TARGET_BALANCE = "game_balance" as const;
 // але частіше ніж раз на кулдаун не нараховуємо.
 export const SPONSOR_TASK_COOLDOWN_SECONDS = 120;
 
+// Скільки реклами AdsGram (rewarded + Task, усі місця застосунку) гравець
+// бачить за добу UTC. Підтримка AdsGram: понад 30 на юзера вони не
+// зараховують, а антифрод може його заблокувати — тож максимум 29, далі
+// AdsGram вимикається до кінця доби і працює наступна мережа (GigaPub).
+// Лічильник: app/api/user/sync (adsgram_today) + lib/ads/adsgramDailyCap.ts.
+export const ADSGRAM_DAILY_CAP = 29;
+
 // claim_daily_bonus
 export const DAILY_BONUS_REWARD_TON = 0.001;
 // Мінімальна "взаємодія з рекламою" перед клеймом (Adsgram/Monetag-заглушка,

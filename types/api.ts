@@ -19,6 +19,8 @@ export interface SyncResponse {
   promo: PromoState | null;
   /** TRUE лише для telegram_id зі списку TELEGRAM_ADMIN_IDS — сам список ніколи не йде в клієнт. */
   is_admin: boolean;
+  /** Скільки реклами AdsGram гравець отримав за добу UTC (ліміт ADSGRAM_DAILY_CAP, lib/ads/adsgramDailyCap.ts). */
+  adsgram_today: number;
   server_time: string;
 }
 

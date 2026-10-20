@@ -6,7 +6,8 @@ import { rpcErrorToApiError } from "@/lib/api/rpc";
 import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
 import { partnerAdLimitError } from "@/lib/ads/partnerAdLimit";
 import { creditSponsorReward } from "@/lib/ads/sponsorReward";
-import { SPONSOR_TASK_COOLDOWN_SECONDS } from "@/lib/constants/economy";
+import { countAdsgramToday } from "@/lib/ads/adsgramDailyCount";
+import { ADSGRAM_DAILY_CAP, SPONSOR_TASK_COOLDOWN_SECONDS } from "@/lib/constants/economy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -104,6 +105,21 @@ export async function GET(request: Request) {
     }
     if (recentConfirmed) {
       return NextResponse.json({ ok: true, status: "confirmed", deduped: true });
+    }
+
+    // Денний ліміт AdsGram (ADSGRAM_DAILY_CAP) — клієнт після нього AdsGram
+    // уже не показує; це страховка від обходу (кілька пристроїв, підмінений клієнт).
+    const adsgramToday = isAdmin ? null : await countAdsgramToday(admin, profile.id);
+    if (adsgramToday !== null && adsgramToday >= ADSGRAM_DAILY_CAP) {
+      await admin.from("ad_verification_attempts").insert({
+        user_id: profile.id,
+        purpose: "partner_ad_watch",
+        provider: "adsgram",
+        status: "rejected",
+        reported_telegram_id: telegramId,
+        reported_reward_event_type: eventType,
+      });
+      return NextResponse.json({ ok: true, status: "rejected", reason: "adsgram_daily_cap" });
     }
 
     // Адмін дивиться без обмеження денним лімітом — telegramId тут уже той

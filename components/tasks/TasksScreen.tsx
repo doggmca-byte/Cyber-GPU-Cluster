@@ -22,6 +22,7 @@ import { useTranslation } from "@/lib/i18n/LanguageProvider";
 import { formatNumber } from "@/lib/i18n/formatNumber";
 import { showGigaRewardedAd } from "@/lib/ads/gigapub";
 import { showAdsgramRewardedAdDetailed } from "@/lib/ads/adsgram";
+import { isAdsgramCapped, noteAdsgramShown } from "@/lib/ads/adsgramDailyCap";
 import { markPartnerAdNoFill, nextPartnerAdSlot } from "@/lib/ads/partnerAdRotation";
 import type { VerifiedPollResult } from "@/lib/ads/verifiedAdWatch";
 import { ScreenSkeleton, NoTelegramNotice, SyncErrorNotice } from "@/components/ui/ScreenStates";
@@ -907,7 +908,7 @@ function SponsorSlot({ initData }: { initData: string }) {
       <SponsorCardHeader />
       {cooldown.remainingSeconds > 0 ? (
         <SponsorPlaceholder label={t.tasks.tadsAd.cooldown(formatCountdown(cooldown.remainingSeconds))} />
-      ) : adsgramAvailable ? (
+      ) : adsgramAvailable && !isAdsgramCapped() ? (
         <AdsgramTaskBody sponsor={sponsor} onUnavailable={() => setAdsgramAvailable(false)} />
       ) : (
         <SponsorPlaceholder label={t.tasks.tadsAd.noAdsAvailable} />
@@ -1083,13 +1084,18 @@ function AdsgramTaskBody({ sponsor, onUnavailable }: { sponsor: SponsorReward; o
       if (mountedRef.current) onUnavailableRef.current();
     };
 
-    el.addEventListener("reward", confirm);
+    const onReward = () => {
+      noteAdsgramShown();
+      confirm();
+    };
+
+    el.addEventListener("reward", onReward);
     el.addEventListener("onBannerNotFound", onNotFound);
     el.addEventListener("onError", onNotFound);
     el.addEventListener("onTooLongSession", onNotFound);
     return () => {
       clearTimeout(revealTimer);
-      el.removeEventListener("reward", confirm);
+      el.removeEventListener("reward", onReward);
       el.removeEventListener("onBannerNotFound", onNotFound);
       el.removeEventListener("onError", onNotFound);
       el.removeEventListener("onTooLongSession", onNotFound);

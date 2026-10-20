@@ -11,6 +11,7 @@ import {
 } from "react";
 import { getWebAppInitData } from "@/lib/telegram/getWebAppInitData";
 import type { BuyGpuResponse, HarvestResponse, Profile, SyncResponse } from "@/types/api";
+import { syncAdsgramShownToday } from "@/lib/ads/adsgramDailyCap";
 
 export type UserDataState =
   | { status: "loading" }
@@ -122,6 +123,7 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
 
         if (res.ok) {
           const data = (await res.json()) as SyncResponse;
+          syncAdsgramShownToday(data.adsgram_today);
           setState({ status: "ready", data, initData, clockOffsetMs: calcClockOffsetMs(data.server_time) });
           return;
         }

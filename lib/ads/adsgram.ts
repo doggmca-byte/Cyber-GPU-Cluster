@@ -1,3 +1,5 @@
+import { isAdsgramCapped, noteAdsgramShown } from "./adsgramDailyCap";
+
 /**
  * AdsGram SDK (Reward-блок) — третій rewarded-провайдер поряд із Monetag
  * (lib/ads/monetag.ts) та GigaPub (lib/ads/gigapub.ts). Скрипт підключається
@@ -235,11 +237,16 @@ export async function showAdsgramRewardedAd(): Promise<boolean> {
  * сам закрив показ, другий блок одразу слідом був би нав'язливим.
  */
 export async function showAdsgramRewardedAdDetailed(): Promise<AdsgramOutcome> {
+  // Денний ліміт AdsGram вичерпано — поводимося як мережа без реклами,
+  // виклик сам перейде до наступної (lib/ads/adsgramDailyCap.ts).
+  if (isAdsgramCapped()) return "no_fill";
+
   const blocks = rotatedBlockIds();
   if (blocks.length === 0) return "no_fill";
 
   for (const blockId of blocks) {
     const outcome = await showOneBlock(blockId);
+    if (outcome === "shown") noteAdsgramShown();
     if (outcome !== "no_fill") return outcome;
   }
   return "no_fill";

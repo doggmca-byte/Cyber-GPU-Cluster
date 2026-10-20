@@ -8,6 +8,7 @@ import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
 import { calcTotalHashPerSecond } from "@/lib/farm/totalHashPerSecond";
 import { loadGpuTemplates } from "@/lib/farm/gpuTemplates";
 import { runOpportunisticDepositScan } from "@/lib/wallet/opportunisticDepositScan";
+import { countAdsgramToday } from "@/lib/ads/adsgramDailyCount";
 import type { PromoState } from "@/lib/promo/promo";
 import type { SyncResponse } from "@/types/api";
 import type { Database } from "@/types/database.types";
@@ -49,9 +50,10 @@ export async function POST(request: Request) {
       profile = await syncDisplayFields(admin, profile, user);
     }
 
-    const [{ data: userGpus, error: gpusError }, gpuTemplates] = await Promise.all([
+    const [{ data: userGpus, error: gpusError }, gpuTemplates, adsgramToday] = await Promise.all([
       admin.from("user_gpus").select("*").eq("user_id", profile.id).order("gpu_level"),
       loadGpuTemplates(admin),
+      countAdsgramToday(admin, profile.id),
     ]);
 
     if (gpusError) throw new ApiError(500, `failed to load user_gpus: ${gpusError.message}`);
@@ -133,6 +135,8 @@ export async function POST(request: Request) {
       // для всіх, крім is_admin: true — справжній захист лишається на
       // requireAdminAuth() (lib/admin/auth.ts), це поле лише про UX/приховування.
       is_admin: isTelegramAdmin(user.id),
+      // Збій підрахунку не має вимикати AdsGram — тоді клієнт лишається при своєму локальному лічильнику.
+      adsgram_today: adsgramToday ?? 0,
       server_time: new Date().toISOString(),
     };
 

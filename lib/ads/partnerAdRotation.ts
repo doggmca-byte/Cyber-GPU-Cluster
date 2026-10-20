@@ -1,3 +1,5 @@
+import { isAdsgramCapped } from "./adsgramDailyCap";
+
 /**
  * Строга 3-позиційна ротація САМЕ для кнопки "Дивитись рекламу"
  * (PartnerAdsCard, purpose=partner_ad_watch) — 1.GigaPub 2.AdsGram 3.TADS,
@@ -79,7 +81,10 @@ export function nextPartnerAdSlot(): PartnerAdSlot {
 
   // Перша за пріоритетом мережа, що не на паузі. Якщо на паузі всі —
   // беремо найвищу за пріоритетом: краще спробувати, ніж не показати нічого.
+  // AdsGram з вичерпаним денним лімітом (ADSGRAM_DAILY_CAP) не пропонуємо зовсім.
+  const capped = isAdsgramCapped();
+  const order = capped ? PARTNER_AD_ORDER.filter((slot) => slot !== "adsgram") : PARTNER_AD_ORDER;
   const noFill = readNoFill();
-  const available = PARTNER_AD_ORDER.find((slot) => !isCoolingDown(slot, noFill));
-  return available ?? PARTNER_AD_ORDER[0];
+  const available = order.find((slot) => !isCoolingDown(slot, noFill));
+  return available ?? order[0];
 }
