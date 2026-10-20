@@ -187,12 +187,13 @@ async function reconcileProcessing(
     const attempt = ((row.payload ?? {}) as WithdrawPayload).payout_attempt;
     const validUntilMs = attempt?.valid_until ? Date.parse(attempt.valid_until) : NaN;
     const startedAtMs = attempt?.started_at ? Date.parse(attempt.started_at) : NaN;
+    const attemptSeqno = Number(attempt?.seqno);
 
     // 'processing' без даних спроби — спадок старого ручного "Авто" з адмінки.
     // Що з ним, воркер знати не може: таку заявку дотискає адмін хешем вручну.
-    if (!Number.isFinite(validUntilMs) || !Number.isFinite(startedAtMs)) continue;
+    if (!Number.isFinite(validUntilMs) || !Number.isFinite(startedAtMs) || !Number.isInteger(attemptSeqno)) continue;
 
-    const settled = await settleOne(admin, row.id, validUntilMs, startedAtMs, startedAt, result);
+    const settled = await settleOne(admin, row.id, attemptSeqno, validUntilMs, startedAtMs, startedAt, result);
     if (!settled) return row.id;
   }
 
@@ -202,6 +203,7 @@ async function reconcileProcessing(
 async function settleOne(
   admin: AdminClient,
   transactionId: string,
+  attemptSeqno: number,
   validUntilMs: number,
   attemptStartedMs: number,
   runStartedAt: number,
@@ -238,6 +240,32 @@ async function settleOne(
     }
 
     if (checkedAt > validUntilMs + EXPIRY_GRACE_SECONDS * 1000) {
+      // Друга, незалежна від індексатора toncenter перевірка. seqno гаманця
+      // зростає лише коли гаманець реально виконав повідомлення. Якщо він досі
+      // дорівнює seqno нашої спроби, а validUntil минув — наше повідомлення
+      // не виконано і вже ніколи не буде: повтор безпечний. Якщо seqno зрушив,
+      // а переказу з нашим id в історії не видно — або історія його пропустила,
+      // або seqno з'їла інша операція з гаманця (ручний переказ із Tonkeeper).
+      // Тут не вгадуємо: заявка лишається в processing, черга стоїть, адмін
+      // перевіряє експлорер.
+      let seqnoNow: number;
+      try {
+        seqnoNow = await getTreasurySeqno();
+      } catch (err) {
+        console.error(`[payouts] seqno check failed for ${transactionId}: ${describeError(err)}`);
+        if (Date.now() - runStartedAt > HARD_STOP_MS) return false;
+        await sleep(POLL_INTERVAL_MS);
+        continue;
+      }
+
+      if (seqnoNow !== attemptSeqno) {
+        console.error(
+          `[payouts] MANUAL CHECK NEEDED: ${transactionId} expired, no transfer with its id found, but wallet seqno ` +
+            `moved ${attemptSeqno} -> ${seqnoNow}. Not resending. Check the treasury in an explorer.`,
+        );
+        return false;
+      }
+
       const { error } = await admin.rpc("revert_withdrawal_to_pending", {
         p_transaction_id: transactionId,
         p_reason: "payout message expired without reaching the network",
