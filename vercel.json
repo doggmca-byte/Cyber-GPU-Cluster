@@ -9,6 +9,10 @@
       "schedule": "* * * * *"
     },
     {
+      "path": "/api/cron/payouts",
+      "schedule": "* * * * *"
+    },
+    {
       "path": "/api/cron/deposits",
       "schedule": "*/5 * * * *"
     },
