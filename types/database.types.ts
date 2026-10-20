@@ -790,6 +790,23 @@ export type Database = {
           tx_hash: string
         }[]
       }
+      acquire_job_lock: {
+        Args: { p_holder: string; p_lease_seconds: number; p_name: string }
+        Returns: boolean
+      }
+      release_job_lock: {
+        Args: { p_holder: string; p_name: string }
+        Returns: undefined
+      }
+      begin_auto_withdrawal_payout: {
+        Args: { p_seqno: number; p_transaction_id: string; p_valid_until: string }
+        Returns: {
+          attempt: number
+          destination_address: string
+          net_payout: number
+          transaction_id: string
+        }[]
+      }
       begin_withdrawal_payout: {
         Args: { p_transaction_id: string }
         Returns: {

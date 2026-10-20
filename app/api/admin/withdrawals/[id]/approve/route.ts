@@ -4,22 +4,19 @@ import { requireAdminAuth } from "@/lib/admin/auth";
 import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { readJsonBody } from "@/lib/api/request";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
-import { sendTreasuryPayout, AmbiguousPayoutError } from "@/lib/ton/treasury";
+import { runPayoutWorker, MAX_AUTO_PAYOUT_TON } from "@/lib/ton/payoutWorker";
 import type { AdminApproveResponse } from "@/types/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 // Захисна межа: заявки понад цю суму НЕ надсилаються автоматично, навіть у
 // auto-режимі — вимагають ручного втручання (manual-режим), щоб один баг чи
 // скомпрометована admin-сесія не спорожнили скарбницю одним кліком.
-const DEFAULT_MAX_AUTO_PAYOUT_TON = 50;
-
+// Та сама межа діє у воркері для автовиплат.
 function getMaxAutoPayoutTon(): number {
-  const raw = process.env.MAX_AUTO_PAYOUT_TON;
-  if (!raw) return DEFAULT_MAX_AUTO_PAYOUT_TON;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MAX_AUTO_PAYOUT_TON;
+  return MAX_AUTO_PAYOUT_TON;
 }
 
 interface ApproveRequestBody {
@@ -54,6 +51,22 @@ async function approveManually(transactionId: string, payoutTxHash: string | und
   }
 
   const admin = createAdminClient();
+
+  // Поки автовідправка по цій заявці ще може дійти в мережу, ручне
+  // підтвердження заборонене: ручна оплата адміном + запізніле
+  // автоповідомлення — це дві виплати за одну заявку.
+  const { data: current, error: loadError } = await admin
+    .from("transactions")
+    .select("status, payload")
+    .eq("id", transactionId)
+    .maybeSingle();
+  if (loadError) throw new ApiError(500, `failed to load withdrawal: ${loadError.message}`);
+  const attempt = (current?.payload as { payout_attempt?: { valid_until?: string } } | null)?.payout_attempt;
+  const validUntilMs = attempt?.valid_until ? Date.parse(attempt.valid_until) : NaN;
+  if (current?.status === "processing" && Number.isFinite(validUntilMs) && Date.now() < validUntilMs + 60_000) {
+    throw new ApiError(409, "auto payout for this withdrawal is in flight — wait a minute and refresh");
+  }
+
   const { data, error } = await admin
     .rpc("approve_withdrawal", { p_transaction_id: transactionId, p_payout_tx_hash: payoutTxHash.trim() })
     .single();
@@ -70,107 +83,54 @@ async function approveManually(transactionId: string, payoutTxHash: string | und
 }
 
 /**
- * Custodial авто-виплата: begin_withdrawal_payout атомарно "застовплює"
- * заявку (pending -> processing), щоб паралельний/повторний запит не міг
- * відправити ту саму виплату двічі. Якщо на БУДЬ-ЯКОМУ кроці після цього
- * стається збій ДО фактичної відправки в мережу — відкочуємо назад у
- * pending через revert_withdrawal_to_pending. Якщо гроші вже пішли, але
- * approve_withdrawal чомусь не вдався — НЕ відкочуємо (щоб не дозволити
- * повторну відправку реальних коштів), а повертаємо 500 з хешем транзакції
- * в повідомленні для ручного дорозслідування.
+ * "Авто" в адмінці — той самий воркер, що й автовиплати (lib/ton/payoutWorker.ts),
+ * лише з цією заявкою першою в черзі. Окремого шляху відправки більше немає:
+ * два незалежні відправники на один гаманець ділили б seqno і могли б
+ * заплатити двічі.
  */
 async function approveAutomatically(transactionId: string) {
   const admin = createAdminClient();
 
-  const { data: claim, error: claimError } = await admin
-    .rpc("begin_withdrawal_payout", { p_transaction_id: transactionId })
-    .single();
-
-  if (claimError) throw rpcErrorToApiError(claimError);
-  if (!claim) throw new ApiError(500, "begin_withdrawal_payout returned no data");
-
-  const { destination_address: destinationAddress, net_payout: netPayout } = claim;
-
-  if (!destinationAddress || !Number.isFinite(netPayout) || netPayout <= 0) {
-    await revertSafely(admin, transactionId, "missing or invalid payout details in transaction payload");
-    throw new ApiError(500, "withdrawal payload is missing destination_address/net_payout");
-  }
-
+  const { data: requested, error: loadError } = await admin
+    .from("transactions")
+    .select("payload")
+    .eq("id", transactionId)
+    .maybeSingle();
+  if (loadError) throw new ApiError(500, `failed to load withdrawal: ${loadError.message}`);
+  const netPayout = Number((requested?.payload as { net_payout?: number | string } | null)?.net_payout);
   const maxAutoPayout = getMaxAutoPayoutTon();
-  if (netPayout > maxAutoPayout) {
-    await revertSafely(admin, transactionId, `exceeds MAX_AUTO_PAYOUT_TON (${maxAutoPayout})`);
+  if (Number.isFinite(netPayout) && netPayout > maxAutoPayout) {
     throw new ApiError(
       400,
       `net payout ${netPayout} TON exceeds the auto-payout limit of ${maxAutoPayout} TON — use manual mode`,
     );
   }
 
-  let payoutTxHash: string;
-  try {
-    const payout = await sendTreasuryPayout(
-      destinationAddress,
-      netPayout,
-      `Cyber GPU Cluster withdrawal ${transactionId}`,
-    );
-    payoutTxHash = payout.txHash;
-  } catch (err) {
-    if (err instanceof AmbiguousPayoutError) {
-      // sendTreasuryPayout сам перевірив seqno гаманця й визначив, що
-      // виплата, найімовірніше, УЖЕ пішла в мережу попри помилку — НЕ
-      // відкочуємо в pending (інакше повторний Approve міг би відправити
-      // ту саму виплату вдруге). Заявка лишається в 'processing'
-      // (застовплена begin_withdrawal_payout раніше в цій функції) — тепер
-      // видима в адмінці (GET /api/admin/withdrawals включає 'processing')
-      // з єдиною доступною дією "Ввести хеш вручну", щоб дожати вручну
-      // реальним хешем після перевірки в експлорері.
-      throw new ApiError(
-        500,
-        `AMBIGUOUS payout state — do NOT retry auto-approve for this transaction: ${err.message}`,
-      );
-    }
+  const worker = await runPayoutWorker({ trigger: "admin", priorityTransactionId: transactionId });
 
-    // Гроші достеменно НЕ пішли (seqno гаманця лишився незмінним) —
-    // безпечно відкотити назад у pending для повторної спроби.
-    const message = err instanceof Error ? err.message : "unknown treasury error";
-    await revertSafely(admin, transactionId, message);
-    throw new ApiError(502, `treasury payout failed: ${message}`);
+  if (worker.skipped === "disabled") {
+    throw new ApiError(409, "auto payouts are disabled (AUTO_PAYOUTS_DISABLED=1) — use manual mode");
   }
 
-  const { data: approved, error: approveError } = await admin
-    .rpc("approve_withdrawal", { p_transaction_id: transactionId, p_payout_tx_hash: payoutTxHash })
-    .single();
+  const { data: tx, error } = await admin
+    .from("transactions")
+    .select("id, status, tx_hash")
+    .eq("id", transactionId)
+    .maybeSingle();
 
-  if (approveError) {
-    // Гроші ВЖЕ пішли (payoutTxHash отримано) — НЕ чіпаємо статус, щоб не
-    // допустити повторної відправки. Хеш є в повідомленні для адміна.
-    throw new ApiError(
-      500,
-      `payout sent (tx_hash=${payoutTxHash}) but failed to finalize in DB: ${approveError.message}. ` +
-        `Resolve manually — do NOT retry auto-approve for this transaction.`,
-    );
+  if (error) throw new ApiError(500, `failed to load withdrawal: ${error.message}`);
+  if (!tx) throw new ApiError(404, "withdrawal not found");
+
+  if (tx.status !== "completed" || !tx.tx_hash) {
+    const reason =
+      worker.skipped === "locked" ? "another payout run is in progress" : worker.stopped ?? "not settled yet";
+    throw new ApiError(409, `withdrawal is ${tx.status}: ${reason} — refresh in a minute`);
   }
-
-  if (!approved) throw new ApiError(500, "approve_withdrawal returned no data");
 
   const response: AdminApproveResponse = {
-    transaction_id: approved.transaction_id,
-    status: approved.status,
-    tx_hash: approved.tx_hash,
+    transaction_id: tx.id,
+    status: tx.status,
+    tx_hash: tx.tx_hash,
   };
   return NextResponse.json(response);
-}
-
-async function revertSafely(
-  admin: ReturnType<typeof createAdminClient>,
-  transactionId: string,
-  reason: string,
-): Promise<void> {
-  const { error } = await admin.rpc("revert_withdrawal_to_pending", {
-    p_transaction_id: transactionId,
-    p_reason: reason,
-  });
-
-  if (error) {
-    console.error("[admin/approve] failed to revert withdrawal to pending:", transactionId, error);
-  }
 }

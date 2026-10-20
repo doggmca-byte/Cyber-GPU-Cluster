@@ -12,9 +12,8 @@ import { Address, toNano } from "@ton/core";
 
 /**
  * Custodial-гаманець скарбниці: сервер сам зберігає мнемонік-фразу й підписує
- * реальні TON-транзакції виплат після Approve в адмінці — усвідомлений
- * компроміс (див. supabase/migrations/20260817030441_...), обраний замість
- * TON Connect-підпису адміном.
+ * реальні TON-транзакції виплат — автоматично для кожної заявки
+ * (lib/ton/payoutWorker.ts, 20261021120000_auto_withdrawal_payouts.sql).
  *
  * НЕБЕЗПЕЧНО: TREASURY_WALLET_MNEMONIC — це повний контроль над коштами
  * скарбниці. Тримати лише як секрет на сервері (Vercel env, НЕ NEXT_PUBLIC_),
@@ -88,141 +87,59 @@ export async function getTreasuryBalanceTon(): Promise<number> {
   return Number(fromNano(balance));
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+export async function getTreasurySeqno(): Promise<number> {
+  const { contract } = await getTreasuryWallet();
+  return contract.getSeqno();
 }
 
-function describeError(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
-}
-
-export interface PayoutResult {
-  txHash: string;
-}
-
-/**
- * Кидається замість звичайної Error, коли ми НЕ можемо стверджувати, що
- * реальна TON-виплата НЕ пішла в мережу (seqno гаманця вже зрушив і/або
- * повторно перевірити його не вдалось). На відміну від "звичайного" збою
- * (наприклад, toncenter повернув 500 ЩЕ ДО sendTransfer — seqno не змінився,
- * нічого не відправлено), тут викликач (approve/route.ts) НЕ повинен
- * автоматично відкочувати заявку назад у pending — інакше повторний Approve
- * ризикує відправити ту саму виплату ВДРУГЕ (гаманець прийме нове зовнішнє
- * повідомлення з наступним seqno незалежно від того, чи попереднє "згубилось"
- * лише в HTTP-відповіді, чи справді ніколи не дійшло до мережі).
- */
-export class AmbiguousPayoutError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "AmbiguousPayoutError";
-  }
+/** Коментар виплати — єдиний ідентифікатор, за яким воркер шукає її в мережі. */
+export function payoutComment(transactionId: string): string {
+  return `Cyber GPU Cluster withdrawal ${transactionId}`;
 }
 
 /**
- * Надсилає TON зі скарбниці на destinationAddress і повертає реальний хеш
- * транзакції (для запису в approve_withdrawal). Чекає на інкремент seqno
- * (підтвердження, що зовнішнє повідомлення оброблено мережею), потім шукає
- * відповідну вихідну транзакцію в історії гаманця за адресою одержувача.
+ * Лише підписує й віддає повідомлення в мережу — без очікувань і без висновків.
+ * Будь-яка помилка тут НЕ означає, що грошей не відправлено (toncenter міг
+ * прийняти повідомлення і впасти на відповіді), тож викликач ніколи не
+ * відкочує заявку за помилкою звідси: що сталось насправді, вирішує лише
+ * findTreasuryPayout після validUntil (lib/ton/payoutWorker.ts).
  *
- * На БУДЬ-ЯКУ помилку після старту відправки — перевіряє seqno ще раз перед
- * тим, як кинути звичайну (безпечну для відкату) Error: якщо він УЖЕ зрушив
- * відносно значення до відправки — кидає AmbiguousPayoutError замість цього,
- * бо повідомлення, найімовірніше, реально прийняте мережею, попри збій.
+ * validUntil (unix-секунди) зашивається в підпис: після нього гаманець
+ * відхилить повідомлення, тож "запізніла" друга виплата неможлива.
  */
-export async function sendTreasuryPayout(
-  destinationAddress: string,
-  amountTon: number,
-  comment: string,
-): Promise<PayoutResult> {
-  const { contract, keyPair, address } = await getTreasuryWallet();
+export async function sendTreasuryTransfer(args: {
+  destinationAddress: string;
+  amountTon: number;
+  comment: string;
+  seqno: number;
+  validUntil: number;
+}): Promise<void> {
+  const { contract, keyPair } = await getTreasuryWallet();
 
-  const to = Address.parse(destinationAddress);
-  const seqnoBefore = await contract.getSeqno();
-
-  try {
-    await contract.sendTransfer({
-      secretKey: keyPair.secretKey,
-      seqno: seqnoBefore,
-      sendMode: SendMode.PAY_GAS_SEPARATELY,
-      messages: [
-        internal({
-          to,
-          value: toNano(amountTon.toFixed(9)),
-          bounce: false,
-          body: comment,
-        }),
-      ],
-    });
-
-    await waitForSeqnoIncrement(contract, seqnoBefore);
-
-    const txHash = await findOutgoingTransactionHash(address, to, amountTon);
-    if (!txHash) {
-      // seqno ТОЧНО вже зрушив (waitForSeqnoIncrement це підтвердив) —
-      // виплата гарантовано пішла в мережу, просто ще не знайшли хеш.
-      // Завжди неоднозначний випадок, ніколи не "просто ретрай".
-      throw new AmbiguousPayoutError(
-        `payout was broadcast and the treasury wallet seqno advanced (${seqnoBefore} → seqno+1), but the ` +
-          `resulting transaction could not be located yet — check the treasury wallet explorer for a transfer ` +
-          `of ${amountTon} TON to ${to.toString()} and finalize manually (do NOT retry auto-approve).`,
-      );
-    }
-
-    return { txHash };
-  } catch (err) {
-    if (err instanceof AmbiguousPayoutError) throw err;
-
-    // Перевіряємо seqno ще раз ПІСЛЯ помилки — якщо він уже зрушив відносно
-    // значення до спроби, sendTransfer, найімовірніше, реально дійшов до
-    // мережі, попри те що ми отримали помилку (наприклад, toncenter впав
-    // саме на відповіді, а не на прийомі повідомлення).
-    let seqnoAfter: number;
-    try {
-      seqnoAfter = await contract.getSeqno();
-    } catch {
-      throw new AmbiguousPayoutError(
-        `payout attempt failed and the treasury wallet seqno could not be re-verified afterwards ` +
-          `(original error: ${describeError(err)}) — do NOT retry automatically; check the treasury wallet ` +
-          `explorer for a transfer of ${amountTon} TON to ${to.toString()} before resending.`,
-      );
-    }
-
-    if (seqnoAfter > seqnoBefore) {
-      throw new AmbiguousPayoutError(
-        `payout attempt failed (${describeError(err)}), but the treasury wallet seqno already advanced ` +
-          `(${seqnoBefore} → ${seqnoAfter}) — the transfer likely went through despite the error. Do NOT retry ` +
-          `automatically; check the treasury wallet explorer for a transfer of ${amountTon} TON to ${to.toString()} ` +
-          `and finalize manually with the real tx hash instead.`,
-      );
-    }
-
-    // seqno незмінний — нічого не пішло в мережу, ця помилка безпечна для
-    // автоматичного відкату заявки назад у pending.
-    throw err;
-  }
-}
-
-async function waitForSeqnoIncrement(
-  contract: OpenedContract<WalletContractV5R1>,
-  previousSeqno: number,
-  { maxAttempts = 8, delayMs = 3000 }: { maxAttempts?: number; delayMs?: number } = {},
-): Promise<void> {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    await sleep(delayMs);
-    const seqno = await contract.getSeqno();
-    if (seqno > previousSeqno) return;
-  }
-
-  throw new Error("timed out waiting for the treasury wallet to confirm the transaction (seqno unchanged)");
+  await contract.sendTransfer({
+    secretKey: keyPair.secretKey,
+    seqno: args.seqno,
+    timeout: args.validUntil,
+    sendMode: SendMode.PAY_GAS_SEPARATELY,
+    messages: [
+      internal({
+        to: Address.parse(args.destinationAddress),
+        value: toNano(args.amountTon.toFixed(9)),
+        bounce: false,
+        body: args.comment,
+      }),
+    ],
+  });
 }
 
 interface TonCenterOutMessage {
   destination?: string;
   value?: string;
+  message?: string;
 }
 
 interface TonCenterTransaction {
-  transaction_id?: { hash?: string };
+  transaction_id?: { hash?: string; lt?: string };
   utime?: number;
   out_msgs?: TonCenterOutMessage[];
 }
@@ -232,53 +149,60 @@ interface TonCenterGetTransactionsResponse {
   result?: TonCenterTransaction[];
 }
 
-/** Шукає щойно відправлену транзакцію серед останніх вихідних з гаманця скарбниці. */
-async function findOutgoingTransactionHash(
-  treasuryAddress: Address,
-  destination: Address,
-  amountTon: number,
-): Promise<string | null> {
-  const url = new URL("https://toncenter.com/api/v2/getTransactions");
-  url.searchParams.set("address", treasuryAddress.toString());
-  url.searchParams.set("limit", "10");
-  url.searchParams.set("archival", "false");
+const HISTORY_PAGE_SIZE = 50;
+const HISTORY_MAX_PAGES = 20;
 
+/**
+ * Шукає вихідний переказ скарбниці з точно таким коментарем, гортаючи історію
+ * назад до sinceUnix. Збіг лише за коментарем (у ньому id заявки) навмисно:
+ * адреса й сума можуть повторюватись, а будь-який переказ із цим id означає
+ * "виплату вже відправлено" — повторювати не можна.
+ *
+ * Помилку toncenter кидає далі, а не повертає null: "не вдалось перевірити"
+ * ніколи не повинно виглядати як "переказу немає".
+ */
+export async function findTreasuryPayout(comment: string, sinceUnix: number): Promise<string | null> {
+  const { address } = await getTreasuryWallet();
   const apiKey = process.env.TONCENTER_API_KEY;
-  if (apiKey) url.searchParams.set("api_key", apiKey);
 
-  const res = await fetch(url.toString(), { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error(`toncenter getTransactions failed with status ${res.status}`);
-  }
+  let cursor: { lt: string; hash: string } | null = null;
 
-  const body = (await res.json()) as TonCenterGetTransactionsResponse;
-  if (!body.ok || !Array.isArray(body.result)) {
-    throw new Error("toncenter returned an unexpected response shape");
-  }
-
-  const destinationRaw = destination.toRawString();
-  const targetNano = toNano(amountTon.toFixed(9));
-
-  for (const tx of body.result) {
-    const hash = tx.transaction_id?.hash;
-    if (!hash) continue;
-
-    for (const outMsg of tx.out_msgs ?? []) {
-      if (!outMsg.destination || !outMsg.value) continue;
-
-      let outDestination: Address;
-      try {
-        outDestination = Address.parse(outMsg.destination);
-      } catch {
-        continue;
-      }
-
-      if (outDestination.toRawString() !== destinationRaw) continue;
-      if (BigInt(outMsg.value) !== targetNano) continue;
-
-      return hash;
+  for (let page = 0; page < HISTORY_MAX_PAGES; page++) {
+    const url = new URL("https://toncenter.com/api/v2/getTransactions");
+    url.searchParams.set("address", address.toString());
+    url.searchParams.set("limit", String(HISTORY_PAGE_SIZE));
+    url.searchParams.set("archival", "true");
+    if (cursor) {
+      url.searchParams.set("lt", cursor.lt);
+      url.searchParams.set("hash", cursor.hash);
     }
+    if (apiKey) url.searchParams.set("api_key", apiKey);
+
+    const res = await fetch(url.toString(), { cache: "no-store" });
+    if (!res.ok) {
+      throw new Error(`toncenter getTransactions failed with status ${res.status}`);
+    }
+
+    const body = (await res.json()) as TonCenterGetTransactionsResponse;
+    if (!body.ok || !Array.isArray(body.result)) {
+      throw new Error("toncenter returned an unexpected response shape");
+    }
+
+    // З курсором перший рядок — це сама транзакція курсора, вона вже переглянута.
+    const txs: TonCenterTransaction[] = cursor ? body.result.slice(1) : body.result;
+    if (txs.length === 0) return null;
+
+    for (const tx of txs) {
+      const hash = tx.transaction_id?.hash;
+      if (!hash) continue;
+      if ((tx.out_msgs ?? []).some((m) => m.message === comment)) return hash;
+    }
+
+    const last: TonCenterTransaction = txs[txs.length - 1];
+    if ((last.utime ?? 0) < sinceUnix) return null;
+    if (!last.transaction_id?.lt || !last.transaction_id.hash) return null;
+    cursor = { lt: last.transaction_id.lt, hash: last.transaction_id.hash };
   }
 
-  return null;
+  throw new Error("treasury history is too long to scan back to the payout start");
 }

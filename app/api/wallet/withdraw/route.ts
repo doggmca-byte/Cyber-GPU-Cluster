@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { Address } from "@ton/core";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyInitData, getTelegramBotToken } from "@/lib/telegram/verifyInitData";
@@ -7,10 +7,14 @@ import { readJsonBody } from "@/lib/api/request";
 import { requireProfileByTelegramId } from "@/lib/api/profile";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
 import { isCaptchaFresh } from "@/lib/captcha/policy";
+import { runPayoutWorker } from "@/lib/ton/payoutWorker";
 import type { WithdrawResponse } from "@/types/api";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Воркер виплат працює в after() цього ж виклику — йому потрібен час на
+// підтвердження переказу в мережі.
+export const maxDuration = 300;
 
 interface WithdrawRequestBody {
   initData?: string;
@@ -20,10 +24,9 @@ interface WithdrawRequestBody {
 
 /**
  * Створює заявку на вивід TON зі статусом 'pending' (request_withdrawal у БД).
- * Кошти резервуються одразу (списуються з withdrawable_balance) — фактична
- * відправка TON на destination_address і позначення транзакції
- * 'completed'/'failed' відбувається поза межами цього роута (адмін-процес/
- * воркер, не реалізований у цьому етапі).
+ * Кошти резервуються одразу (списуються з withdrawable_balance). Відправку TON
+ * запускає воркер автовиплат (lib/ton/payoutWorker.ts) одразу ПІСЛЯ відповіді —
+ * гравець не чекає мережу, а якщо цей запуск зірветься, заявку підбере крон.
  */
 export async function POST(request: Request) {
   try {
@@ -88,6 +91,14 @@ export async function POST(request: Request) {
       ads_watched_since_withdraw: data.ads_watched_since_withdraw,
       server_time: new Date().toISOString(),
     };
+
+    after(async () => {
+      try {
+        await runPayoutWorker({ trigger: "withdraw" });
+      } catch (err) {
+        console.error(`[payouts] worker after withdraw ${data.transaction_id} failed:`, err);
+      }
+    });
 
     return NextResponse.json(response);
   } catch (error) {
