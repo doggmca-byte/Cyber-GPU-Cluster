@@ -31,4 +31,5 @@ next-env.d.ts
 
 # broadcast state (local only)
 scripts/.anniversary-sent.log
+scripts/.anniversary-2m-sent.log
 scripts/assets/
