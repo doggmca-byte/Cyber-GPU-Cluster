@@ -31,10 +31,13 @@ function isValidTonAddress(value: string): boolean {
 export function WithdrawModal({
   profile,
   initData,
+  isAdmin = false,
   onClose,
 }: {
   profile: Profile;
   initData: string;
+  /** Адмін виводить без реклами й лімітів — сервер перевіряє це сам (TELEGRAM_ADMIN_IDS). */
+  isAdmin?: boolean;
   onClose: () => void;
 }) {
   const { t, language } = useTranslation();
@@ -65,25 +68,27 @@ export function WithdrawModal({
   // request_withdrawal RPC: тіри за lifetime-депозитами, кап амбасадора і
   // правило "один бездепозитний вивід рівно на мінімум, далі — тільки після
   // депозиту" (20260907090000_no_deposit_single_withdrawal.sql).
-  const policy = withdrawPolicy({
+  // Адміну сервер знімає всі обмеження, крім балансу (20261021140000_admin_withdrawal_bypass.sql).
+  const basePolicy = withdrawPolicy({
     lifetimeDepositedTon: profile.lifetime_deposited_ton,
     isAmbassador: profile.is_ambassador,
     withdrawalRequestCount: profile.withdrawal_request_count,
   });
+  const policy = isAdmin ? { ...basePolicy, depositRequired: false, maxTon: profile.withdrawable_balance } : basePolicy;
   const maxForThisRequest = policy.maxTon;
 
   const todayUtc = new Date().toISOString().slice(0, 10);
-  const alreadyRequestedToday = profile.last_withdrawal_request_date === todayUtc;
+  const alreadyRequestedToday = !isAdmin && profile.last_withdrawal_request_date === todayUtc;
 
   // 20 переглядів реклами перед КОЖНИМ виводом — знову жорстке правило
   // (request_withdrawal, 20260918200000_require_ads_before_each_withdrawal.sql).
   // Лічильник обнуляється після кожної заявки, тож і кнопка знову гасне до
   // наступних 20 переглядів. Прогрес і кнопка перегляду вже показуються
   // вгорі модалки, поки поріг не досягнуто.
-  const adsProgress = profile.ads_watched_since_withdraw >= MIN_ADS_BEFORE_WITHDRAW;
+  const adsProgress = isAdmin || profile.ads_watched_since_withdraw >= MIN_ADS_BEFORE_WITHDRAW;
   const balanceOk = hasValidNumber && requested <= profile.withdrawable_balance;
-  const quotaOk = hasValidNumber && requested <= profile.withdrawal_quota;
-  const minOk = hasValidNumber && requested >= WITHDRAW_MIN_TON;
+  const quotaOk = hasValidNumber && (isAdmin || requested <= profile.withdrawal_quota);
+  const minOk = hasValidNumber && (isAdmin || requested >= WITHDRAW_MIN_TON);
   const maxOk = hasValidNumber && requested <= maxForThisRequest;
   const canSubmit =
     hasValidNumber &&
@@ -100,9 +105,16 @@ export function WithdrawModal({
   // округлена вниз до 4 знаків, щоб не перевищити баланс через округлення.
   const maxFill =
     Math.floor(
-      Math.min(profile.withdrawable_balance, profile.withdrawal_quota, maxForThisRequest) * 10_000 + 1e-6,
+      Math.min(
+        profile.withdrawable_balance,
+        isAdmin ? profile.withdrawable_balance : profile.withdrawal_quota,
+        maxForThisRequest,
+      ) *
+        10_000 +
+        1e-6,
     ) / 10_000;
-  const canFillMax = !alreadyRequestedToday && !policy.depositRequired && maxFill >= WITHDRAW_MIN_TON;
+  const canFillMax =
+    !alreadyRequestedToday && !policy.depositRequired && maxFill >= (isAdmin ? 0.0001 : WITHDRAW_MIN_TON);
 
   // Відомі відмови request_withdrawal / роуту — локалізованим текстом замість
   // сирого англійського повідомлення з БД.

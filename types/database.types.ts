@@ -981,6 +981,7 @@ export type Database = {
         Args: {
           p_amount: number
           p_destination_address: string
+          p_is_admin?: boolean
           p_user_id: string
         }
         Returns: {

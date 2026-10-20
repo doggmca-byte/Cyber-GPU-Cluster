@@ -8,6 +8,7 @@ import { requireProfileByTelegramId } from "@/lib/api/profile";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
 import { isCaptchaFresh } from "@/lib/captcha/policy";
 import { runPayoutWorker } from "@/lib/ton/payoutWorker";
+import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
 import type { WithdrawResponse } from "@/types/api";
 
 export const runtime = "nodejs";
@@ -74,6 +75,9 @@ export async function POST(request: Request) {
         p_user_id: profile.id,
         p_amount: amount,
         p_destination_address: destinationAddress,
+        // Адмін (TELEGRAM_ADMIN_IDS) виводить без реклами й лімітів — для
+        // перевірки автовиплат. Прапорець ставить лише сервер.
+        p_is_admin: isTelegramAdmin(user.id),
       })
       .single();
 
