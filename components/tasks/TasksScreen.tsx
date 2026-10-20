@@ -888,20 +888,37 @@ async function pollSponsorReward(initData: string, baselineBalance: number): Pro
   return { kind: "timeout" };
 }
 
+type SponsorProvider = "adsgram" | "tads" | "none";
+type SponsorReward = ReturnType<typeof useSponsorRewardConfirm>;
+
 /**
  * Спонсорський слот у вкладці "Партнери": ЗАВЖДИ спершу AdsGram Task; лише
- * коли AdsGram не має (більше) завдань для гравця — onBannerNotFound/onError —
- * слот перемикається на банер TADS. Після виконання завдання AdsGram сам
- * підвантажує наступне, тож гравець проходить усі доступні завдання AdsGram,
- * і тільки потім бачить TADS.
+ * коли AdsGram не має (більше) завдань для гравця — onBannerNotFound/onError/
+ * onTooLongSession — слот перемикається на банер TADS. Після виконання
+ * завдання AdsGram сам підвантажує наступне, тож гравець проходить усі
+ * доступні завдання AdsGram, і тільки потім бачить TADS. Картка видима
+ * завжди: поки реклама вантажиться або коли її немає в жодного провайдера,
+ * замість реклами — некликабельна заглушка.
  */
 function SponsorSlot({ initData }: { initData: string }) {
-  const [provider, setProvider] = useState<"adsgram" | "tads">(ADSGRAM_TASK_BLOCK_ID ? "adsgram" : "tads");
-  if (provider === "adsgram") return <AdsgramTaskCard initData={initData} onUnavailable={() => setProvider("tads")} />;
-  return <TadsBannerCard initData={initData} />;
+  const { t } = useTranslation();
+  const sponsor = useSponsorRewardConfirm(initData);
+  const [provider, setProvider] = useState<SponsorProvider>(ADSGRAM_TASK_BLOCK_ID ? "adsgram" : "tads");
+
+  if (!sponsor.ready) return null;
+
+  return (
+    <div className="glass-card p-3.5">
+      <SponsorCardHeader />
+      {provider === "adsgram" && <AdsgramTaskBody sponsor={sponsor} onUnavailable={() => setProvider("tads")} />}
+      {provider === "tads" && <TadsBannerBody sponsor={sponsor} onUnavailable={() => setProvider("none")} />}
+      {provider === "none" && <SponsorPlaceholder label={t.tasks.tadsAd.noAdsAvailable} />}
+      <SponsorStatus confirming={sponsor.confirming} error={sponsor.error} />
+    </div>
+  );
 }
 
-/** Спільне підтвердження нагороди для обох спонсорських карток. */
+/** Спільне підтвердження нагороди для обох спонсорських провайдерів. */
 function useSponsorRewardConfirm(initData: string) {
   const { t } = useTranslation();
   const { state, patchProfile } = useUserData();
@@ -956,6 +973,25 @@ function SponsorCardHeader() {
   );
 }
 
+/** Некликабельний рядок замість реклами: "завантаження" або "реклами немає". */
+function SponsorPlaceholder({ label, loading = false }: { label: string; loading?: boolean }) {
+  const { t } = useTranslation();
+  return (
+    <div
+      aria-disabled="true"
+      className="mt-2.5 flex cursor-not-allowed select-none items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-2"
+    >
+      <p className="flex min-w-0 items-center gap-2 text-[11px] text-slate-500">
+        {loading && <Loader2 size={13} className="shrink-0 animate-spin" />}
+        {label}
+      </p>
+      <span className="shrink-0 rounded-xl bg-white/5 px-3 py-1.5 text-[11px] font-bold text-slate-600">
+        {t.tasks.action.start}
+      </span>
+    </div>
+  );
+}
+
 function SponsorStatus({ confirming, error }: { confirming: boolean; error: string | null }) {
   const { t } = useTranslation();
   return (
@@ -975,13 +1011,14 @@ function SponsorStatus({ confirming, error }: { confirming: boolean; error: stri
  * Завдання AdsGram (<adsgram-task>). Коли гравець його виконав, AdsGram смикає
  * Reward URL -> /api/ads/adsgram-postback?type=task (creditSponsorReward, без
  * денного ліміту). Подія "reward" на клієнті — лише сигнал почати опитування.
- * Поки SDK вантажить завдання, картка прихована (сірий скелет SDK не клікається):
- * показуємо її, якщо за ADSGRAM_TASK_REVEAL_MS не прийшло "не знайдено".
+ * Поки SDK вантажить завдання, його сірий скелет не клікається — тож перші
+ * ADSGRAM_TASK_REVEAL_MS поверх нього заглушка "Завантаження", а сам елемент
+ * прозорий (але в DOM і не display:none, щоб SDK бачив його як показаний).
  */
-function AdsgramTaskCard({ initData, onUnavailable }: { initData: string; onUnavailable: () => void }) {
+function AdsgramTaskBody({ sponsor, onUnavailable }: { sponsor: SponsorReward; onUnavailable: () => void }) {
   const { t, language } = useTranslation();
-  const { ready, confirming, error, confirm, mountedRef } = useSponsorRewardConfirm(initData);
-  const [visible, setVisible] = useState(false);
+  const { confirm, mountedRef } = sponsor;
+  const [loaded, setLoaded] = useState(false);
   const taskRef = useRef<HTMLElement | null>(null);
   const onUnavailableRef = useRef(onUnavailable);
   onUnavailableRef.current = onUnavailable;
@@ -991,7 +1028,7 @@ function AdsgramTaskCard({ initData, onUnavailable }: { initData: string; onUnav
     if (!el) return;
 
     const revealTimer = setTimeout(() => {
-      if (mountedRef.current) setVisible(true);
+      if (mountedRef.current) setLoaded(true);
     }, ADSGRAM_TASK_REVEAL_MS);
     const onNotFound = () => {
       if (mountedRef.current) onUnavailableRef.current();
@@ -1000,22 +1037,28 @@ function AdsgramTaskCard({ initData, onUnavailable }: { initData: string; onUnav
     el.addEventListener("reward", confirm);
     el.addEventListener("onBannerNotFound", onNotFound);
     el.addEventListener("onError", onNotFound);
+    el.addEventListener("onTooLongSession", onNotFound);
     return () => {
       clearTimeout(revealTimer);
       el.removeEventListener("reward", confirm);
       el.removeEventListener("onBannerNotFound", onNotFound);
       el.removeEventListener("onError", onNotFound);
+      el.removeEventListener("onTooLongSession", onNotFound);
     };
-  }, [ready, confirm, mountedRef]);
+  }, [confirm, mountedRef]);
 
-  if (!ADSGRAM_TASK_BLOCK_ID || !ready) return null;
+  if (!ADSGRAM_TASK_BLOCK_ID) return null;
 
   const reward = t.tasks.reward.ton(formatNumber(language, SPONSOR_REWARD_TON, { maximumFractionDigits: 3 }));
 
   return (
-    <div className={visible ? "glass-card p-3.5" : "hidden"}>
-      <SponsorCardHeader />
-      <adsgram-task ref={taskRef} data-block-id={ADSGRAM_TASK_BLOCK_ID} className="mt-2.5 block">
+    <div className="relative">
+      {!loaded && <SponsorPlaceholder label={t.common.loading} loading />}
+      <adsgram-task
+        ref={taskRef}
+        data-block-id={ADSGRAM_TASK_BLOCK_ID}
+        className={loaded ? "mt-2.5 block" : "pointer-events-none absolute inset-x-0 top-0 mt-2.5 block opacity-0"}
+      >
         <span slot="reward" className="text-[11px] font-semibold text-neon-green">{reward}</span>
         <div slot="button" className="rounded-xl bg-neon-purple px-3 py-1.5 text-center text-[11px] font-bold text-background">
           {t.tasks.action.start}
@@ -1027,7 +1070,6 @@ function AdsgramTaskCard({ initData, onUnavailable }: { initData: string; onUnav
           {t.tasks.action.claimed}
         </div>
       </adsgram-task>
-      <SponsorStatus confirming={confirming} error={error} />
     </div>
   );
 }
@@ -1039,32 +1081,27 @@ function AdsgramTaskCard({ initData, onUnavailable }: { initData: string; onUnav
  * Task, без денного ліміту). Контейнер SDK — назавжди порожній з боку React,
  * інакше ре-рендер стирав би вставлену SDK розмітку.
  */
-function TadsBannerCard({ initData }: { initData: string }) {
-  const { ready, confirming, error, confirm, mountedRef } = useSponsorRewardConfirm(initData);
-  const [status, setStatus] = useState<"loading" | "ready" | "no_ads">("loading");
+function TadsBannerBody({ sponsor, onUnavailable }: { sponsor: SponsorReward; onUnavailable: () => void }) {
+  const { confirm, mountedRef } = sponsor;
   const hasMountedAdRef = useRef(false);
+  const onUnavailableRef = useRef(onUnavailable);
+  onUnavailableRef.current = onUnavailable;
 
   useEffect(() => {
-    if (!ready || hasMountedAdRef.current) return;
+    if (hasMountedAdRef.current) return;
     hasMountedAdRef.current = true;
     const mounted = mountTadsAd({
       onClickReward: confirm,
       onAdsNotFound: () => {
-        if (mountedRef.current) setStatus("no_ads");
+        if (mountedRef.current) onUnavailableRef.current();
       },
     });
-    setStatus(mounted ? "ready" : "no_ads");
-  }, [ready, confirm, mountedRef]);
-
-  if (!ready || status === "no_ads") return null;
+    if (!mounted) onUnavailableRef.current();
+  }, [confirm, mountedRef]);
 
   return (
-    <div className="glass-card p-3.5">
-      <SponsorCardHeader />
-      <div className="relative mt-2.5 min-h-[50px]">
-        <div id={TADS_WIDGET_ID ? tadsContainerId(TADS_WIDGET_ID) : undefined} />
-      </div>
-      <SponsorStatus confirming={confirming} error={error} />
+    <div className="relative mt-2.5 min-h-[50px]">
+      <div id={TADS_WIDGET_ID ? tadsContainerId(TADS_WIDGET_ID) : undefined} />
     </div>
   );
 }
