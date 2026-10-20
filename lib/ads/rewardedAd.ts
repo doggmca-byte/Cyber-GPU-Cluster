@@ -1,6 +1,7 @@
 import { showRewardedAd } from "./monetag";
 import { showGigaRewardedAd } from "./gigapub";
 import { showAdsgramRewardedAd } from "./adsgram";
+import { isAdsgramCapped } from "./adsgramDailyCap";
 
 export type RewardedProvider = "gigapub" | "monetag" | "adsgram";
 
@@ -28,6 +29,15 @@ const FLOW_ORDER: Record<VerifiedFlow, readonly RewardedProvider[]> = {
   daily_bonus: ["adsgram", "gigapub"],
   withdraw: ["adsgram", "gigapub"],
 };
+
+/**
+ * Порядок мереж без AdsGram, якщо його денний ліміт (ADSGRAM_DAILY_CAP)
+ * вичерпано — тоді запит іде одразу до наступної мережі (GigaPub), а не
+ * через "реклами немає" від AdsGram.
+ */
+function withoutCappedAdsgram(order: readonly RewardedProvider[]): readonly RewardedProvider[] {
+  return isAdsgramCapped() ? order.filter((provider) => provider !== "adsgram") : order;
+}
 
 // Чия черга йти першим — зберігаємо в localStorage, а не в змінній модуля,
 // щоб чергування тримало лад між перезавантаженнями сторінки/сесіями, а не
@@ -79,7 +89,7 @@ function showByProvider(provider: RewardedProvider): Promise<boolean> {
  * провалились усі (і тоді бекенд-клейм/інкремент не викликати).
  */
 export async function showRewardedAdRotating(): Promise<boolean> {
-  for (const provider of rotatedProviderOrder()) {
+  for (const provider of withoutCappedAdsgram(rotatedProviderOrder())) {
     if (await showByProvider(provider)) return true;
   }
   return false;
@@ -114,13 +124,13 @@ export async function showRewardedAdForVerifiedFlow(
     const attemptId = await openAttempt();
     if (!attemptId) return { watched: false, provider: null, ymid: null };
 
-    for (const provider of FLOW_ORDER.withdraw) {
+    for (const provider of withoutCappedAdsgram(FLOW_ORDER.withdraw)) {
       if (await showByProvider(provider)) return { watched: true, provider, ymid: attemptId };
     }
     return { watched: false, provider: null, ymid: null };
   }
 
-  for (const provider of FLOW_ORDER[flow]) {
+  for (const provider of withoutCappedAdsgram(FLOW_ORDER[flow])) {
     if (provider === "monetag") {
       const ymid = await openAttempt();
       if (await showRewardedAd(ymid ?? undefined)) return { watched: true, provider, ymid };
