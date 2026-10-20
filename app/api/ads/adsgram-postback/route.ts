@@ -5,6 +5,7 @@ import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
 import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
 import { partnerAdLimitError } from "@/lib/ads/partnerAdLimit";
+import { creditSponsorReward } from "@/lib/ads/sponsorReward";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,10 +18,8 @@ export const dynamic = "force-dynamic";
 const DEDUPE_WINDOW_SECONDS = 6;
 
 // Блок типу Task (Reward URL з &type=task, components/tasks/TasksScreen.tsx,
-// AdsgramTaskCard): нагорода та сама, що й за перегляд, але не більше цієї
-// кількості зарахувань на гравця за UTC-добу саме з цього блоку. Понад ліміт
-// відповідаємо 200 (AdsGram вважає виконання доставленим), але не нараховуємо.
-const TASK_DAILY_LIMIT = 10;
+// AdsgramTaskCard): нагорода через creditSponsorReward — без денного ліміту й
+// без лічильника партнерської реклами; скільки завдань дати, вирішує AdsGram.
 const TASK_EVENT_TYPE = "task";
 
 /**
@@ -83,38 +82,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: true, status: "confirmed", deduped: true });
     }
 
-    if (isTask && !isAdmin) {
-      const utcMidnight = new Date();
-      utcMidnight.setUTCHours(0, 0, 0, 0);
-      const { count, error: countError } = await admin
-        .from("ad_verification_attempts")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", profile.id)
-        .eq("provider", "adsgram")
-        .eq("reported_reward_event_type", TASK_EVENT_TYPE)
-        .eq("status", "confirmed")
-        .gte("confirmed_at", utcMidnight.toISOString());
-      if (countError) throw new ApiError(500, `failed to count task completions: ${countError.message}`);
-      if ((count ?? 0) >= TASK_DAILY_LIMIT) {
-        await admin.from("ad_verification_attempts").insert({
-          user_id: profile.id,
-          purpose: "partner_ad_watch",
-          provider: "adsgram",
-          status: "rejected",
-          reported_telegram_id: telegramId,
-          reported_reward_event_type: TASK_EVENT_TYPE,
-        });
-        return NextResponse.json({ ok: true, status: "rejected", reason: "daily task limit reached" });
-      }
-    }
-
     // Адмін дивиться без обмеження денним лімітом — telegramId тут уже той
     // самий, за яким щойно знайдено profile (findProfileByTelegramId), тож
     // джерело правди для авторизаційного рішення не потребує окремого запиту.
-    const limitError = await partnerAdLimitError(admin, profile.id, isAdmin);
-    const { error: rpcError } = limitError
-      ? { error: limitError }
-      : await admin.rpc("record_partner_ad_watch", { p_user_id: profile.id, p_bypass_limit: isAdmin });
+    const limitError = isTask ? null : await partnerAdLimitError(admin, profile.id, isAdmin);
+    const { error: rpcError } = isTask
+      ? await creditSponsorReward(admin, profile.id, "adsgram_task")
+      : limitError
+        ? { error: limitError }
+        : await admin.rpc("record_partner_ad_watch", { p_user_id: profile.id, p_bypass_limit: isAdmin });
 
     if (rpcError) {
       if (rpcError.code === "P0001") {

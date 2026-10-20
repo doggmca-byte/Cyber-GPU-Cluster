@@ -38,6 +38,7 @@ import type {
 } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 import { postJsonWithRetry } from "@/lib/api/postJsonWithRetry";
+import { mountTadsAd, tadsContainerId, TADS_WIDGET_ID } from "@/lib/ads/tads";
 
 // Дзеркалить константи в record_partner_ad_watch
 // (supabase/migrations/20261020120000_partner_ads_limit_20_and_task_rewards.sql) —
@@ -420,7 +421,7 @@ function TasksScreenReady({ initData }: { initData: string }) {
         {activeCategory === "partners" && (
           <>
             <PartnerAdsCard initData={initData} />
-            <AdsgramTaskCard initData={initData} />
+            <SponsorSlot initData={initData} />
           </>
         )}
         {activeCategory === "special" && <SpecialTasks initData={initData} />}
@@ -853,6 +854,7 @@ function TaskActionButton({
 // Блок AdsGram типу Task (кабінет AdsGram -> Block type: Task). Id з кабінету
 // виду "task-1234" або просто "1234" — префікс додаємо самі.
 const ADSGRAM_TASK_REVEAL_MS = 2500;
+const SPONSOR_REWARD_TON = 0.001;
 
 const ADSGRAM_TASK_BLOCK_ID = (() => {
   const raw = process.env.NEXT_PUBLIC_ADSGRAM_TASK_BLOCK_ID?.trim();
@@ -860,105 +862,159 @@ const ADSGRAM_TASK_BLOCK_ID = (() => {
   return raw.startsWith("task-") ? raw : `task-${raw}`;
 })();
 
+type SponsorPollResult = { kind: "confirmed"; profile: SyncResponse["profile"] } | { kind: "timeout" };
+
 /**
- * Спонсорське завдання AdsGram (замість банера TADS). Віджет <adsgram-task>
- * сам показує завдання партнера; коли гравець його виконав, AdsGram смикає
- * Reward URL -> /api/ads/adsgram-postback?type=task, де нараховується та сама
- * нагорода, що й за партнерську рекламу (record_partner_ad_watch), але не
- * більше ADSGRAM_TASK_DAILY_LIMIT разів на добу саме з цього блоку. Подія
- * "reward" на клієнті — лише сигнал почати опитувати сервер.
+ * Спонсорські нагороди (record_sponsor_task_reward) НЕ чіпають лічильник
+ * партнерської реклами, тож підтвердження чекаємо за зростанням
+ * withdrawable_balance, а не partner_ads_watched_today.
  */
-function AdsgramTaskCard({ initData }: { initData: string }) {
-  const { t, language } = useTranslation();
+async function pollSponsorReward(initData: string, baselineBalance: number): Promise<SponsorPollResult> {
+  for (let attempt = 0; attempt < PARTNER_AD_POLL_ATTEMPTS; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, PARTNER_AD_POLL_DELAY_MS));
+    try {
+      const res = await fetch("/api/user/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData }),
+      });
+      if (!res.ok) continue;
+      const data = (await res.json()) as SyncResponse;
+      if (Number(data.profile.withdrawable_balance) > baselineBalance) return { kind: "confirmed", profile: data.profile };
+    } catch {
+      // мережевий збій — пробуємо ще раз наступного тику.
+    }
+  }
+  return { kind: "timeout" };
+}
+
+/**
+ * Спонсорський слот у вкладці "Партнери": ЗАВЖДИ спершу AdsGram Task; лише
+ * коли AdsGram не має (більше) завдань для гравця — onBannerNotFound/onError —
+ * слот перемикається на банер TADS. Після виконання завдання AdsGram сам
+ * підвантажує наступне, тож гравець проходить усі доступні завдання AdsGram,
+ * і тільки потім бачить TADS.
+ */
+function SponsorSlot({ initData }: { initData: string }) {
+  const [provider, setProvider] = useState<"adsgram" | "tads">(ADSGRAM_TASK_BLOCK_ID ? "adsgram" : "tads");
+  if (provider === "adsgram") return <AdsgramTaskCard initData={initData} onUnavailable={() => setProvider("tads")} />;
+  return <TadsBannerCard initData={initData} />;
+}
+
+/** Спільне підтвердження нагороди для обох спонсорських карток. */
+function useSponsorRewardConfirm(initData: string) {
+  const { t } = useTranslation();
   const { state, patchProfile } = useUserData();
-  // "loading" — віджет змонтований, але картка прихована: поки AdsGram
-  // вантажить завдання, SDK малює сірий скелет, і якщо завдання немає
-  // (onBannerNotFound), гравець бачив би неклікабельну заглушку, що зникає.
-  // Окремої події "завантажено" SDK не має — показуємо картку, якщо за
-  // ADSGRAM_TASK_REVEAL_MS не прийшло "не знайдено".
-  const [status, setStatus] = useState<"loading" | "ready" | "confirming" | "no_ads">("loading");
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const taskRef = useRef<HTMLElement | null>(null);
 
-  const readyProfile = state.status === "ready" ? state.data.profile : null;
-  const readyIsAdmin = state.status === "ready" ? state.data.is_admin : false;
-  const today = new Date().toISOString().slice(0, 10);
-  const watchedToday =
-    readyProfile && readyProfile.partner_ads_reset_date === today ? readyProfile.partner_ads_watched_today : 0;
-  const limitReached = readyProfile ? !readyIsAdmin && watchedToday >= PARTNER_AD_DAILY_LIMIT : false;
-
-  const latestWatchedTodayRef = useRef(watchedToday);
-  latestWatchedTodayRef.current = watchedToday;
+  const balance = state.status === "ready" ? Number(state.data.profile.withdrawable_balance) : 0;
+  const balanceRef = useRef(balance);
+  balanceRef.current = balance;
 
   const mountedRef = useRef(true);
-  useEffect(() => () => {
-    mountedRef.current = false;
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
+
+  const confirm = useCallback(() => {
+    if (!mountedRef.current) return;
+    setError(null);
+    setConfirming(true);
+    void pollSponsorReward(initData, balanceRef.current).then((outcome) => {
+      if (!mountedRef.current) return;
+      if (outcome.kind === "confirmed") {
+        patchProfile({ withdrawable_balance: outcome.profile.withdrawable_balance });
+      } else {
+        setError(t.tasks.partnerAds.stillProcessing);
+      }
+      setConfirming(false);
+    });
+  }, [initData, patchProfile, t]);
+
+  return { ready: state.status === "ready", confirming, error, confirm, mountedRef };
+}
+
+function SponsorCardHeader() {
+  const { t, language } = useTranslation();
+  return (
+    <div className="flex items-start gap-2.5">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neon-purple/10 text-neon-purple">
+        <Handshake size={16} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold text-white">{t.tasks.tadsAd.title}</p>
+        <p className="mt-0.5 text-[11px] text-slate-500">{t.tasks.tadsAd.description}</p>
+        <p className="mt-1.5 text-[11px] font-semibold text-neon-green">
+          {t.tasks.reward.ton(formatNumber(language, SPONSOR_REWARD_TON, { maximumFractionDigits: 3 }))}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SponsorStatus({ confirming, error }: { confirming: boolean; error: string | null }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {confirming && (
+        <p className="mt-2 flex items-center gap-2 text-[11px] text-neon-gold">
+          <Loader2 size={13} className="animate-spin" />
+          {t.tasks.partnerAds.confirming}
+        </p>
+      )}
+      {error && <p className="mt-2 text-[11px] text-red-400">{error}</p>}
+    </>
+  );
+}
+
+/**
+ * Завдання AdsGram (<adsgram-task>). Коли гравець його виконав, AdsGram смикає
+ * Reward URL -> /api/ads/adsgram-postback?type=task (creditSponsorReward, без
+ * денного ліміту). Подія "reward" на клієнті — лише сигнал почати опитування.
+ * Поки SDK вантажить завдання, картка прихована (сірий скелет SDK не клікається):
+ * показуємо її, якщо за ADSGRAM_TASK_REVEAL_MS не прийшло "не знайдено".
+ */
+function AdsgramTaskCard({ initData, onUnavailable }: { initData: string; onUnavailable: () => void }) {
+  const { t, language } = useTranslation();
+  const { ready, confirming, error, confirm, mountedRef } = useSponsorRewardConfirm(initData);
+  const [visible, setVisible] = useState(false);
+  const taskRef = useRef<HTMLElement | null>(null);
+  const onUnavailableRef = useRef(onUnavailable);
+  onUnavailableRef.current = onUnavailable;
 
   useEffect(() => {
     const el = taskRef.current;
     if (!el) return;
 
-    const onReward = () => {
-      if (!mountedRef.current) return;
-      setError(null);
-      setStatus("confirming");
-      void pollPartnerAdWatchConfirmation(initData, latestWatchedTodayRef.current).then((outcome) => {
-        if (!mountedRef.current) return;
-        if (outcome.kind === "confirmed") {
-          patchProfile({
-            partner_ads_watched_today: outcome.profile.partner_ads_watched_today,
-            partner_ads_reset_date: outcome.profile.partner_ads_reset_date,
-            withdrawable_balance: outcome.profile.withdrawable_balance,
-          });
-        } else {
-          setError(outcome.kind === "rejected" ? t.tasks.partnerAds.notCounted : t.tasks.partnerAds.stillProcessing);
-        }
-        setStatus("ready");
-      });
-    };
-    const onNotFound = () => {
-      if (mountedRef.current) setStatus("no_ads");
-    };
-
     const revealTimer = setTimeout(() => {
-      if (mountedRef.current) setStatus((s) => (s === "loading" ? "ready" : s));
+      if (mountedRef.current) setVisible(true);
     }, ADSGRAM_TASK_REVEAL_MS);
+    const onNotFound = () => {
+      if (mountedRef.current) onUnavailableRef.current();
+    };
 
-    el.addEventListener("reward", onReward);
+    el.addEventListener("reward", confirm);
     el.addEventListener("onBannerNotFound", onNotFound);
     el.addEventListener("onError", onNotFound);
     return () => {
       clearTimeout(revealTimer);
-      el.removeEventListener("reward", onReward);
+      el.removeEventListener("reward", confirm);
       el.removeEventListener("onBannerNotFound", onNotFound);
       el.removeEventListener("onError", onNotFound);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initData, limitReached, status === "no_ads"]);
+  }, [ready, confirm, mountedRef]);
 
-  if (!ADSGRAM_TASK_BLOCK_ID || state.status !== "ready" || limitReached || status === "no_ads") return null;
+  if (!ADSGRAM_TASK_BLOCK_ID || !ready) return null;
 
-  const reward = t.tasks.reward.ton(formatNumber(language, PARTNER_AD_REWARD_TON, { maximumFractionDigits: 3 }));
+  const reward = t.tasks.reward.ton(formatNumber(language, SPONSOR_REWARD_TON, { maximumFractionDigits: 3 }));
 
   return (
-    <div className={status === "loading" ? "hidden" : "glass-card p-3.5"}>
-      <div className="flex items-start gap-2.5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neon-purple/10 text-neon-purple">
-          <Handshake size={16} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold text-white">{t.tasks.tadsAd.title}</p>
-          <p className="mt-0.5 text-[11px] text-slate-500">{t.tasks.tadsAd.description}</p>
-          <div className="mt-1.5 flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold text-neon-green">{reward}</span>
-            <span className="text-[10px] font-medium text-slate-500">
-              {t.tasks.partnerAds.progress(watchedToday, PARTNER_AD_DAILY_LIMIT)}
-            </span>
-          </div>
-        </div>
-      </div>
-
+    <div className={visible ? "glass-card p-3.5" : "hidden"}>
+      <SponsorCardHeader />
       <adsgram-task ref={taskRef} data-block-id={ADSGRAM_TASK_BLOCK_ID} className="mt-2.5 block">
         <span slot="reward" className="text-[11px] font-semibold text-neon-green">{reward}</span>
         <div slot="button" className="rounded-xl bg-neon-purple px-3 py-1.5 text-center text-[11px] font-bold text-background">
@@ -971,14 +1027,44 @@ function AdsgramTaskCard({ initData }: { initData: string }) {
           {t.tasks.action.claimed}
         </div>
       </adsgram-task>
+      <SponsorStatus confirming={confirming} error={error} />
+    </div>
+  );
+}
 
-      {status === "confirming" && (
-        <p className="mt-2 flex items-center gap-2 text-[11px] text-neon-gold">
-          <Loader2 size={13} className="animate-spin" />
-          {t.tasks.partnerAds.confirming}
-        </p>
-      )}
-      {error && <p className="mt-2 text-[11px] text-red-400">{error}</p>}
+/**
+ * Запасний спонсор — банер TADS (lib/ads/tads.ts), коли в AdsGram немає
+ * завдань. Нагорода на клік підтверджується S2S-вебхуком
+ * /api/ads/tads-postback (creditSponsorReward — та сама сума, що й AdsGram
+ * Task, без денного ліміту). Контейнер SDK — назавжди порожній з боку React,
+ * інакше ре-рендер стирав би вставлену SDK розмітку.
+ */
+function TadsBannerCard({ initData }: { initData: string }) {
+  const { ready, confirming, error, confirm, mountedRef } = useSponsorRewardConfirm(initData);
+  const [status, setStatus] = useState<"loading" | "ready" | "no_ads">("loading");
+  const hasMountedAdRef = useRef(false);
+
+  useEffect(() => {
+    if (!ready || hasMountedAdRef.current) return;
+    hasMountedAdRef.current = true;
+    const mounted = mountTadsAd({
+      onClickReward: confirm,
+      onAdsNotFound: () => {
+        if (mountedRef.current) setStatus("no_ads");
+      },
+    });
+    setStatus(mounted ? "ready" : "no_ads");
+  }, [ready, confirm, mountedRef]);
+
+  if (!ready || status === "no_ads") return null;
+
+  return (
+    <div className="glass-card p-3.5">
+      <SponsorCardHeader />
+      <div className="relative mt-2.5 min-h-[50px]">
+        <div id={TADS_WIDGET_ID ? tadsContainerId(TADS_WIDGET_ID) : undefined} />
+      </div>
+      <SponsorStatus confirming={confirming} error={error} />
     </div>
   );
 }

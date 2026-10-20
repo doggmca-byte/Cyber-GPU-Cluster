@@ -3,8 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { findProfileByTelegramId } from "@/lib/api/profile";
 import { ApiError, handleRouteError } from "@/lib/api/errors";
 import { rpcErrorToApiError } from "@/lib/api/rpc";
-import { isTelegramAdmin } from "@/lib/admin/telegramAdmins";
-import { partnerAdLimitError } from "@/lib/ads/partnerAdLimit";
+import { creditSponsorReward } from "@/lib/ads/sponsorReward";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -89,11 +88,9 @@ async function handleTadsPostback(request: Request) {
       return NextResponse.json({ ok: true, status: "confirmed", deduped: true });
     }
 
-    const bypassLimit = isTelegramAdmin(telegramId);
-    const limitError = await partnerAdLimitError(admin, profile.id, bypassLimit);
-    const { error: rpcError } = limitError
-      ? { error: limitError }
-      : await admin.rpc("record_partner_ad_watch", { p_user_id: profile.id, p_bypass_limit: bypassLimit });
+    // Спонсорський банер: та сама нагорода, що й за AdsGram Task, без денного
+    // ліміту й без лічильника партнерської реклами (lib/ads/sponsorReward.ts).
+    const { error: rpcError } = await creditSponsorReward(admin, profile.id, "tads");
 
     if (rpcError) {
       if (rpcError.code === "P0001") {

@@ -67,6 +67,8 @@ export default function RootLayout({
           клієнтську довіру.
         */}
         <Script src="https://sad.adsgram.ai/js/sad.min.js" strategy="afterInteractive" />
+        {/* TADS SDK (window.tads) — запасний спонсор у вкладці "Партнери", коли в AdsGram немає завдань (TasksScreen, SponsorSlot). */}
+        <Script src="https://w.tads.me/widget.js" strategy="afterInteractive" />
         {children}
       </body>
     </html>
