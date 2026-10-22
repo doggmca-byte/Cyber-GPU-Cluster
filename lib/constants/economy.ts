@@ -144,6 +144,12 @@ export const ADMIN_GRANT_TARGET_BALANCE = "game_balance" as const;
 // але частіше ніж раз на кулдаун не нараховуємо.
 export const SPONSOR_TASK_COOLDOWN_SECONDS = 120;
 
+// Нагорода й ліміт AdsGram Task — дзеркало record_sponsor_task_reward
+// (20261022090000_adsgram_task_reward_and_hourly_limit.sql). Сервер — джерело
+// правди; клієнт лише ховає завдання, коли постбек однаково не нарахує.
+export const ADSGRAM_TASK_REWARD_TON = 0.0005;
+export const ADSGRAM_TASK_HOURLY_LIMIT = 8;
+
 // Скільки реклами AdsGram (rewarded + Task, усі місця застосунку) гравець
 // бачить за добу UTC. Підтримка AdsGram: понад 30 на юзера вони не
 // зараховують, а антифрод може його заблокувати — тож максимум 29, далі

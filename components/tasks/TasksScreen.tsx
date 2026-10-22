@@ -39,7 +39,11 @@ import type {
 } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 import { postJsonWithRetry } from "@/lib/api/postJsonWithRetry";
-import { SPONSOR_TASK_COOLDOWN_SECONDS } from "@/lib/constants/economy";
+import {
+  ADSGRAM_TASK_HOURLY_LIMIT,
+  ADSGRAM_TASK_REWARD_TON,
+  SPONSOR_TASK_COOLDOWN_SECONDS,
+} from "@/lib/constants/economy";
 
 // Дзеркалить константи в record_partner_ad_watch
 // (supabase/migrations/20261020120000_partner_ads_limit_20_and_task_rewards.sql) —
@@ -855,7 +859,7 @@ function TaskActionButton({
 // Блок AdsGram типу Task (кабінет AdsGram -> Block type: Task). Id з кабінету
 // виду "task-1234" або просто "1234" — префікс додаємо самі.
 const ADSGRAM_TASK_REVEAL_MS = 2500;
-const SPONSOR_REWARD_TON = 0.001;
+const SPONSOR_REWARD_TON = ADSGRAM_TASK_REWARD_TON;
 
 const ADSGRAM_TASK_BLOCK_ID = (() => {
   const raw = process.env.NEXT_PUBLIC_ADSGRAM_TASK_BLOCK_ID?.trim();
@@ -919,6 +923,29 @@ function SponsorSlot({ initData }: { initData: string }) {
 }
 
 const SPONSOR_COOLDOWN_STORAGE_KEY = "cgc_sponsor_task_cooldown_until";
+const SPONSOR_HISTORY_STORAGE_KEY = "cgc_sponsor_task_rewards";
+const HOUR_MS = 60 * 60 * 1000;
+
+function readRewardHistory(): number[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(SPONSOR_HISTORY_STORAGE_KEY) ?? "[]");
+    if (!Array.isArray(parsed)) return [];
+    const cutoff = Date.now() - HOUR_MS;
+    return parsed.filter((v): v is number => typeof v === "number" && v > cutoff);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Коли завдання знову стане доступним з огляду на ліміт ADSGRAM_TASK_HOURLY_LIMIT
+ * за ковзну годину: коли найстаріше з останніх N нарахувань вийде з вікна.
+ */
+function hourlyLimitUntil(history: number[]): number {
+  if (history.length < ADSGRAM_TASK_HOURLY_LIMIT) return 0;
+  const sorted = [...history].sort((a, b) => a - b);
+  return sorted[sorted.length - ADSGRAM_TASK_HOURLY_LIMIT] + HOUR_MS;
+}
 
 function formatCountdown(totalSeconds: number): string {
   return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, "0")}`;
@@ -928,7 +955,8 @@ function formatCountdown(totalSeconds: number): string {
  * Кулдаун між завданнями AdsGram (SPONSOR_TASK_COOLDOWN_SECONDS) — дзеркало
  * серверного (app/api/ads/adsgram-postback): поки він іде, завдання не
  * показуємо, бо постбек у цей час однаково не нарахує. Кінець кулдауну — у
- * localStorage, щоб не скидався повторним відкриттям вкладки.
+ * localStorage, щоб не скидався повторним відкриттям вкладки. Так само тут
+ * годинний ліміт ADSGRAM_TASK_HOURLY_LIMIT: таймер іде до найпізнішого з двох.
  */
 function useSponsorCooldown() {
   const [until, setUntil] = useState(0);
@@ -937,7 +965,9 @@ function useSponsorCooldown() {
   useEffect(() => {
     try {
       const stored = Number(localStorage.getItem(SPONSOR_COOLDOWN_STORAGE_KEY));
-      if (Number.isFinite(stored) && stored > Date.now()) setUntil(stored);
+      const limitUntil = hourlyLimitUntil(readRewardHistory());
+      const next = Math.max(Number.isFinite(stored) ? stored : 0, limitUntil);
+      if (next > Date.now()) setUntil(next);
     } catch {
       // сховище недоступне — кулдаун лише в пам'яті, сервер однаково його тримає.
     }
@@ -954,14 +984,19 @@ function useSponsorCooldown() {
   }, [until]);
 
   const start = useCallback(() => {
-    const next = Date.now() + SPONSOR_TASK_COOLDOWN_SECONDS * 1000;
+    const current = Date.now();
+    const cooldownUntil = current + SPONSOR_TASK_COOLDOWN_SECONDS * 1000;
+    let limitUntil = 0;
     try {
-      localStorage.setItem(SPONSOR_COOLDOWN_STORAGE_KEY, String(next));
+      localStorage.setItem(SPONSOR_COOLDOWN_STORAGE_KEY, String(cooldownUntil));
+      const history = [...readRewardHistory(), current];
+      localStorage.setItem(SPONSOR_HISTORY_STORAGE_KEY, JSON.stringify(history));
+      limitUntil = hourlyLimitUntil(history);
     } catch {
       // див. вище.
     }
-    setNow(Date.now());
-    setUntil(next);
+    setNow(current);
+    setUntil(Math.max(cooldownUntil, limitUntil));
   }, []);
 
   return { remainingSeconds: Math.max(0, Math.ceil((until - now) / 1000)), start };
@@ -1016,7 +1051,7 @@ function SponsorCardHeader() {
         <p className="text-xs font-semibold text-white">{t.tasks.tadsAd.title}</p>
         <p className="mt-0.5 text-[11px] text-slate-500">{t.tasks.tadsAd.description}</p>
         <p className="mt-1.5 text-[11px] font-semibold text-neon-green">
-          {t.tasks.reward.ton(formatNumber(language, SPONSOR_REWARD_TON, { maximumFractionDigits: 3 }))}
+          {t.tasks.reward.ton(formatNumber(language, SPONSOR_REWARD_TON, { maximumFractionDigits: 4 }))}
         </p>
       </div>
     </div>
@@ -1104,7 +1139,7 @@ function AdsgramTaskBody({ sponsor, onUnavailable }: { sponsor: SponsorReward; o
 
   if (!ADSGRAM_TASK_BLOCK_ID) return null;
 
-  const reward = t.tasks.reward.ton(formatNumber(language, SPONSOR_REWARD_TON, { maximumFractionDigits: 3 }));
+  const reward = t.tasks.reward.ton(formatNumber(language, SPONSOR_REWARD_TON, { maximumFractionDigits: 4 }));
 
   return (
     <div className="relative">
