@@ -50,7 +50,7 @@ import {
 // лише для відображення (сервер — єдине джерело правди для фактичного
 // нарахування й ліміту, тут це тільки початкове значення до першого
 // перегляду за сесію).
-const PARTNER_AD_REWARD_TON = 0.001;
+const PARTNER_AD_REWARD_TON = 0.0003;
 const PARTNER_AD_DAILY_LIMIT = 20;
 
 const CATEGORY_ORDER: TaskCategory[] = ["in_game", "general", "partners", "wallet", "friends", "special"];
@@ -629,7 +629,7 @@ function PartnerAdsCard({ initData }: { initData: string }) {
 
           <div className="mt-1.5 flex items-center justify-between gap-2">
             <span className="text-[11px] font-semibold text-neon-green">
-              {t.tasks.reward.ton(formatNumber(language, PARTNER_AD_REWARD_TON, { maximumFractionDigits: 3 }))}
+              {t.tasks.reward.ton(formatNumber(language, PARTNER_AD_REWARD_TON, { maximumFractionDigits: 4 }))}
             </span>
             <span className="text-[10px] font-medium text-slate-500">
               {t.tasks.partnerAds.progress(watchedToday, PARTNER_AD_DAILY_LIMIT)}
