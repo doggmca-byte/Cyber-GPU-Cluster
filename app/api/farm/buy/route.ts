@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     // Транзакція вже пройшла — перечитуємо фактичні рядки, щоб віддати
     // клієнту справжні id/amount/last_harvest_at, а не синтетичні локальні.
     const [{ data: userGpus, error: gpusError }, gpuTemplates] = await Promise.all([
-      admin.from("user_gpus").select("*").eq("user_id", profile.id).order("gpu_level"),
+      admin.from("user_gpus").select("*").eq("user_id", profile.id).order("gpu_level").order("created_at"),
       loadGpuTemplates(admin),
     ]);
 

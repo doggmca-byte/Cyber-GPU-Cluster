@@ -63,6 +63,8 @@ export interface BuyGpuResponse {
 
 export interface ReviveGpuResponse {
   gpu_level: number;
+  /** Яку саме партію (рядок user_gpus) оживлено. */
+  gpu_id: string;
   new_game_balance: number;
   revival_count: number;
   revival_cost: number;

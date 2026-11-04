@@ -62,8 +62,8 @@ interface UserDataContextValue {
    * падала через нестачу коштів (відкат лишав рядок з amount = 0).
    */
   applyGpuPurchase: (result: BuyGpuResponse) => void;
-  /** Патч після успішного revive_gpu — оживлює рядок і списує game_balance разом. */
-  patchGpuRevived: (level: number, newGameBalance: number, revivalCount: number) => void;
+  /** Патч після успішного revive_gpu — оживлює саме цю партію (рядок user_gpus) і списує game_balance разом. */
+  patchGpuRevived: (gpuId: string, newGameBalance: number, revivalCount: number) => void;
 }
 
 const UserDataContext = createContext<UserDataContextValue | null>(null);
@@ -233,7 +233,7 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const patchGpuRevived = useCallback((level: number, newGameBalance: number, revivalCount: number) => {
+  const patchGpuRevived = useCallback((gpuId: string, newGameBalance: number, revivalCount: number) => {
     setState((prev) => {
       if (prev.status !== "ready") return prev;
 
@@ -241,7 +241,7 @@ export function UserDataProvider({ children }: { children: React.ReactNode }) {
       // за серверним часом (з поправкою), а не за годинником пристрою.
       const now = new Date(Date.now() + prev.clockOffsetMs).toISOString();
       const nextUserGpus = prev.data.user_gpus.map((g) =>
-        g.gpu_level === level
+        g.id === gpuId
           ? { ...g, is_dead: false, lifetime_hash_generated: 0, last_harvest_at: now, revival_count: revivalCount }
           : g,
       );

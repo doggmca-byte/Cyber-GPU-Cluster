@@ -186,10 +186,14 @@ export const MAX_UNCLAIMED_SECONDS = MAX_UNCLAIMED_HOURS * 3600;
 // прапорець не потрібен (сервер завжди перевіряє актуальне значення), лишень
 // для довідки тут.
 
-// harvest_user_hash / revive_gpu: lifecycle-кап агрегатно по рядку
-// (user, level) — cap_hash = cost_ton × GPU_LIFECYCLE_MULTIPLIER × amount /
-// HASH_TO_TON_RATE. Коли lifetime_hash_generated досягає цього капа — рядок
-// "мертвий" (is_dead), більше не нараховує, доки не оживлений.
+// harvest_user_hash / revive_gpu: lifecycle-кап агрегатно по рядку user_gpus —
+// ПАРТІЇ карток (не по рівню: на рівень партій може бути кілька, кожна зі своїм
+// revival_count, 20261104090000_gpu_lots_own_lifecycle.sql) — cap_hash =
+// cost_ton × GPU_LIFECYCLE_MULTIPLIER × amount / HASH_TO_TON_RATE. Коли
+// lifetime_hash_generated досягає цього капа — партія "мертва" (is_dead),
+// більше не нараховує, доки не оживлена. buy_gpu докидає картки лише в живу
+// ще не оживлену партію, інакше відкриває нову — тож кожна куплена картка
+// проходить усі цикли з першого.
 export const GPU_LIFECYCLE_MULTIPLIER = 1.25;
 export const GPU_REVIVAL_MAX_COUNT = 3;
 // Ціна оживлення = cost_ton × amount × множник за НОМЕРОМ оживлення

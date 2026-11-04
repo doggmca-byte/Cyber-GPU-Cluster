@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Zap, Settings2, Timer } from "lucide-react";
 import { useUserData } from "@/components/providers/UserDataProvider";
 import { useTranslation } from "@/lib/i18n/LanguageProvider";
@@ -18,6 +17,7 @@ import {
   type PromoState,
 } from "@/lib/promo/promo";
 import { anniversaryMonths, isAnniversaryPromo } from "@/lib/promo/anniversary";
+import { GPU_REVIVAL_MAX_COUNT } from "@/lib/constants/economy";
 import type { BuyGpuResponse, GpuTemplate, SyncResponse } from "@/types/api";
 import type { TranslationDictionary } from "@/lib/i18n/dictionaries";
 
@@ -89,8 +89,13 @@ function MarketScreenReady({
   const msLeft = promoMsLeft(promo, nowMs);
   const countdown = splitCountdown(msLeft);
 
-  const amountByLevel = new Map(user_gpus.map((g) => [g.gpu_level, g.amount]));
-  const deadByLevel = new Map(user_gpus.map((g) => [g.gpu_level, g.is_dead]));
+  // Рядок user_gpus — партія; на рівень їх може бути кілька. Ліміт рівня —
+  // сума партій, крім вичерпаних (мертві без оживлень) — так само рахує buy_gpu.
+  const amountByLevel = new Map<number, number>();
+  for (const g of user_gpus) {
+    if (g.is_dead && g.revival_count >= GPU_REVIVAL_MAX_COUNT) continue;
+    amountByLevel.set(g.gpu_level, (amountByLevel.get(g.gpu_level) ?? 0) + g.amount);
+  }
 
   const [buyingLevel, setBuyingLevel] = useState<number | null>(null);
   const [errorByLevel, setErrorByLevel] = useState<Record<number, string>>({});
@@ -176,7 +181,6 @@ function MarketScreenReady({
             key={template.level}
             template={template}
             owned={amountByLevel.get(template.level) ?? 0}
-            isDead={deadByLevel.get(template.level) ?? false}
             isBuying={buyingLevel === template.level}
             disabled={buyingLevel !== null}
             error={errorByLevel[template.level]}
@@ -204,7 +208,6 @@ function MarketScreenReady({
 function GpuCard({
   template,
   owned,
-  isDead,
   isBuying,
   disabled,
   error,
@@ -217,7 +220,6 @@ function GpuCard({
 }: {
   template: GpuTemplate;
   owned: number;
-  isDead: boolean;
   isBuying: boolean;
   disabled: boolean;
   error?: string;
@@ -295,40 +297,31 @@ function GpuCard({
         />
       </div>
 
-      {isDead ? (
-        <Link
-          href="/"
-          className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-xl bg-red-500/10 py-2 text-xs font-semibold text-red-400 transition active:scale-[0.98]"
-        >
-          {t.market.reviveOnFarm}
-        </Link>
-      ) : (
-        <button
-          type="button"
-          onClick={onBuy}
-          disabled={disabled || isMaxed || !canAfford}
-          className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-xl bg-neon-green py-2 text-xs font-semibold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {isMaxed ? (
-            t.market.limitReached
-          ) : isBuying ? (
-            t.market.buying
-          ) : discounted ? (
-            <span className="flex items-center gap-1.5">
-              <span className="text-background/60 line-through">
-                {formatNumber(language, template.cost_ton, { minimumFractionDigits: 2, maximumFractionDigits: 3 })}
-              </span>
-              {/* До 4 знаків: 15% від 0.25 / 0.75 дає 0.2125 / 0.6375 — бекенд
-                  списує цю суму точно, тож на кнопці показуємо її без округлення. */}
-              {t.market.buy(formatNumber(language, price, { minimumFractionDigits: 2, maximumFractionDigits: 4 }))}
+      <button
+        type="button"
+        onClick={onBuy}
+        disabled={disabled || isMaxed || !canAfford}
+        className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-xl bg-neon-green py-2 text-xs font-semibold text-background transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {isMaxed ? (
+          t.market.limitReached
+        ) : isBuying ? (
+          t.market.buying
+        ) : discounted ? (
+          <span className="flex items-center gap-1.5">
+            <span className="text-background/60 line-through">
+              {formatNumber(language, template.cost_ton, { minimumFractionDigits: 2, maximumFractionDigits: 3 })}
             </span>
-          ) : (
-            t.market.buy(formatNumber(language, template.cost_ton, { maximumFractionDigits: 2 }))
-          )}
-        </button>
-      )}
+            {/* До 4 знаків: 15% від 0.25 / 0.75 дає 0.2125 / 0.6375 — бекенд
+                списує цю суму точно, тож на кнопці показуємо її без округлення. */}
+            {t.market.buy(formatNumber(language, price, { minimumFractionDigits: 2, maximumFractionDigits: 4 }))}
+          </span>
+        ) : (
+          t.market.buy(formatNumber(language, template.cost_ton, { maximumFractionDigits: 2 }))
+        )}
+      </button>
 
-      {!isMaxed && !isDead && !canAfford && (
+      {!isMaxed && !canAfford && (
         <p className="mt-1.5 text-center text-[10px] text-slate-500">
           {t.market.notEnough(formatNumber(language, shortBy, { maximumFractionDigits: 3 }))}
         </p>

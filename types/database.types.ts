@@ -547,6 +547,7 @@ export type Database = {
       user_gpus: {
         Row: {
           amount: number
+          created_at: string
           gpu_level: number
           id: string
           is_dead: boolean
@@ -557,6 +558,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          created_at?: string
           gpu_level: number
           id?: string
           is_dead?: boolean
@@ -567,6 +569,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          created_at?: string
           gpu_level?: number
           id?: string
           is_dead?: boolean
@@ -1003,8 +1006,9 @@ export type Database = {
         }[]
       }
       revive_gpu: {
-        Args: { p_level: number; p_user_id: string }
+        Args: { p_gpu_id?: string; p_level: number; p_user_id: string }
         Returns: {
+          gpu_id: string
           new_game_balance: number
           revival_cost: number
           revival_count: number

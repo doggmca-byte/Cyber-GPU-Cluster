@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     const [{ data: userGpus, error: gpusError }, gpuTemplates, adsgramToday] = await Promise.all([
-      admin.from("user_gpus").select("*").eq("user_id", profile.id).order("gpu_level"),
+      admin.from("user_gpus").select("*").eq("user_id", profile.id).order("gpu_level").order("created_at"),
       loadGpuTemplates(admin),
       countAdsgramToday(admin, profile.id),
     ]);
@@ -215,19 +215,17 @@ const STARTER_GPU_LEVEL = 1;
 
 /**
  * Видає новому профілю один майнер L1 одразу при створенні: він просто стоїть
- * у списку активних серверів, без жодних повідомлень. ignoreDuplicates —
- * UNIQUE (user_id, gpu_level): повторний виклик (гонка двох sync) нічого не
- * змінює. Некритично: збій не має ламати реєстрацію, лише лишає рядок у логах.
+ * у списку активних серверів, без жодних повідомлень. Повторний виклик (гонка
+ * двох sync) впирається в user_gpus_open_lot_uq (одна відкрита партія на
+ * рівень) і отримує 23505 — це не помилка, картка вже видана. Некритично:
+ * збій не має ламати реєстрацію, лише лишає рядок у логах.
  */
 async function grantStarterGpu(admin: ReturnType<typeof createAdminClient>, profileId: string): Promise<void> {
   const { error } = await admin
     .from("user_gpus")
-    .upsert(
-      { user_id: profileId, gpu_level: STARTER_GPU_LEVEL, amount: 1 },
-      { onConflict: "user_id,gpu_level", ignoreDuplicates: true },
-    );
+    .insert({ user_id: profileId, gpu_level: STARTER_GPU_LEVEL, amount: 1 });
 
-  if (error) {
+  if (error && error.code !== "23505") {
     console.error(`[api/user/sync] failed to grant starter gpu for ${profileId}: ${error.message}`);
   }
 }

@@ -296,7 +296,9 @@ function ActiveServersSection({
   const visibleGpus = userGpus.filter(
     (gpu) => gpu.amount > 0 && templateByLevel.has(gpu.gpu_level),
   );
-  const ownedCount = visibleGpus.length;
+  // Рядок — це партія, а не рівень: одного рівня може бути кілька партій
+  // (різні цикли), тож лічильник "N / 10" рахує саме рівні.
+  const ownedCount = new Set(visibleGpus.map((gpu) => gpu.gpu_level)).size;
 
   return (
     <div className="flex flex-col gap-2">
@@ -379,7 +381,7 @@ function ServerRow({
       const res = await fetch("/api/farm/revive", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ initData, gpu_level: template.level }),
+        body: JSON.stringify({ initData, gpu_level: template.level, gpu_id: gpu.id }),
       });
 
       if (!res.ok) {
@@ -388,7 +390,7 @@ function ServerRow({
       }
 
       const result = (await res.json()) as ReviveGpuResponse;
-      patchGpuRevived(template.level, result.new_game_balance, result.revival_count);
+      patchGpuRevived(result.gpu_id, result.new_game_balance, result.revival_count);
     } catch (err) {
       setReviveError(err instanceof Error ? err.message : t.common.unknownError);
     } finally {
@@ -475,7 +477,12 @@ function ServerRow({
             </span>
           )}
         </div>
-        <p className="truncate text-[10px] text-slate-500">{rarityLabel}</p>
+        <p className="truncate text-[10px] text-slate-500">
+          {rarityLabel}
+          {/* Оживлена партія — показуємо, на якому вона циклі: партій одного
+              рівня може бути кілька, і цикли в них різні. */}
+          {gpu.revival_count > 0 && ` · ${t.farm.reviveCount(gpu.revival_count, GPU_REVIVAL_MAX_COUNT)}`}
+        </p>
 
         <div className="mt-1 flex items-center gap-1 font-mono text-[11px] font-semibold tabular-nums text-neon-green">
           <Zap size={10} fill="currentColor" />
