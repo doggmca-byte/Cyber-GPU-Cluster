@@ -22,9 +22,12 @@ export interface ReferralStatsResponse {
 /**
  * Не входив у явний список маршрутів Етапу 4, але без нього нема звідки
  * взяти дані для картки статистики на app/friends — реферальні дані не
- * повертаються з /api/user/sync. Просте readonly-агрегування по referrals,
- * тому окремого RPC не потребує (RLS усе одно блокує прямий доступ з клієнта,
- * читаємо через admin-клієнт, як і решту роутів).
+ * повертаються з /api/user/sync. Readonly-агрегування по referrals.
+ *
+ * Агрегація робиться в SQL (get_referral_stats), а НЕ сумуванням рядків у JS:
+ * PostgREST віддає максимум 1000 рядків за запит (db_max_rows), тож у
+ * рефовода з >1000 рефералів сума по "першій тисячі" показувала 0.01 TON
+ * замість реальних 0.408, а лічильник друзів впирався в 1000.
  */
 export async function POST(request: Request) {
   try {
@@ -37,20 +40,19 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const profile = await requireProfileByTelegramId(admin, user.id);
 
-    const { data: referrals, error } = await admin
-      .from("referrals")
-      .select("pending_reward, total_earned")
-      .eq("referrer_id", profile.id);
+    const { data, error } = await admin.rpc("get_referral_stats", { p_user_id: profile.id }).single();
 
     if (error) {
-      throw new ApiError(500, `failed to load referrals: ${error.message}`);
+      throw new ApiError(500, `failed to load referral stats: ${error.message}`);
     }
+    if (!data) throw new ApiError(500, "get_referral_stats returned no data");
 
-    const rows = referrals ?? [];
+    // Number(): bigint/numeric з RPC — число в JSON, але не покладаємось на це
+    // мовчки, бо рядок тут зламав би суми на екрані (конкатенація замість додавання).
     const response: ReferralStatsResponse = {
-      friends_count: rows.length,
-      total_earned: rows.reduce((sum, r) => sum + r.total_earned, 0),
-      pending_reward: rows.reduce((sum, r) => sum + r.pending_reward, 0),
+      friends_count: Number(data.friends_count),
+      total_earned: Number(data.total_earned),
+      pending_reward: Number(data.pending_reward),
       server_time: new Date().toISOString(),
     };
 

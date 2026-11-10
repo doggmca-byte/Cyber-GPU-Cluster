@@ -906,6 +906,14 @@ export type Database = {
       }
       collect_hash: { Args: { p_user_id: string }; Returns: Json }
       harvest_user_hash: { Args: { p_user_id: string }; Returns: number }
+      get_referral_stats: {
+        Args: { p_user_id: string }
+        Returns: {
+          friends_count: number
+          pending_reward: number
+          total_earned: number
+        }[]
+      }
       list_channel_penalty_candidates: {
         Args: { p_limit?: number }
         Returns: {
