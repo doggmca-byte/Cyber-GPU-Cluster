@@ -107,15 +107,10 @@ function FriendsScreenReady({ data, initData }: { data: SyncResponse; initData: 
 
       const result = (await res.json()) as ClaimReferralResponse;
       patchProfile({ withdrawable_balance: result.withdrawable_balance });
-      setStats((prev) =>
-        prev
-          ? {
-              ...prev,
-              pending_reward: 0,
-              total_earned: prev.total_earned + result.claimed_amount,
-            }
-          : prev,
-      );
+      // total_earned НЕ чіпаємо: у БД він уже включає цю комісію (нараховується
+      // разом із pending_reward в момент заробітку), тож додавання claimed_amount
+      // подвоювало б її на екрані до наступного перезавантаження.
+      setStats((prev) => (prev ? { ...prev, pending_reward: 0 } : prev));
       setClaimSuccess(
         t.friends.claimSuccess(formatNumber(language, result.claimed_amount, { maximumFractionDigits: 6 })),
       );
