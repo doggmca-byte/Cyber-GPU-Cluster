@@ -412,6 +412,18 @@ const kk: TranslationDictionary = {
         title: "MEME FARM",
         description: "MEME FARM-ды ашып, профиліңді жаса.",
       },
+      rmt_open: {
+        title: "Runes Mining",
+        description: "Runes Mining ашып, аккаунт жаса.",
+      },
+      rmt_first_claim: {
+        title: "Runes Mining: алғашқы жинау",
+        description: "Runes Mining шахтасында алғашқы жинауды жаса.",
+      },
+      rmt_connect_wallet: {
+        title: "Runes Mining: әмиян",
+        description: "Runes Mining-те TON әмиянын қос.",
+      },
       first_deposit: {
         title: "Алғашқы депозитіңді жаса",
         description: "Game Balance-ты нақты TON-мен кемінде бір рет толықтыр.",

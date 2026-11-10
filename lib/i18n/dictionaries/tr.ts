@@ -412,6 +412,18 @@ const tr: TranslationDictionary = {
         title: "MEME FARM",
         description: "MEME FARM'ı aç ve profilini oluştur.",
       },
+      rmt_open: {
+        title: "Runes Mining",
+        description: "Runes Mining'i aç ve hesabını oluştur.",
+      },
+      rmt_first_claim: {
+        title: "Runes Mining: ilk toplama",
+        description: "Runes Mining madeninde ilk toplamanı yap.",
+      },
+      rmt_connect_wallet: {
+        title: "Runes Mining: cüzdan",
+        description: "Runes Mining'de bir TON cüzdanı bağla.",
+      },
       first_deposit: {
         title: "İlk yatırımını yap",
         description: "Game Balance'ını en az bir kez gerçek TON ile yükle.",

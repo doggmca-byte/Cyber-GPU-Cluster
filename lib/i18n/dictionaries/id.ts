@@ -412,6 +412,18 @@ const id: TranslationDictionary = {
         title: "MEME FARM",
         description: "Buka MEME FARM dan buat profilmu.",
       },
+      rmt_open: {
+        title: "Runes Mining",
+        description: "Buka Runes Mining dan buat akunmu.",
+      },
+      rmt_first_claim: {
+        title: "Runes Mining: klaim pertama",
+        description: "Lakukan klaim pertama di tambang Runes Mining.",
+      },
+      rmt_connect_wallet: {
+        title: "Runes Mining: dompet",
+        description: "Hubungkan dompet TON di Runes Mining.",
+      },
       first_deposit: {
         title: "Lakukan deposit pertamamu",
         description: "Isi ulang Game Balance dengan TON asli setidaknya sekali.",

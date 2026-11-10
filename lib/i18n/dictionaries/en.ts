@@ -418,6 +418,18 @@ const en = {
         title: "MEME FARM",
         description: "Open MEME FARM and create your profile.",
       },
+      rmt_open: {
+        title: "Runes Mining",
+        description: "Open Runes Mining and create your account.",
+      },
+      rmt_first_claim: {
+        title: "Runes Mining: first claim",
+        description: "Make your first claim in the Runes Mining mine.",
+      },
+      rmt_connect_wallet: {
+        title: "Runes Mining: wallet",
+        description: "Connect a TON wallet in Runes Mining.",
+      },
       first_deposit: {
         title: "Make your first deposit",
         description: "Top up your Game Balance with real TON at least once.",

@@ -417,6 +417,18 @@ const ru: TranslationDictionary = {
         title: "MEME FARM",
         description: "Открой MEME FARM и создай свой профиль.",
       },
+      rmt_open: {
+        title: "Runes Mining",
+        description: "Открой Runes Mining и создай аккаунт.",
+      },
+      rmt_first_claim: {
+        title: "Runes Mining: первый сбор",
+        description: "Сделай первый сбор в шахте Runes Mining.",
+      },
+      rmt_connect_wallet: {
+        title: "Runes Mining: кошелёк",
+        description: "Подключи TON-кошелёк в Runes Mining.",
+      },
       first_deposit: {
         title: "Сделай первый депозит",
         description: "Пополни Game Balance реальным TON хотя бы один раз.",

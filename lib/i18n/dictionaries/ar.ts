@@ -412,6 +412,18 @@ const ar: TranslationDictionary = {
         title: "MEME FARM",
         description: "افتح MEME FARM وأنشئ ملفك الشخصي.",
       },
+      rmt_open: {
+        title: "Runes Mining",
+        description: "افتح Runes Mining وأنشئ حسابك.",
+      },
+      rmt_first_claim: {
+        title: "Runes Mining: أول جمع",
+        description: "نفّذ أول عملية جمع في منجم Runes Mining.",
+      },
+      rmt_connect_wallet: {
+        title: "Runes Mining: المحفظة",
+        description: "اربط محفظة TON في Runes Mining.",
+      },
       first_deposit: {
         title: "قم بأول عملية إيداع",
         description: "اشحن رصيد اللعبة بـ TON حقيقي مرة واحدة على الأقل.",
