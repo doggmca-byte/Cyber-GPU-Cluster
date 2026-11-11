@@ -17,6 +17,8 @@ interface UseMiningEngineOptions {
    * last_harvest_at пише БД, тож "зараз" для нього = Date.now() + clockOffsetMs.
    */
   clockOffsetMs: number;
+  /** profiles.unlimited_accrual: без ліміту 8 год накопичення (див. calcUnclaimedHash). */
+  unlimitedAccrual?: boolean;
   /** Сирий Telegram initData для запиту /api/farm/harvest. */
   initData: string;
   /**
@@ -67,6 +69,7 @@ export function useMiningEngine({
   userGpus,
   gpuTemplates,
   clockOffsetMs,
+  unlimitedAccrual = false,
   initData,
   onHarvestSuccess,
   onHarvestFailure,
@@ -76,7 +79,7 @@ export function useMiningEngine({
   // Початкове значення рахуємо одразу — без спалаху 0 / застарілого числа на
   // першому кадрі після монтування.
   const [snapshot, setSnapshot] = useState(() =>
-    calcUnclaimedHash(userGpus, templateByLevel, Date.now() + clockOffsetMs),
+    calcUnclaimedHash(userGpus, templateByLevel, Date.now() + clockOffsetMs, unlimitedAccrual),
   );
   const [isHarvesting, setIsHarvesting] = useState(false);
   const [harvestError, setHarvestError] = useState<string | null>(null);
@@ -93,7 +96,7 @@ export function useMiningEngine({
 
     const tick = () => {
       if (!harvestingRef.current && supersededGpusRef.current !== userGpus) {
-        const next = calcUnclaimedHash(userGpus, templateByLevel, Date.now() + clockOffsetMs);
+        const next = calcUnclaimedHash(userGpus, templateByLevel, Date.now() + clockOffsetMs, unlimitedAccrual);
         // 4 знаки після коми — саме стільки показує UI; не перерендерюємо ферму
         // на кожен кадр, якщо видиме число не змінилось.
         setSnapshot((prev) =>
@@ -107,7 +110,7 @@ export function useMiningEngine({
 
     tick();
     return () => cancelAnimationFrame(frame);
-  }, [userGpus, templateByLevel, clockOffsetMs]);
+  }, [userGpus, templateByLevel, clockOffsetMs, unlimitedAccrual]);
 
   const harvest = useCallback(async () => {
     if (harvestingRef.current) return;
@@ -138,7 +141,7 @@ export function useMiningEngine({
       // Лічильник одразу стає тим, що випливає з ВІДПОВІДІ сервера (≈ 0), і
       // старий масив user_gpus більше не тікає, поки новий не дійде в стейт.
       supersededGpusRef.current = userGpus;
-      setSnapshot(calcUnclaimedHash(data.user_gpus, templateByLevel, Date.parse(data.server_time)));
+      setSnapshot(calcUnclaimedHash(data.user_gpus, templateByLevel, Date.parse(data.server_time), unlimitedAccrual));
       onHarvestSuccess(data);
     } catch (err) {
       const isTimeout = err instanceof DOMException && err.name === "AbortError";
@@ -155,7 +158,7 @@ export function useMiningEngine({
       harvestingRef.current = false;
       setIsHarvesting(false);
     }
-  }, [initData, userGpus, templateByLevel, onHarvestSuccess, onHarvestFailure]);
+  }, [initData, userGpus, templateByLevel, unlimitedAccrual, onHarvestSuccess, onHarvestFailure]);
 
   return { unclaimedHash: snapshot.unclaimed, isAtCap: snapshot.isAtCap, isHarvesting, harvestError, harvest };
 }

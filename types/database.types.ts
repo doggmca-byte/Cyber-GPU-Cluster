@@ -254,6 +254,7 @@ export type Database = {
           hash_balance: number
           id: string
           is_ambassador: boolean
+          unlimited_accrual: boolean
           is_bot_blocked: boolean
           last_daily_bonus_at: string | null
           last_seen_at: string | null
@@ -283,6 +284,7 @@ export type Database = {
           hash_balance?: number
           id?: string
           is_ambassador?: boolean
+          unlimited_accrual?: boolean
           is_bot_blocked?: boolean
           last_daily_bonus_at?: string | null
           last_seen_at?: string | null
@@ -312,6 +314,7 @@ export type Database = {
           hash_balance?: number
           id?: string
           is_ambassador?: boolean
+          unlimited_accrual?: boolean
           is_bot_blocked?: boolean
           last_daily_bonus_at?: string | null
           last_seen_at?: string | null

@@ -117,7 +117,8 @@ export async function GET(request: Request) {
       telegram_id: number;
       telegram_language_code: string | null;
       last_daily_bonus_at: string | null;
-    }>(admin, "profiles", "id,telegram_id,telegram_language_code,last_daily_bonus_at", (q) =>
+      unlimited_accrual: boolean;
+    }>(admin, "profiles", "id,telegram_id,telegram_language_code,last_daily_bonus_at,unlimited_accrual", (q) =>
       (q as ReturnType<ReturnType<Admin["from"]>["select"]>)
         .eq("is_bot_blocked", false)
         .gte("last_seen_at", activeSince)
@@ -168,7 +169,9 @@ export async function GET(request: Request) {
     const candidates: Candidate[] = [];
     for (const p of profiles) {
       const harvestedAt = lastHarvest.get(p.id);
-      if (harvestedAt !== undefined && harvestedAt <= pausedCutoff) continue;
+      // unlimited_accrual: виробництво в людини не зупиняється, "паузи" для
+      // production-notify в неї нема — тож і тут не відсікаємо як "на паузі".
+      if (!p.unlimited_accrual && harvestedAt !== undefined && harvestedAt <= pausedCutoff) continue;
 
       const bonusReady =
         !p.last_daily_bonus_at || Date.parse(p.last_daily_bonus_at) <= now - 24 * 3600 * 1000;

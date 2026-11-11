@@ -55,6 +55,7 @@ function FarmScreenReady({
     userGpus: user_gpus,
     gpuTemplates: gpu_templates,
     clockOffsetMs,
+    unlimitedAccrual: profile.unlimited_accrual,
     initData,
     onHarvestSuccess: applyHarvest,
     onHarvestFailure: resync,

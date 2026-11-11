@@ -30,6 +30,12 @@ export function calcUnclaimedHash(
   userGpus: readonly UserGpu[],
   templateByLevel: ReadonlyMap<number, GpuTemplate>,
   serverNowMs: number,
+  /**
+   * profiles.unlimited_accrual — персональний виняток: накопичення НЕ обрізається
+   * MAX_UNCLAIMED_SECONDS (дзеркало harvest_user_hash). Лімітом лишається тільки
+   * життєвий цикл картки (headroom).
+   */
+  unlimitedAccrual = false,
 ): UnclaimedHashSnapshot {
   let unclaimed = 0;
   let isAtCap = false;
@@ -44,13 +50,16 @@ export function calcUnclaimedHash(
     const lastHarvestMs = Date.parse(gpu.last_harvest_at);
     if (Number.isNaN(lastHarvestMs)) continue;
 
-    const elapsedSeconds = Math.min(Math.max((serverNowMs - lastHarvestMs) / 1000, 0), MAX_UNCLAIMED_SECONDS);
+    const elapsedSeconds = Math.min(
+      Math.max((serverNowMs - lastHarvestMs) / 1000, 0),
+      unlimitedAccrual ? Number.POSITIVE_INFINITY : MAX_UNCLAIMED_SECONDS,
+    );
     const accruedByTime = elapsedSeconds * template.hash_per_second * gpu.amount;
 
     const headroom = Math.max(gpuLifecycleCapHash(template.cost_ton, gpu.amount) - gpu.lifetime_hash_generated, 0);
 
     unclaimed += Math.min(accruedByTime, headroom);
-    if (elapsedSeconds >= MAX_UNCLAIMED_SECONDS || accruedByTime >= headroom) isAtCap = true;
+    if ((!unlimitedAccrual && elapsedSeconds >= MAX_UNCLAIMED_SECONDS) || accruedByTime >= headroom) isAtCap = true;
   }
 
   return { unclaimed, isAtCap };
