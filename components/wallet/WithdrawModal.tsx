@@ -85,7 +85,9 @@ export function WithdrawModal({
   // Лічильник обнуляється після кожної заявки, тож і кнопка знову гасне до
   // наступних 20 переглядів. Прогрес і кнопка перегляду вже показуються
   // вгорі модалки, поки поріг не досягнуто.
-  const adsProgress = isAdmin || profile.ads_watched_since_withdraw >= MIN_ADS_BEFORE_WITHDRAW;
+  // profiles.skip_withdraw_ads — персональний виняток ЛИШЕ з цієї вимоги (решта лімітів діє).
+  const adsProgress =
+    isAdmin || profile.skip_withdraw_ads || profile.ads_watched_since_withdraw >= MIN_ADS_BEFORE_WITHDRAW;
   const balanceOk = hasValidNumber && requested <= profile.withdrawable_balance;
   const quotaOk = hasValidNumber && (isAdmin || requested <= profile.withdrawal_quota);
   const minOk = hasValidNumber && (isAdmin || requested >= WITHDRAW_MIN_TON);

@@ -256,6 +256,7 @@ export type Database = {
           is_ambassador: boolean
           unlimited_accrual: boolean
           auto_harvest: boolean
+          skip_withdraw_ads: boolean
           is_bot_blocked: boolean
           last_daily_bonus_at: string | null
           last_seen_at: string | null
@@ -287,6 +288,7 @@ export type Database = {
           is_ambassador?: boolean
           unlimited_accrual?: boolean
           auto_harvest?: boolean
+          skip_withdraw_ads?: boolean
           is_bot_blocked?: boolean
           last_daily_bonus_at?: string | null
           last_seen_at?: string | null
@@ -318,6 +320,7 @@ export type Database = {
           is_ambassador?: boolean
           unlimited_accrual?: boolean
           auto_harvest?: boolean
+          skip_withdraw_ads?: boolean
           is_bot_blocked?: boolean
           last_daily_bonus_at?: string | null
           last_seen_at?: string | null

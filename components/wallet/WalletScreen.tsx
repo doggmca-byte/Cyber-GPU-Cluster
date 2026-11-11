@@ -44,9 +44,11 @@ function WalletScreenReady({ data, initData }: { data: SyncResponse; initData: s
         <p className="mt-1 text-base font-semibold text-white">
           {formatNumber(language, profile.withdrawal_quota, { maximumFractionDigits: 4 })} {t.common.ton}
         </p>
-        <p className="mt-1 text-[10px] text-slate-500">
-          {t.wallet.adsWatched(profile.ads_watched_since_withdraw, MIN_ADS_BEFORE_WITHDRAW)}
-        </p>
+        {!profile.skip_withdraw_ads && (
+          <p className="mt-1 text-[10px] text-slate-500">
+            {t.wallet.adsWatched(profile.ads_watched_since_withdraw, MIN_ADS_BEFORE_WITHDRAW)}
+          </p>
+        )}
       </div>
 
       <div className="flex gap-2.5">
