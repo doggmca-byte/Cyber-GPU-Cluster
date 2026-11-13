@@ -29,8 +29,8 @@ export function buildReferralLink(telegramId: number): string {
  */
 function normalizeForTagMatch(value: string): string {
   return value
-    .replace(/[︎️​-‍⁠﻿]/g, "")
-    .replace(/s+/g, " ")
+    .replace(/[\uFE0E\uFE0F\u200B-\u200D\u2060\uFEFF]/g, "")
+    .replace(/\s+/g, " ")
     .toLowerCase();
 }
 
