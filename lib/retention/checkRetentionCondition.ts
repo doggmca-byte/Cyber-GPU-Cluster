@@ -19,6 +19,22 @@ export function buildReferralLink(telegramId: number): string {
 }
 
 /**
+ * Нормалізація для порівняння тега з іменем. Telegram-клієнти зберігають одне й те
+ * саме емодзі по-різному: "⚡" може прийти як U+26A1 або як U+26A1 U+FE0F
+ * (невидимий варіант-селектор емодзі), на екрані вони ідентичні. Строге includes
+ * через це не бачило тег у людей, які його реально додали (у частини гравців навіть
+ * 🏴‍☠ записаний без U+FE0F). Прибираємо U+FE0E/U+FE0F і символи нульової ширини,
+ * зводимо будь-які пробіли (у т.ч. нерозривний) до одного й ігноруємо регістр
+ * (@username у Telegram нечутливий до регістру). Сам тег і молнію вимагаємо як і раніше.
+ */
+function normalizeForTagMatch(value: string): string {
+  return value
+    .replace(/[︎️​-‍⁠﻿]/g, "")
+    .replace(/s+/g, " ")
+    .toLowerCase();
+}
+
+/**
  * Перевіряє УМОВУ ЗАРАЗ (тег в імені / реферальний лінк в біо) через
  * Telegram Bot API getChat. Fail-closed: мережевий збій чи "не вдалось
  * отримати чат" -> met:false (check_failed), НІКОЛИ met:true за замовчуванням
@@ -32,7 +48,9 @@ export async function checkRetentionCondition(
   if (!chat.ok) return { met: false, reason: "check_failed" };
 
   if (taskType === "NAME_TAG") {
-    const hasTag = chat.firstName.includes(RETENTION_NAME_TAG) || chat.lastName.includes(RETENTION_NAME_TAG);
+    const tag = normalizeForTagMatch(RETENTION_NAME_TAG);
+    const hasTag =
+      normalizeForTagMatch(chat.firstName).includes(tag) || normalizeForTagMatch(chat.lastName).includes(tag);
     return hasTag ? { met: true } : { met: false, reason: "tag_missing" };
   }
 
